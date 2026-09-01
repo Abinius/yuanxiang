@@ -1,59 +1,78 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 光彩云村庄 · 云乡
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> 宁夏红寺堡枸杞认养 SaaS —— 云乡民在线认养一畦田，生态种植全程可溯源。
 
-## About Laravel
+光彩云村庄平台（内部代号「云乡」）是一套面向认养农业的多租户 SaaS，以宁夏红寺堡枸杞为首个样板：城市用户（云乡民）在线认养一畦枸杞田，全程溯源、实时监控、定期配送、节日礼盒；家人端录入农事，后台统一经营。全链条内化（种植家庭 + 有机肥厂 + 在地劳力 + 品牌 + 平台）是核心差异化。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 技术栈
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Laravel 12**（PHP 8.2）+ **Blade** + **Tailwind v4**（Vite，`@theme` 语义色）—— 纯 Blade + 内联 JS，无 React/Vue
+- **SQLite** 默认（可换 MySQL/PG）；**yansongda/laravel-pay**（微信支付）
+- **mallardduck/blade-lucide-icons** —— `<x-lucide-*>` 图标组件
+- 设计系统：dsh（deepseek-harness）版式语法 + 暖调品牌令牌（枸杞砖红 `#B33A26` / 金 `#C9A227` / 米底 `#FAF6F0`）
+- 字体：Instrument Serif + Noto Serif SC（标题）/ Instrument Sans + Noto Sans SC（正文）/ SF Mono（代码）
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 架构
 
-## Learning Laravel
+多租户 SaaS，路由前缀 `/t/{tenant:slug}`，`tenant` 中间件注入租户上下文，`role:tenant_admin` / `role:family,tenant_admin` 区分端，`tenant.member` 守卫防跨租户越权（认养人只能访问本人租户资源；公开页保持跨租户可分享）。
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| 端 | 路由前缀 | 角色 | 能力 |
+|---|---|---|---|
+| 前台 site | `/t/{slug}` | 公开 + 认养人 | 认养下单/签约/支付、溯源时间线、溯源码扫码、礼盒收礼、我的田（生长日历/农事动态/续费/收货）、实时监控、短链接、铭牌分享 |
+| 后台 admin | `/t/{slug}/admin` | `tenant_admin` | 经营看板、认养订单、农事内容、摄像头、溯源码、配送、补退、礼盒、促销、站点设置、短链接 |
+| 家人端 family | `/t/{slug}/family` | `family` / `tenant_admin` | 农事录入、肥料批次、采收录入 |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+平台公共：选店入口 `/`、微信支付回调 `/pay/wechat/notify`、`robots.txt`、`sitemap.xml`。
 
-## Laravel Sponsors
+## 领域模型
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Tenant · User · Plot · Farm · FarmMember · FarmLog · FertilizerBatch · Harvest · Adoption · Payment · Delivery · TraceCode · GiftBox · Promotion · Coupon · ShortLink · Settlement · Payout · CommissionRule · SubscriptionPlan · Plan · Organization · Address · DetectionReport · Post · PushMessage · AdoptionAdjustment · Camera
 
-### Premium Partners
+## 本地开发
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer install
+cp .env.example .env && php artisan key:generate
+php artisan migrate --force          # SQLite，默认 database/database.sqlite
+npm install && npm run build         # 或 npm run dev 热更新
+php artisan serve                    # 127.0.0.1:8000
+```
 
-## Contributing
+一键并发起服务（composer script）：
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer dev    # serve + queue:listen + pail + vite 并发
+```
 
-## Code of Conduct
+## 测试
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan config:clear && php artisan test
+```
 
-## Security Vulnerabilities
+156 tests / 513 assertions。
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 设计系统
 
-## License
+- `resources/css/app.css` —— `@theme` 语义色 + 组件 class 库（导航/卡片/按钮/表格/标签/空态/分页/表单），`--ds-*` token 系列
+- `resources/views/components/design-system/` —— 共享 partials
+- 两个 layout：`layouts/site.blade.php`（前台）+ `layouts/dashboard.blade.php`（admin/family）
+- 后台侧栏：Lucide 图标，桌面折叠 + 移动端 off-canvas 抽屉（`display:contents` 修复栅格遮挡）
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 目录结构
+
+```
+app/Http/Controllers/
+  Site/      前台（认养/溯源/我的田/直播/礼盒/短链/分享）
+  Admin/     商户后台
+  Family/    家人端录入
+  Auth/      双登录（账密 + 微信）
+  Pay/       微信支付
+app/Models/  领域模型（TenantScoped）
+resources/views/{site,admin,family,components,layouts}
+routes/web.php
+```
+
+## 背景
+
+宁夏红寺堡光彩村枸杞种植家庭出身，全链条内化：种植家庭 + 有机肥厂（NXLB）+ 在地农业劳力 + 品牌 + 平台。6 亩枸杞「云乡民」认养起步，样板田 → 村庄平台。
