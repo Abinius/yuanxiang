@@ -11,6 +11,7 @@ use App\Models\Adoption;
 use App\Models\Payment;
 use App\Models\Plot;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -36,8 +37,24 @@ class AdoptionService
             abort_if($plot->type === PlotType::Group, 422, '拼团田不可直接认养，请选择单株');
         }
 
-        abort_if(
-            Adoption::query()
+        $plan = $plot->plan;
+        abort_if(! $plan || $plan->status !== 'active', 422, '该档位方案不可用');
+
+        $annualFee = (float) $plan->price_yearly;
+        $amountOff = 0.0;
+        if ($coupon) {
+            abort_if($coupon->user_id !== $user->id, 422, '该券不属于当前用户');
+            $amountOff = $this->promotions->discountFor($coupon, $plan, $seasonYear);
+            $annualFee = max(0.0, $annualFee - $amountOff);
+        }
+
+        // 事务 + 唯一约束兜底:防并发下单超卖。
+        // Address 写入放事务内,确保 adoption 失败时不回留孤儿地址。
+        return DB::transaction(function () use ($user, $plot, $seasonYear, $renewedFromId, $plan, $annualFee, $coupon, $amountOff, $addressData) {
+            if (! empty($addressData)) {
+                Address::create(array_merge($addressData, ['user_id' => $user->id]));
+            }
+            $exists = Adoption::query()
                 ->where('adoptable_type', Plot::class)
                 ->where('adoptable_id', $plot->id)
                 ->where('season_year', $seasonYear)
@@ -46,55 +63,46 @@ class AdoptionService
                     AdoptionStatus::PendingAgreement->value,
                     AdoptionStatus::Active->value,
                 ])
-                ->exists(),
-            422,
-            '该田块本季已被认养'
-        );
+                ->exists();
+            if ($exists) {
+                abort(422, '该田块本季已被认养');
+            }
 
-        $plan = $plot->plan;
-        abort_if(! $plan || $plan->status !== 'active', 422, '该档位方案不可用');
+            try {
+                $adoption = Adoption::create([
+                    'tenant_id' => $plot->tenant_id,
+                    'adoption_no' => 'AD'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
+                    'user_id' => $user->id,
+                    'adoptable_type' => Plot::class,
+                    'adoptable_id' => $plot->id,
+                    'plan_id' => $plan->id,
+                    'farm_id' => $plot->farm_id,
+                    'season_year' => $seasonYear,
+                    'annual_fee' => $annualFee,
+                    'renewed_from_id' => $renewedFromId,
+                    'start_date' => now()->toDateString(),
+                    'status' => AdoptionStatus::PendingPayment->value,
+                ]);
+            } catch (QueryException $e) {
+                // 唯一约束冲突:另一请求已抢先下单。事务回滚,降级 422。
+                abort(422, '该田块本季已被认养');
+            }
 
-        if (! empty($addressData)) {
-            Address::create(array_merge($addressData, ['user_id' => $user->id]));
-        }
+            Payment::create([
+                'tenant_id' => $plot->tenant_id,
+                'payable_type' => Adoption::class,
+                'payable_id' => $adoption->id,
+                'amount' => $annualFee,
+                'method' => 'manual',
+                'status' => PaymentStatus::Pending->value,
+            ]);
 
-        $annualFee = (float) $plan->price_yearly;
-        $amountOff = 0.0;
-        if ($coupon) {
-            abort_if($coupon->user_id !== $user->id, 422, '该券不属于当前用户');
-            $amountOff = $this->promotions->discountFor($coupon, $plan, $seasonYear);
-            $annualFee = max(0, $annualFee - $amountOff);
-        }
+            if ($coupon && $amountOff > 0) {
+                $this->promotions->recordUsage($coupon, $adoption, $amountOff);
+            }
 
-        $adoption = Adoption::create([
-            'tenant_id' => $plot->tenant_id,
-            'adoption_no' => 'AD'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
-            'user_id' => $user->id,
-            'adoptable_type' => Plot::class,
-            'adoptable_id' => $plot->id,
-            'plan_id' => $plan->id,
-            'farm_id' => $plot->farm_id,
-            'season_year' => $seasonYear,
-            'annual_fee' => $annualFee,
-            'renewed_from_id' => $renewedFromId,
-            'start_date' => now()->toDateString(),
-            'status' => AdoptionStatus::PendingPayment->value,
-        ]);
-
-        Payment::create([
-            'tenant_id' => $plot->tenant_id,
-            'payable_type' => Adoption::class,
-            'payable_id' => $adoption->id,
-            'amount' => $annualFee,
-            'method' => 'manual',
-            'status' => PaymentStatus::Pending->value,
-        ]);
-
-        if ($coupon && $amountOff > 0) {
-            $this->promotions->recordUsage($coupon, $adoption, $amountOff);
-        }
-
-        return $adoption;
+            return $adoption;
+        });
     }
 
     /**

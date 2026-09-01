@@ -9,12 +9,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="{{ asset('app.css') }}">
+@vite('resources/css/app.css')
 <style>
-  /* 租户动态品牌色:app.css 为静态品牌色,租户覆盖值在此注入。 */
+  /* 租户动态品牌色:app.css 为静态品牌色,租户覆盖值在此注入。
+     把 --primary/--accent 映射到 Tailwind 使用的 --color-brand-*/--color-accent-*，
+     使多租户品牌化真正生效（原代码只注入 --primary/--accent 但从未被引用，属死代码）。 */
   :root{
     --primary:{{ $brand['primary'] ?? config('site.defaults.brand.primary') }};
     --accent:{{ $brand['accent'] ?? config('site.defaults.brand.accent') }};
+    --color-brand-500: var(--primary);
+    --color-brand-600: var(--primary);
+    --color-brand-700: var(--primary);
+    --color-accent-500: var(--accent);
+    --color-accent-400: var(--accent);
   }
 </style>
 @include('site.partials.seo')

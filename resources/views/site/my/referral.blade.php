@@ -20,8 +20,8 @@
         {{ $coupon->code }}
       </div>
 
-      <button class="btn btn-primary btn-sm" type="button"
-              onclick="navigator.clipboard.writeText('{{ $coupon->code }}').then(function(){this.textContent='已复制'}).catch(function(){})">
+      <button id="ref-copy-btn" class="btn btn-primary btn-sm" type="button"
+              onclick="(function(b){navigator.clipboard.writeText('{{ $coupon->code }}').then(function(){b.textContent='已复制'}).catch(function(){});})(this)">
         复制推荐码
       </button>
 

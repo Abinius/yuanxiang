@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 // 平台后台（SaaS 管理）
 Route::prefix('platform')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('platform.login');
-    Route::post('/login', [AuthController::class, 'login'])->name('platform.login.post');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('platform.login.post');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('platform.logout');
 
     Route::middleware(['auth', 'role:platform_admin'])->group(function () {

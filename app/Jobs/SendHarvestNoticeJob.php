@@ -8,6 +8,7 @@ use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\User;
 use App\Services\WechatTemplateService;
+use App\Tenancy\HandlesTenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -17,7 +18,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 class SendHarvestNoticeJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, HandlesTenantContext;
 
     public function __construct(public int $harvestId)
     {
@@ -30,26 +31,28 @@ class SendHarvestNoticeJob implements ShouldQueue
             return;
         }
 
-        $userIds = Adoption::query()
-            ->where('adoptable_type', Plot::class)
-            ->where('adoptable_id', $harvest->plot_id)
-            ->where('status', AdoptionStatus::Active)
-            ->pluck('user_id')
-            ->unique();
+        $this->withTenantContext($harvest->tenant_id, function () use ($harvest, $templates) {
+            $userIds = Adoption::query()
+                ->where('adoptable_type', Plot::class)
+                ->where('adoptable_id', $harvest->plot_id)
+                ->where('status', AdoptionStatus::Active)
+                ->pluck('user_id')
+                ->unique();
 
-        $recipients = User::query()
-            ->whereIn('id', $userIds)
-            ->whereNotNull('openid')
-            ->get();
+            $recipients = User::query()
+                ->whereIn('id', $userIds)
+                ->whereNotNull('openid')
+                ->get();
 
-        foreach ($recipients as $user) {
-            $templates->send($user, 'harvest_notice', [
-                'url' => route('tenant.home', ['tenant' => $harvest->tenant->slug]),
-                'data' => [
-                    'thing1' => ['value' => $harvest->plot?->code ?? '你的田'],
-                    'thing2' => ['value' => mb_substr($harvest->notes ?? '今天采了，正在打单配送', 0, 20)],
-                ],
-            ]);
-        }
+            foreach ($recipients as $user) {
+                $templates->send($user, 'harvest_notice', [
+                    'url' => route('tenant.home', ['tenant' => $harvest->tenant->slug]),
+                    'data' => [
+                        'thing1' => ['value' => $harvest->plot?->code ?? '你的田'],
+                        'thing2' => ['value' => mb_substr($harvest->notes ?? '今天采了，正在打单配送', 0, 20)],
+                    ],
+                ]);
+            }
+        });
     }
 }

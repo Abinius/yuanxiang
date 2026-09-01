@@ -24,7 +24,8 @@
           <a class="btn btn-ghost mt-3" href="{{ $camera->playback_url }}" target="_blank" rel="noopener">查看回看片段</a>
         @endif
       </div>
-      <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"
+              crossorigin="anonymous"></script>
       <script>
         (function () {
           var video = document.getElementById('live-video');

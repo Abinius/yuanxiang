@@ -8,6 +8,7 @@ use App\Models\CouponUsage;
 use App\Models\Plan;
 use App\Models\Promotion;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -17,15 +18,22 @@ use Illuminate\Support\Str;
  */
 class PromotionService
 {
-    /** 校验券并返回折扣额（0 表示无优惠）。 */
+    /** 校验券并返回折扣额（0 表示无优惠）。含过期/库存校验。 */
     public function discountFor(Coupon $coupon, Plan $plan, int $seasonYear): float
     {
         abort_unless($coupon->status === 'unused', 422, '该券不可用');
+        if ($coupon->expires_at && now()->gt($coupon->expires_at)) {
+            abort(422, '该券已过期');
+        }
 
         $promotion = $coupon->promotion;
         abort_unless($promotion && $promotion->status === 'active', 422, '活动不存在或已下线');
         abort_if($promotion->starts_at && now()->lt($promotion->starts_at), 422, '活动未开始');
         abort_if($promotion->ends_at && now()->gt($promotion->ends_at), 422, '活动已结束');
+        // 库存校验:stock 字段 null = 不限;>0 = 限量剩余;<=0 = 已用完
+        if ($promotion->stock !== null && (int) $promotion->stock <= 0) {
+            abort(422, '活动名额已满');
+        }
 
         $rule = $promotion->rule ?? [];
         $scopePlans = $rule['scope']['plan_id'] ?? null;
@@ -47,7 +55,7 @@ class PromotionService
         return min((float) ($rule['amount'] ?? 0), $plan->price_yearly);
     }
 
-    /** 记录券使用（coupon_usages）+ 券置 used。 */
+    /** 记录券使用（coupon_usages）+ 券置 used + 扣减活动库存。 */
     public function recordUsage(Coupon $coupon, Adoption $adoption, float $amountOff): void
     {
         CouponUsage::create([
@@ -58,6 +66,20 @@ class PromotionService
             'used_at' => now(),
         ]);
         $coupon->update(['status' => 'used', 'used_at' => now()]);
+
+        // 扣减活动库存（限量活动才扣；库存字段为 null/0 表示不限，不扣）。
+        // 用原子 SQL:WHERE stock > 0 保证不超过可用库存,WHERE affected rows = 0 表示并发已被扣完。
+        // affected_rows 为 0 说明名额已被并发抢光,此时券仍扣减会超卖,故回滚本交易。
+        $promo = $coupon->promotion;
+        if ($promo && (int) ($promo->stock ?? 0) > 0) {
+            $updated = Promotion::query()
+                ->where('id', $promo->id)
+                ->where('stock', '>', 0)
+                ->update(['stock' => DB::raw('stock - 1')]);
+            if (! $updated) {
+                throw new \RuntimeException('活动名额已满');
+            }
+        }
     }
 
     /** 生成/取回用户的推荐码券（可复用）；推荐活动未配置时返回 null（页面友好降级，不 422）。 */

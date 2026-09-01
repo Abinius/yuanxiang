@@ -18,14 +18,9 @@
 @source '../**/*.js';
 
 /* ---------- 字体 ---------- */
-@font-face {
-  font-family: 'Instrument Serif';
-  src: url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
-}
-@font-face {
-  font-family: 'Noto Serif SC';
-  src: local('Noto Serif SC');
-}
+/* Instrument Serif 无可靠自托管/CDN 字体文件，直接跳过 @font-face，
+   依赖 --font-serif 栈里的 Noto Serif SC / Songti SC / STSong 系统 fallback（已测试可用）。
+   如需真上 Instrument Serif，需自托管 .woff2 到此仓库 assets/ 再引用本地 url。 */
 
 @theme {
   /* 字体栈:标题衬线(品牌感) + 正文系统黑体 + 代码等宽 */
@@ -80,8 +75,8 @@
 
   /* 正文/次级/辅助文字 */
   --ds-text:      #2B2620;
-  --ds-text-mute: #8A8378;
-  --ds-text-soft: #5C554B;
+  --ds-text-mute: #6B6558;
+  --ds-text-soft: #4A443C;
 
   /* border-l 细边框阶梯(dsh 的 4%/10%/12%/16%) */
   --ds-border-1: rgba(43, 38, 32, 0.05);
@@ -392,6 +387,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   color: var(--ds-text-mute);
   font-size: var(--ds-body-xs);
 }
+@media (max-width: 840px) {
+  .nav { flex-wrap: wrap; padding: 10px 16px; gap: 8px; }
+  .nav-links { flex-wrap: wrap; gap: 8px; font-size: var(--ds-body-xs); }
+  .nav-links a:not(.btn) { padding: 2px 0; }
+}
 
 /* 前台主区 */
 .main {
@@ -611,7 +611,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   padding: 11px 12px;
   border: 1px solid var(--ds-border-2);
   border-radius: var(--ds-r-sm);
-  font-size: var(--ds-body);
+  font-size: 16px;
   background: #fff;
   color: var(--ds-text);
   transition: border-color var(--ds-duration) var(--ds-ease),
@@ -1050,8 +1050,8 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
 .nav-toggle:hover { color: var(--color-brand-500); border-color: var(--color-brand-500); }
 .sidebar-backdrop { display: none; }
 
-/* 后台 <nav> 旧类兼容 */
-nav { @apply hidden; }
+/* 后台 <nav> 旧类兼容:全局 <nav> 不再隐藏(之前的 nav{@apply hidden} 是历史 hack,
+   会与 welcome 页 <nav class="land-nav"> 等冲突);现靠具体 class(.nav/.nav-admin) 显式声明样式。 */
 
 /* ====================== 前台页面:产品卡(认养田块)====================== */
 

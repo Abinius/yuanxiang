@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="{{ asset('app.css') }}">
+@vite('resources/css/app.css')
 <title>平台后台登录 · 光彩云村庄</title>
 <style>
   .login-page {

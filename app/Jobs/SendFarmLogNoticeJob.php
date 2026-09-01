@@ -8,6 +8,7 @@ use App\Models\Adoption;
 use App\Models\FarmLog;
 use App\Models\User;
 use App\Services\WechatTemplateService;
+use App\Tenancy\HandlesTenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -18,7 +19,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 class SendFarmLogNoticeJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, HandlesTenantContext;
 
     public function __construct(public int $farmLogId)
     {
@@ -35,27 +36,29 @@ class SendFarmLogNoticeJob implements ShouldQueue
         }
 
         $templateKey = $log->type === FarmLogType::LiveBroadcast ? 'live_notice' : 'content';
-        $url = route('tenant.home', ['tenant' => $log->tenant->slug]);
 
-        $userIds = Adoption::query()
-            ->where('tenant_id', $log->tenant_id)
-            ->where('status', AdoptionStatus::Active)
-            ->pluck('user_id')
-            ->unique();
+        $this->withTenantContext($log->tenant_id, function () use ($log, $templates, $templateKey) {
+            $url = route('tenant.home', ['tenant' => $log->tenant->slug]);
 
-        $recipients = User::query()
-            ->whereIn('id', $userIds)
-            ->whereNotNull('openid')
-            ->get();
+            $userIds = Adoption::query()
+                ->where('status', AdoptionStatus::Active)
+                ->pluck('user_id')
+                ->unique();
 
-        foreach ($recipients as $user) {
-            $templates->send($user, $templateKey, [
-                'url' => $url,
-                'data' => [
-                    'thing1' => ['value' => mb_substr($log->title, 0, 20)],
-                    'thing2' => ['value' => mb_substr($log->content ?? '看田地动态', 0, 20)],
-                ],
-            ]);
-        }
+            $recipients = User::query()
+                ->whereIn('id', $userIds)
+                ->whereNotNull('openid')
+                ->get();
+
+            foreach ($recipients as $user) {
+                $templates->send($user, $templateKey, [
+                    'url' => $url,
+                    'data' => [
+                        'thing1' => ['value' => mb_substr($log->title, 0, 20)],
+                        'thing2' => ['value' => mb_substr($log->content ?? '看田地动态', 0, 20)],
+                    ],
+                ]);
+            }
+        });
     }
 }

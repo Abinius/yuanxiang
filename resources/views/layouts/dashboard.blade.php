@@ -8,7 +8,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="{{ asset('app.css') }}">
+@vite('resources/css/app.css')
 <title>@yield('title', '后台') · {{ $tenant->name ?? '光彩云村庄平台' }}</title>
 @stack('head')
 </head>

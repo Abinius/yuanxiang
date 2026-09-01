@@ -16,28 +16,38 @@
 @endsection
 
 @section('content')
-  <h2>录入有机肥批次</h2>
+  <h2 class="admin-h1">录入有机肥批次</h2>
   @if ($errors->any())
     <div class="alert">{{ $errors->first() }}</div>
   @endif
   <form method="POST" action="{{ route('tenant.family.fertilizer.store', ['tenant' => $tenant->slug]) }}">
     @csrf
-    <label>批次号</label>
-    <input name="batch_no" required maxlength="60" value="{{ old('batch_no') }}">
+    <div class="field">
+      <label>批次号</label>
+      <input class="input" name="batch_no" required maxlength="60" value="{{ old('batch_no') }}">
+    </div>
 
-    <label>生产日期</label>
-    <input type="date" name="produced_at" required value="{{ old('produced_at') }}">
+    <div class="field">
+      <label>生产日期</label>
+      <input class="input" type="date" name="produced_at" required value="{{ old('produced_at') }}">
+    </div>
 
-    <label>NXLB 参考编号</label>
-    <input name="nxlb_ref" maxlength="120" value="{{ old('nxlb_ref') }}">
+    <div class="field">
+      <label>NXLB 参考编号</label>
+      <input class="input" name="nxlb_ref" maxlength="120" value="{{ old('nxlb_ref') }}">
+    </div>
 
-    <label>配料 / 成分</label>
-    <textarea name="ingredients" rows="3" maxlength="1000">{{ old('ingredients') }}</textarea>
+    <div class="field">
+      <label>配料 / 成分</label>
+      <textarea class="textarea" name="ingredients" rows="3" maxlength="1000">{{ old('ingredients') }}</textarea>
+    </div>
 
-    <label>检测报告链接（可选）</label>
-    <input name="test_report_url" maxlength="500" value="{{ old('test_report_url') }}">
+    <div class="field">
+      <label>检测报告链接（可选）</label>
+      <input class="input" name="test_report_url" maxlength="500" value="{{ old('test_report_url') }}">
+    </div>
 
-    <button class="btn" type="submit" style="width:100%;margin-top:16px">保存批次</button>
+    <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px">保存批次</button>
   </form>
   <p class="note" style="margin-top:14px">录入的是有机肥投入品批次信息，非有机产品认证声明。</p>
 @endsection

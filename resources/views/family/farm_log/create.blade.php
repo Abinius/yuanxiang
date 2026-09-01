@@ -16,29 +16,33 @@
 @endsection
 
 @section('content')
-  <h2>发农事动态 / 直播预告</h2>
+  <h2 class="admin-h1">发农事动态 / 直播预告</h2>
   @if ($errors->any())
     <div class="alert">{{ $errors->first() }}</div>
   @endif
   <form method="POST" action="{{ route('tenant.family.logs.store', ['tenant' => $tenant->slug]) }}" enctype="multipart/form-data">
     @csrf
-    <label>田块</label>
-    <select name="plot_id" required>
-      @foreach ($plots as $plot)
-        <option value="{{ $plot->id }}" @selected(old('plot_id') == $plot->id)>{{ $plot->code }}</option>
-      @endforeach
-    </select>
+    <div class="field">
+      <label>田块</label>
+      <select class="select" name="plot_id" required>
+        @foreach ($plots as $plot)
+          <option value="{{ $plot->id }}" @selected(old('plot_id') == $plot->id)>{{ $plot->code }}</option>
+        @endforeach
+      </select>
+    </div>
 
-    <label>类型</label>
-    <select name="type" required>
-      @foreach ($types as $t)
-        <option value="{{ $t['value'] }}" @selected(old('type') === $t['value'])>{{ $t['label'] }}</option>
-      @endforeach
-    </select>
+    <div class="field">
+      <label>类型</label>
+      <select class="select" name="type" required>
+        @foreach ($types as $t)
+          <option value="{{ $t['value'] }}" @selected(old('type') === $t['value'])>{{ $t['label'] }}</option>
+        @endforeach
+      </select>
+    </div>
 
-    <div id="batch-field" style="display:none">
+    <div class="field" id="batch-field" style="display:none">
       <label>有机肥批次（NXLB，施肥时选）</label>
-      <select name="fertilizer_batch_id">
+      <select class="select" name="fertilizer_batch_id">
         <option value="">（可选）</option>
         @forelse ($batches as $batch)
           <option value="{{ $batch->id }}" @selected(old('fertilizer_batch_id') == $batch->id)>
@@ -50,17 +54,25 @@
       </select>
     </div>
 
-    <label>标题</label>
-    <input name="title" required maxlength="60" value="{{ old('title') }}">
+    <div class="field">
+      <label>标题</label>
+      <input class="input" name="title" required maxlength="60" value="{{ old('title') }}">
+    </div>
 
-    <label>内容</label>
-    <textarea name="content" rows="4" maxlength="1000">{{ old('content') }}</textarea>
+    <div class="field">
+      <label>内容</label>
+      <textarea class="textarea" name="content" rows="4" maxlength="1000">{{ old('content') }}</textarea>
+    </div>
 
-    <label>图片（可选，最多 6 张，jpg/png/webp ≤4MB）</label>
-    <input type="file" name="images[]" accept="image/*" multiple>
+    <div class="field">
+      <label>图片（可选，最多 6 张，jpg/png/webp ≤4MB）</label>
+      <input class="input" type="file" name="images[]" accept="image/*" multiple>
+    </div>
 
-    <label>发生时间</label>
-    <input type="date" name="occurred_at" value="{{ old('occurred_at', now()->toDateString()) }}">
+    <div class="field">
+      <label>发生时间</label>
+      <input class="input" type="date" name="occurred_at" value="{{ old('occurred_at', now()->toDateString()) }}">
+    </div>
 
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
       <input type="hidden" name="is_public" value="0">
@@ -68,7 +80,7 @@
       <span>对云乡民可见（默认公开）</span>
     </label>
 
-    <button class="btn" type="submit" style="width:100%;margin-top:16px">发布</button>
+    <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px">发布</button>
   </form>
   <script>
     (function () {

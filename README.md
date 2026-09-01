@@ -6,7 +6,7 @@
 
 ## 技术栈
 
-- **Laravel 12**（PHP 8.2）+ **Blade** + **Tailwind v4**（Vite，`@theme` 语义色）—— 纯 Blade + 内联 JS，无 React/Vue
+- **Laravel 12**（PHP 8.2）+ **Blade** + **Tailwind v4**（**Vite 构建**，`@vite` 注入，`@theme` 语义色）—— 纯 Blade + 内联 JS，无 React/Vue
 - **SQLite** 默认（可换 MySQL/PG）；**yansongda/laravel-pay**（微信支付）
 - **mallardduck/blade-lucide-icons** —— `<x-lucide-*>` 图标组件
 - 设计系统：dsh（deepseek-harness）版式语法 + 暖调品牌令牌（枸杞砖红 `#B33A26` / 金 `#C9A227` / 米底 `#FAF6F0`）
@@ -50,7 +50,7 @@ composer dev    # serve + queue:listen + pail + vite 并发
 php artisan config:clear && php artisan test
 ```
 
-156 tests / 513 assertions。
+167 tests（含安全基线 + 保底规则引擎单元测试）。
 
 ## 设计系统
 

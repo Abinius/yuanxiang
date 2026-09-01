@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="{{ asset('app.css') }}">
+@vite('resources/css/app.css')
 <title>光彩云村庄 · 云端认养真实田块</title>
 <style>
   /* 入口页专属:全屏品牌画面 + 多租户导航条 */

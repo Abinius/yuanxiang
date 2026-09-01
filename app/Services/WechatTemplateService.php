@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PushMessage;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -34,11 +35,13 @@ class WechatTemplateService
         }
 
         try {
-            $accessToken = Http::get('https://api.weixin.qq.com/cgi-bin/token', [
-                'grant_type' => 'client_credential',
-                'appid' => config('wechat.app_id'),
-                'secret' => config('wechat.secret'),
-            ])->json('access_token') ?? '';
+            $accessToken = Cache::remember('wechat:access_token', now()->addHours(2), function () {
+                return Http::get('https://api.weixin.qq.com/cgi-bin/token', [
+                    'grant_type' => 'client_credential',
+                    'appid' => config('wechat.app_id'),
+                    'secret' => config('wechat.secret'),
+                ])->json('access_token') ?? '';
+            });
 
             $resp = Http::withToken($accessToken)
                 ->post('https://api.weixin.qq.com/cgi-bin/message/template/send', [

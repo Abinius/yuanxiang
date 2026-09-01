@@ -20,6 +20,14 @@ class ShortLinkController extends Controller
         $link = $this->links->resolve($tenant, $code);
         abort_unless($link, 404);
 
-        return redirect()->away($link->target_url, 302);
+        // 安全兜底：仅允许 http(s) 跳转，防 admin 被攻破后制造 javascript: 钓鱼
+        $target = trim((string) $link->target_url);
+        abort_if(
+            ! preg_match('#^https?://#i', $target),
+            422,
+            '链接目标不合法'
+        );
+
+        return redirect()->away($target, 302);
     }
 }

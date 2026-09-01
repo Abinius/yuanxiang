@@ -113,6 +113,7 @@ class MyPlotController extends Controller
     public function autoRenew(Tenant $tenant, Adoption $adoption, Request $request)
     {
         abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_unless($adoption->status === AdoptionStatus::Active, 422, '仅生效中认养可设置续费意向');
 
         $adoption->update(['auto_renew' => ! $adoption->auto_renew]);
 

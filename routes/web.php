@@ -71,10 +71,10 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
 
     // 双登录
     Route::get('/login', [LoginController::class, 'show'])->name('tenant.login');
-    Route::post('/login', [LoginController::class, 'login'])->name('tenant.login.post');
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1')->name('tenant.login.post');
     Route::get('/login/wechat', [LoginController::class, 'wechat'])->name('tenant.login.wechat');
     Route::get('/login/wechat/callback', [LoginController::class, 'wechatCallback'])->name('tenant.wechat.callback');
-    Route::post('/login/bind-phone', [LoginController::class, 'bindPhone'])->middleware('auth')->name('tenant.bind-phone');
+    Route::post('/login/bind-phone', [LoginController::class, 'bindPhone'])->middleware(['auth', 'throttle:3,1'])->name('tenant.bind-phone');
     Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('tenant.logout');
 
     // 认养
@@ -91,13 +91,13 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
     Route::get('/trace/{plot}', [TraceController::class, 'show'])->name('tenant.trace.show');
 
     // 溯源码扫码页（公开；码在租户内过滤，跨租户码自动 404）
-    Route::get('/s/{code}', [ScanController::class, 'show'])->name('tenant.scan.show');
+    Route::get('/s/{code}', [ScanController::class, 'show'])->middleware('throttle:30,1')->name('tenant.scan.show');
 
     // 礼盒收礼人落地页（公开，拉新）
-    Route::get('/gift/{code}', [GiftScanController::class, 'show'])->name('tenant.gift.scan');
+    Route::get('/gift/{code}', [GiftScanController::class, 'show'])->middleware('throttle:30,1')->name('tenant.gift.scan');
 
     // 短链接跳转（公开）+ 公开铭牌落地页（外链可打开）
-    Route::get('/u/{code}', [ShortLinkController::class, 'redirect'])->name('tenant.short-link.redirect');
+    Route::get('/u/{code}', [ShortLinkController::class, 'redirect'])->middleware('throttle:60,1')->name('tenant.short-link.redirect');
     Route::get('/nameplate/{adoption}', [ShareController::class, 'nameplate'])->name('tenant.share.nameplate');
 
     // 我的田（云乡民：铭牌 + 生长日历 + 农事动态 + 分享）
