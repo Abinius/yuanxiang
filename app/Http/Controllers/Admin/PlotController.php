@@ -8,6 +8,7 @@ use App\Models\Farm;
 use App\Models\Plan;
 use App\Models\Plot;
 use App\Models\Tenant;
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -20,6 +21,10 @@ use Illuminate\Validation\Rule;
  */
 class PlotController extends Controller
 {
+    public function __construct(private readonly SettingsService $settings)
+    {
+    }
+
     public function index(Tenant $tenant, Request $request)
     {
         $plots = Plot::query()
@@ -39,6 +44,7 @@ class PlotController extends Controller
             'farms' => Farm::where('tenant_id', $tenant->id)->orderBy('name')->get(),
             'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
             'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'pricing' => $this->settings->pricing($tenant),
         ]);
     }
 
@@ -63,6 +69,7 @@ class PlotController extends Controller
             'farms' => Farm::where('tenant_id', $tenant->id)->orderBy('name')->get(),
             'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
             'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'pricing' => $this->settings->pricing($tenant),
         ]);
     }
 

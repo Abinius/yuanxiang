@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\SettingsService;
 use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
@@ -95,5 +96,91 @@ class SettingsTest extends TestCase
             ->assertOk()
             ->assertSee('og:title', false)
             ->assertSee(config('site.defaults.description'));
+    }
+
+    // ── M2：定价 / 营销 / 分销 / 会员 / 合同 后台可设 ──
+
+    public function test_settings_form_shows_pricing_and_commission_sections(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+
+        $this->actingAs($this->admin())
+            ->get("/t/{$t->slug}/admin/settings")
+            ->assertOk()
+            ->assertSee('分地档年费')
+            ->assertSee('保底产量')
+            ->assertSee('红人佣金率')
+            ->assertSee('会员阶梯');
+    }
+
+    public function test_admin_can_update_pricing_settings(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+
+        $this->actingAs($this->admin())
+            ->put("/t/{$t->slug}/admin/settings", [
+                'fendi_yearly' => 6000,
+                'zhu_yearly' => 360,
+                'guarantee_fendi' => 20,
+                'guarantee_zhu' => 0.6,
+            ])
+            ->assertRedirect();
+
+        $t->refresh();
+        $this->assertSame(6000, $t->settings['pricing']['fendi_yearly']);
+        $this->assertSame(360, $t->settings['pricing']['zhu_yearly']);
+        $this->assertEquals(20, $t->settings['pricing']['guarantee_kg']['fendi']);
+        $this->assertEquals(0.6, $t->settings['pricing']['guarantee_kg']['zhu']);
+    }
+
+    public function test_settings_service_two_layer_override(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+        $svc = app(SettingsService::class);
+
+        // 无覆盖 → config 默认
+        $this->assertSame(config('site.defaults.pricing.fendi_yearly'), $svc->pricing($t)['fendi_yearly']);
+        $this->assertSame(config('site.defaults.commission.rates.partner'), $svc->commission($t)['rates']['partner']);
+
+        // 覆盖后 → 取租户值
+        $t->settings = ['pricing' => array_merge(config('site.defaults.pricing'), ['fendi_yearly' => 7777])];
+        $t->save();
+
+        $this->assertSame(7777, $svc->pricing($t)['fendi_yearly']);
+        $this->assertSame(config('site.defaults.pricing.zhu_yearly'), $svc->pricing($t)['zhu_yearly']); // 未覆盖项回落
+    }
+
+    public function test_commission_rate_capped_at_10_percent(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+
+        $this->actingAs($this->admin())
+            ->put("/t/{$t->slug}/admin/settings", [
+                'rate_partner' => 11, // 超 10% 合规上限
+            ])
+            ->assertSessionHasErrors('rate_partner');
+    }
+
+    public function test_admin_can_update_member_tiers_and_contract_version(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+
+        $this->actingAs($this->admin())
+            ->put("/t/{$t->slug}/admin/settings", [
+                'tier_red' => 1,
+                'tier_expert' => 8888,
+                'tier_partner' => 50000,
+                'contract_template_version' => 'v2',
+            ])
+            ->assertRedirect();
+
+        $t->refresh();
+        $this->assertSame(8888, $t->settings['member']['tiers']['expert']);
+        $this->assertSame('v2', $t->settings['contract']['template_version']);
     }
 }
