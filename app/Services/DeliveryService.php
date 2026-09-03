@@ -16,7 +16,11 @@ use App\Models\Plot;
  */
 class DeliveryService
 {
-    /** 为一次采收生成配送单（跳过已生成的认养单）。@return Delivery[] */
+    public function __construct(
+        private readonly TraceCodeService $traceCodes,
+    ) {}
+
+    /** 为一次采收生成配送单（跳过已生成的认养单）+ 每箱一溯源码。@return Delivery[] */
     public function createForHarvest(Harvest $harvest): array
     {
         $adoptions = Adoption::query()
@@ -43,6 +47,9 @@ class DeliveryService
                 'spec' => ['packing' => '保底分装'],
                 'status' => DeliveryStatus::Pending->value,
             ]);
+
+            // 每箱一码：绑定到该认养人 + 本次采收（adoption_id+harvest_id 与配送一一对应）
+            $this->traceCodes->generate($harvest, 1, $adoption->id);
         }
 
         return $created;

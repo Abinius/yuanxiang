@@ -14,5 +14,6 @@ return [
         'live_notice' => env('WECHAT_TEMPLATE_LIVE_NOTICE', ''),
         'content' => env('WECHAT_TEMPLATE_CONTENT', ''),
         'harvest_notice' => env('WECHAT_TEMPLATE_HARVEST_NOTICE', ''),
+        'renewal_notice' => env('WECHAT_TEMPLATE_RENEWAL_NOTICE', ''),
     ],
 ];

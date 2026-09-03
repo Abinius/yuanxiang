@@ -35,7 +35,7 @@
       <label>类型</label>
       <select class="select" name="type" required>
         @foreach ($types as $t)
-          <option value="{{ $t['value'] }}" @selected(old('type') === $t['value'])>{{ $t['label'] }}</option>
+          <option value="{{ $t['value'] }}" @selected(old('type', request('type')) === $t['value'])>{{ $t['label'] }}</option>
         @endforeach
       </select>
     </div>
@@ -54,9 +54,19 @@
       </select>
     </div>
 
+    <div class="field" id="video-field" style="display:none">
+      <label>露脸解说视频（≤60s，mp4/mov/webm，≤40MB）</label>
+      <input class="input" type="file" name="video_url" accept="video/*">
+      <div class="field" style="margin-top:8px">
+        <label>解说时长（秒）</label>
+        <input class="input" type="number" name="video_duration" min="1" max="120" value="{{ old('video_duration') }}">
+      </div>
+      <p class="note text-xs" style="margin-top:6px">录一段露脸解说，云乡民在我的田时间线直接可见。</p>
+    </div>
+
     <div class="field">
-      <label>标题</label>
-      <input class="input" name="title" required maxlength="60" value="{{ old('title') }}">
+      <label>标题(留空自动生成)</label>
+      <input class="input" name="title" maxlength="60" value="{{ old('title') }}">
     </div>
 
     <div class="field">
@@ -86,11 +96,15 @@
     (function () {
       var sel = document.querySelector('select[name="type"]');
       var box = document.getElementById('batch-field');
-      if (!sel || !box) return;
-      function toggle() { box.style.display = sel.value === 'fertilize' ? 'block' : 'none'; }
+      var vbox = document.getElementById('video-field');
+      if (!sel) return;
+      function toggle() {
+        if (box) box.style.display = sel.value === 'fertilize' ? 'block' : 'none';
+        if (vbox) vbox.style.display = sel.value === 'explain' ? 'block' : 'none';
+      }
       sel.addEventListener('change', toggle);
       toggle();
     })();
   </script>
-  <p class="note" style="margin-top:14px">直播预告请选"直播预告"类型；开播提醒由后续模板消息推送。</p>
+  <p class="note" style="margin-top:14px">直播预告请选"直播预告"类型；露脸解说选"解说"并上传≤60s 视频；开播提醒由后续模板消息推送。</p>
 @endsection

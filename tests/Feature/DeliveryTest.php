@@ -10,8 +10,10 @@ use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\PushMessage;
 use App\Models\Tenant;
+use App\Models\TraceCode;
 use App\Models\User;
 use App\Services\AdoptionService;
+use App\Services\DeliveryService;
 use App\Services\WechatTemplateService;
 use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
@@ -292,6 +294,49 @@ class DeliveryTest extends TestCase
             ->assertRedirect();
 
         Queue::assertPushed(SendHarvestNoticeJob::class);
+    }
+
+    /** G5/A4：家人端录采收 → 一键联动生 pending 配送 + 每箱一溯源码；重复触发幂等。 */
+    public function test_family_harvest_generates_deliveries_and_trace_codes(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+        $adopter = $this->makeActiveAdopter('mock_a4g5_1');
+        $adoption = $adopter->adoptions()->first();
+        $plot = $adoption->adoptable;
+        $family = $this->familyHarvestUser();
+        Queue::fake();
+
+        $this->actingAs($family)
+            ->post("/t/{$t->slug}/family/harvest", [
+                'plot_id' => $plot->id,
+                'season_year' => now()->year,
+                'harvested_at' => now()->toDateString(),
+                'dry_weight_kg' => '15',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('ok', '采收已记录，配送草稿与溯源码已生成');
+
+        $harvest = Harvest::where('plot_id', $plot->id)->latest('id')->first();
+
+        // 每个活跃认养人 → 1 pending 配送单
+        $deliveries = Delivery::where('harvest_id', $harvest->id)->get();
+        $this->assertCount(1, $deliveries);
+        $this->assertSame($adoption->id, $deliveries->first()->adoption_id);
+        $this->assertSame('pending', $deliveries->first()->status->value);
+        $this->assertNotNull($deliveries->first()->address_id);
+
+        // 每箱一溯源码，绑定 adoption+harvest+plot
+        $trace = TraceCode::where('harvest_id', $harvest->id)->first();
+        $this->assertNotNull($trace);
+        $this->assertSame($adoption->id, $trace->adoption_id);
+        $this->assertSame($plot->id, $trace->plot_id);
+        $this->assertSame(0, $trace->scanned_count);
+
+        // 幂等：同一 harvest 再调 createForHarvest 不重复生成
+        app(DeliveryService::class)->createForHarvest($harvest);
+        $this->assertSame(1, Delivery::where('harvest_id', $harvest->id)->count());
+        $this->assertSame(1, TraceCode::where('harvest_id', $harvest->id)->count());
     }
 
     public function test_harvest_notice_job_sends_to_plot_adopters(): void

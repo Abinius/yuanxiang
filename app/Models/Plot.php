@@ -21,6 +21,7 @@ class Plot extends Model
         'code',
         'mu_area',
         'price_yearly',
+        'story',
         'status',
         'order_index',
     ];

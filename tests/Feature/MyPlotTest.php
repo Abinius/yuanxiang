@@ -208,6 +208,80 @@ class MyPlotTest extends TestCase
             ->assertDontSee('别家的采收');
     }
 
+    // ── F4 我的田防断更兜底 ────────────────────────────────────
+
+    /** 家人沉默时渲染期注入系统物候节点（不写库），补上陪伴感。 */
+    public function test_timeline_shows_system_nodes_when_family_silent(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $user = $this->villager();
+        $adoption = $this->makeActiveAdoption($user);
+        // 无任何公开家人日志
+
+        $this->actingAs($user)
+            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->assertOk()
+            ->assertSee('系统物候')
+            ->assertSee('节气物候')
+            ->assertSee('system-node');
+    }
+
+    /** 家人动态保持 occurred_at 倒序,系统节点追加在尾部。 */
+    public function test_timeline_appends_system_at_tail_preserving_family_order(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $user = $this->villager();
+        $adoption = $this->makeActiveAdoption($user);
+
+        $this->makeLog($adoption, FarmLogType::Harvest, '先采', true, now()->subDays(5));
+        $this->makeLog($adoption, FarmLogType::Fertilize, '后施', true, now()->subDay());
+        // 2 条公开 < 3 → 注入系统节点
+
+        $this->actingAs($user)
+            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->assertOk()
+            ->assertSeeInOrder(['后施', '先采', '系统物候']);
+    }
+
+    /** 家人内容充足且新鲜（≥3 条 且 最新≤7天）时不注入系统节点。 */
+    public function test_timeline_hides_system_when_family_has_fresh_content(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $user = $this->villager();
+        $adoption = $this->makeActiveAdoption($user);
+
+        $this->makeLog($adoption, FarmLogType::Fertilize, 'a', true, now()->subDay());
+        $this->makeLog($adoption, FarmLogType::Weed, 'b', true, now()->subDays(2));
+        $this->makeLog($adoption, FarmLogType::Harvest, 'c', true, now()->subDays(3));
+
+        $this->actingAs($user)
+            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->assertOk()
+            ->assertDontSee('系统物候')
+            ->assertDontSee('system-node');
+    }
+
+    /** 家人内容虽足 3 条,但最新超 7 天（断更）仍注入系统节点。 */
+    public function test_timeline_shows_system_when_family_content_is_stale(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $user = $this->villager();
+        $adoption = $this->makeActiveAdoption($user);
+
+        $this->makeLog($adoption, FarmLogType::Daily, 'd1', true, now()->subDays(10));
+        $this->makeLog($adoption, FarmLogType::Daily, 'd2', true, now()->subDays(12));
+        $this->makeLog($adoption, FarmLogType::Daily, 'd3', true, now()->subDays(15));
+
+        $this->actingAs($user)
+            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->assertOk()
+            ->assertSee('系统物候');
+    }
+
     // ── 生长日历 ──────────────────────────────────────────────
 
     public function test_growth_calendar_has_today_marker_and_current_stage(): void
@@ -262,11 +336,11 @@ class MyPlotTest extends TestCase
         $user = $this->villager();
         $this->makeOrder($user); // pending_payment
 
-        // 断单续接：非生效单不再死链 403，而是「去支付」
+        // 断单续接：非生效单不再死链 403，而是「继续支付」CTA（F2 R2.1）
         $this->actingAs($user)
             ->get("/t/{$t->slug}/my")
             ->assertOk()
-            ->assertSee('去支付');
+            ->assertSee('继续支付');
     }
 
     public function test_my_index_shows_sign_action_for_pending_agreement(): void

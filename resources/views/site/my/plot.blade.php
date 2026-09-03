@@ -33,6 +33,29 @@
       @endforeach
     </div>
 
+    <h2 style="margin:24px 0 8px;font-size:var(--ds-h3)">我的丰收</h2>
+    @php $tkg = $yieldSummary['this_year_kg'] ?? 0; $seasons = $yieldSummary['seasons'] ?? []; @endphp
+    <div class="sub-card">
+      <div class="flex justify-between items-baseline">
+        <span class="text-sm" style="color:var(--ds-text-mute)">{{ $adoption->season_year }} 年度累计采收</span>
+        <span class="serif font-medium text-brand" style="font-size:1.4rem">{{ number_format($tkg, 1) }} <span class="text-xs">kg 干果</span></span>
+      </div>
+      @if ($seasons->isNotEmpty())
+        <div class="flex items-end gap-3 mt-3">
+          @foreach ($seasons as $yr => $kg)
+            @php $max = $seasons->max(); $bar = $max > 0 ? max(8, (float) $kg / (float) $max * 60) : 8; @endphp
+            <div class="flex-1 flex flex-col items-center">
+              <span class="text-xs" style="color:var(--ds-text-mute)">{{ number_format((float) $kg, 1) }}</span>
+              <div class="w-full rounded" style="height:{{ $bar }}px;background:var(--color-brand-500);margin-top:4px"></div>
+              <span class="text-xs muted">{{ $yr }}</span>
+            </div>
+          @endforeach
+        </div>
+      @else
+        <p class="note text-xs mt-1">本季暂无采收记录，家人采收后这里会更新。</p>
+      @endif
+    </div>
+
     <h2 style="margin:24px 0 8px;font-size:var(--ds-h3)">配送进度</h2>
     @forelse ($adoption->deliveries as $d)
       <div class="sub-card mb-3">
@@ -58,17 +81,20 @@
     @endforelse
 
     <h2 style="margin:24px 0 8px;font-size:var(--ds-h3)">农事动态</h2>
-    @forelse ($logs as $log)
-      <div class="sub-card mb-3">
+    @forelse ($timeline as $log)
+      <div class="sub-card mb-3 {{ $log->is_system ?? false ? 'system-node' : '' }}">
         <div class="flex justify-between items-center">
           <span class="tag" style="background:var(--color-brand-50);color:var(--color-brand-500)">{{ $log->type->label() }}</span>
           <span class="text-xs muted">{{ $log->occurred_at->format('Y-m-d') }}</span>
         </div>
+        @if ($log->is_system ?? false)
+          <span class="tag text-xs" style="background:var(--ds-bg-soft);color:var(--ds-text-mute);margin-top:6px;display:inline-block">系统物候</span>
+        @endif
         <div class="font-medium mt-2">{{ $log->title }}</div>
         @if ($log->content)
           <p class="text-sm mt-1" style="color:var(--ds-text-soft)">{{ $log->content }}</p>
         @endif
-        @if ($log->author)
+        @if (!$log->is_system && $log->author)
           <div class="text-xs muted mt-2">记录人:{{ $log->author->nickname }}</div>
         @endif
       </div>

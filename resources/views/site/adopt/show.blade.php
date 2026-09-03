@@ -15,6 +15,13 @@
       · <b class="text-brand serif">¥{{ number_format($plot->price_yearly) }}/年</b>
     </p>
 
+    @if ($plot->story)
+      <div class="sub-card mb-4" style="background:var(--ds-bg-layer-2);padding:14px 18px">
+        <div class="text-xs muted mb-1" style="letter-spacing:.12em">地块故事</div>
+        <p class="text-sm" style="line-height:1.9;margin:0;color:var(--ds-text-soft)">{{ $plot->story }}</p>
+      </div>
+    @endif
+
     <div class="rule-block">
       <div class="rule-row">
         <span class="rule-key">交付</span>
@@ -73,7 +80,7 @@
             </div>
             <div class="field">
               <label>推荐码(可选)</label>
-              <input class="input" name="referral_code" maxlength="40" value="{{ old('referral_code') }}">
+              <input class="input" name="referral_code" maxlength="40" value="{{ old('referral_code', session('referral_code')) }}">
             </div>
             <button class="btn btn-primary btn-block btn-lg" type="submit">提交订单</button>
           </form>

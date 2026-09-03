@@ -15,15 +15,19 @@ class TraceCodeService
 {
     private const MAX_COLLISION_RETRY = 5;
 
-    /** @return TraceCode[] */
-    public function generate(Harvest $harvest, int $count = 1): array
+    /**
+     * @param  int  $count       生成数量（每箱一码）
+     * @param  int|null  $adoptionId  绑定到具体认养单；null 则留空（独立生码场景）
+     * @return TraceCode[]
+     */
+    public function generate(Harvest $harvest, int $count = 1, ?int $adoptionId = null): array
     {
         $codes = [];
         for ($i = 0; $i < $count; $i++) {
             $codes[] = TraceCode::create([
                 'tenant_id' => $harvest->tenant_id,
                 'code' => $this->uniqueCode(),
-                'adoption_id' => null,
+                'adoption_id' => $adoptionId,
                 'harvest_id' => $harvest->id,
                 'plot_id' => $harvest->plot_id,
                 'scanned_count' => 0,

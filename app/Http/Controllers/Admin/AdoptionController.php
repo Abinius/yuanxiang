@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Adoption;
+use App\Models\Plot;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\WeChatPayService;
 use Illuminate\Http\Request;
@@ -28,6 +30,50 @@ class AdoptionController extends Controller
             ->withQueryString();
 
         return view('admin.adoptions.index', compact('tenant', 'adoptions'));
+    }
+
+    /** A1 离线开单：选用户（手机号）+ 地块 + 方案。 */
+    public function create(Tenant $tenant, Request $request)
+    {
+        $plots = Plot::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'available')
+            ->with('plan')
+            ->orderBy('code')
+            ->get();
+
+        return view('admin.adoptions.create', compact('tenant', 'plots'));
+    }
+
+    /** A1 离线开单提交：复用 AdoptionService::createOrder + markPaid（线下已收款）。 */
+    public function store(Tenant $tenant, Request $request)
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'regex:/^1\d{10}$/'],
+            'plot_id' => ['required', 'exists:plots,id'],
+            'season_year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'named_label' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $plot = Plot::where('tenant_id', $tenant->id)->findOrFail($data['plot_id']);
+        abort_if($plot->status !== \App\Enums\PlotStatus::Available, 422, '该田块当前不可认养');
+
+        $user = User::where('tenant_id', $tenant->id)->where('phone', $data['phone'])->first();
+        abort_if(! $user, 422, '未找到该手机号的云乡民');
+
+        $adoption = $this->adoptions->createOrder($user, $plot, [], [
+            'season_year' => $data['season_year'] ?? (int) now()->format('Y'),
+        ]);
+
+        // 线下已收款 → 直接标记已支付（→ 待签约），管理员可顺手命名
+        $this->adoptions->markPaid($adoption, ['method' => 'offline']);
+
+        if (! empty($data['named_label'])) {
+            $this->adoptions->signAgreement($adoption, $data['named_label']);
+        }
+
+        return redirect()->route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug])
+            ->with('ok', '已创建离线订单 '.$adoption->adoption_no);
     }
 
     /**

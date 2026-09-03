@@ -58,8 +58,39 @@
     @endforeach
   </div>
 
+  @if (in_array('farm_log', $scopes))
+    <div class="section-title"><span>快速记录（拍照即发，标题可留空）</span></div>
+    <div class="card-grid grid-3 mb-5">
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=daily" style="background:var(--ds-bg-layer-2)">
+        <div class="num sm serif text-brand">📷</div>
+        <div class="label font-medium">发动态</div>
+      </a>
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=explain" style="background:var(--ds-bg-layer-2)">
+        <div class="num sm serif text-brand">🎙️</div>
+        <div class="label font-medium">录解说（露脸）</div>
+      </a>
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=live_broadcast" style="background:var(--ds-bg-layer-2)">
+        <div class="num sm serif text-brand">🔴</div>
+        <div class="label font-medium">直播预告</div>
+      </a>
+    </div>
+  @endif
+
+  @php
+    $todayMonth = (int) now()->format('n');
+    $stageLabel = $todos['stage']['label'] ?? '';
+  @endphp
+  <div class="section-title"><span>今日待办（{{ $todayMonth }}月 · {{ $stageLabel }}）</span></div>
+  <div class="sub-card mb-5" style="padding:14px 18px">
+    <ul style="margin:0;padding-left:1.2em;line-height:2;color:var(--ds-text-soft);font-size:var(--ds-body-s)">
+      <li>本月物候：<b class="text-brand">{{ $stageLabel ?: '生长中' }}</b>，按产区农事历安排田间作业</li>
+      <li>待制作礼盒：<b class="text-brand">{{ $todos['giftDrafting'] }}</b> 个（家人端礼盒状态为 草稿/制作中）</li>
+      <li>30 天内到期认养：<b class="text-brand">{{ $todos['expiringAdoptions'] }}</b> 单，可安排采收寄送</li>
+    </ul>
+  </div>
+
   <p class="note text-xs mb-5">
-    拍照发动态 / 录肥批次 / 录采收 / 直播预告;动态默认对云乡民可见。
+    拍照发动态 / 录肥批次 / 录采收 / 直播预告 / 录露脸解说;动态默认对云乡民可见。
   </p>
 
   <section class="section">

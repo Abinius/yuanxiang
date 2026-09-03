@@ -31,7 +31,7 @@ class SendFarmLogNoticeJob implements ShouldQueue
         if (! $log || ! $log->is_public) {
             return;
         }
-        if (! in_array($log->type->value, ['live_broadcast', 'daily'], true)) {
+        if (! in_array($log->type->value, ['live_broadcast', 'daily', 'explain'], true)) {
             return;
         }
 

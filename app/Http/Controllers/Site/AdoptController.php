@@ -31,11 +31,23 @@ class AdoptController extends Controller
 
     public function index(Request $request, Tenant $tenant)
     {
+        // F5：转化前回放 —— 公开的直播/解说内容（video_url 非空）在认养页可见，信任卖点
+        $replays = \App\Models\FarmLog::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_public', true)
+            ->whereIn('type', ['live_broadcast', 'explain'])
+            ->whereNotNull('video_url')
+            ->with(['plot', 'author'])
+            ->orderByDesc('occurred_at')
+            ->limit(4)
+            ->get();
+
         return view('site.adopt.index', [
             'tenant' => $tenant,
             'plots' => Plot::where('type', 'plot')->orderBy('order_index')->get(),
             'groups' => Plot::where('type', 'group')->withCount('children')->orderBy('order_index')->get(),
             'statusLabels' => self::STATUS_LABELS,
+            'replays' => $replays,
         ]);
     }
 

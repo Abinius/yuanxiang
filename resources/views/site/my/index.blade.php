@@ -58,12 +58,28 @@
                 续费意向
               </label>
             </form>
+            @if ($adoption->daysRemaining() !== null)
+              <span class="note text-xs">
+                距到期 <b class="text-brand">{{ $adoption->daysRemaining() }}</b> 天
+                @if ($adoption->daysRemaining() <= 30) <span class="text-warn">· 可续费</span> @endif
+              </span>
+            @endif
+          @elseif ($st === 'ended')
+            <form method="POST" action="{{ route('tenant.my.renew', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+              @csrf
+              <button class="btn btn-primary btn-sm" type="submit">续费下一季</button>
+            </form>
           @elseif ($st === 'pending_payment')
-            <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">去支付</a>
-            <span class="note text-xs">订单待支付,完成后即可签署认养。</span>
+            @php $resume = $adoptionService->resumePayment($adoption); @endphp
+            @if ($resume)
+              <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">继续支付</a>
+              <span class="note text-xs">订单 {{ $adoptionService->expiresAt($adoption)->format('Y-m-d H:i') }} 前支付有效</span>
+            @else
+              <span class="note text-xs text-warn">订单已过期，请重新下单</span>
+            @endif
           @elseif ($st === 'pending_agreement')
             <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">去签署协议</a>
-            <span class="note text-xs">已支付,签署命名后正式生效。</span>
+            <span class="note text-xs">已支付，签署命名后正式生效。</span>
           @endif
         </div>
       </div>

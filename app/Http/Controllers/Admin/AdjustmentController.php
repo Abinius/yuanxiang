@@ -47,4 +47,17 @@ class AdjustmentController extends Controller
 
         return back()->with('ok', '已应用');
     }
+
+    /** A3 批量应用：按年度把所有 pending 补退一并 apply。 */
+    public function applyAll(Tenant $tenant, Request $request)
+    {
+        $data = $request->validate([
+            'season_year' => ['required', 'integer', 'min:2000', 'max:2100'],
+        ]);
+
+        $applied = $this->adjustments->applyAll($tenant, (int) $data['season_year']);
+
+        return redirect()->route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug])
+            ->with('ok', '已批量应用 '.$applied.' 条补退');
+    }
 }

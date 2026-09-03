@@ -22,7 +22,14 @@
       </div>
     @endif
 
-    @if ($traceCode->adoption)
+    @if ($isMyBox)
+      <div class="sub-card mb-3" style="background:var(--ds-bg-layer-2);box-shadow:none;padding:10px 14px">
+        <div class="flex justify-between items-center">
+          <span class="tag" style="background:var(--color-brand-50);color:var(--color-brand-500)">你的箱 · {{ $traceCode->adoption->named_label }}</span>
+          <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $traceCode->adoption]) }}">查看我的田 ›</a>
+        </div>
+      </div>
+    @elseif ($traceCode->adoption)
       <div class="sub-card mb-3" style="background:var(--ds-bg-layer-2);box-shadow:none;padding:10px 14px">
         <div class="text-sm">认养人:<b class="text-brand">{{ $traceCode->adoption->named_label }}</b></div>
       </div>

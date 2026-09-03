@@ -6,14 +6,19 @@ use App\Enums\AdoptionStatus;
 use App\Enums\DeliveryStatus;
 use App\Enums\PlotType;
 use App\Http\Controllers\Controller;
+use App\Enums\FarmLogType;
 use App\Models\Adoption;
 use App\Models\Delivery;
 use App\Models\FarmLog;
+use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\Tenant;
+use App\Services\AdoptionService;
 use App\Services\DeliveryService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * 我的田（云乡民视角）：铭牌 + 生长日历 + 农事动态流 + 铭牌分享。
@@ -28,6 +33,7 @@ class MyPlotController extends Controller
     public function __construct(
         private readonly DeliveryService $deliveries,
         private readonly PromotionService $promotions,
+        private readonly AdoptionService $adoptions,
     ) {
     }
 
@@ -39,6 +45,7 @@ class MyPlotController extends Controller
         return view('site.my.index', [
             'tenant' => $tenant,
             'adoptions' => $adoptions,
+            'adoptionService' => $this->adoptions,
         ]);
     }
 
@@ -59,11 +66,23 @@ class MyPlotController extends Controller
             ->limit(30)
             ->get();
 
+        // F4 R4.1：家人动态少/旧时渲染期注入系统节点（config('goji.stages') 物候常识），
+        // 不写库、不建表、不 cron。日历计数仍只用真实家人日志（不污染）。
+        $stages = config('goji.stages');
+        $needsFiller = $logs->count() < 3 || $logs->first()?->occurred_at?->diffInDays(now()) > 7;
+        $systemNodes = $needsFiller ? $this->buildSystemNodes($plotIds, $stages) : collect();
+        $timeline = $logs->concat($systemNodes);
+
+        // F7：我的丰收产量面 —— 本季合计 + 历季曲线（按 season_year 聚合）。
+        $yieldSummary = $this->buildYieldSummary($adoption->adoptable, $adoption->season_year);
+
         return view('site.my.plot', [
             'tenant' => $tenant,
             'adoption' => $adoption,
             'logs' => $logs,
+            'timeline' => $timeline,
             'calendar' => $this->buildCalendar($logs),
+            'yieldSummary' => $yieldSummary,
         ]);
     }
 
@@ -93,11 +112,11 @@ class MyPlotController extends Controller
         return back()->with('ok', '已确认收货');
     }
 
-    /** 续费：建下一季新单（自动用用户可用的 renewal 券抵扣）。 */
+    /** 续费：建下一季新单（自动用用户可用的 renewal 券抵扣）。F9：Ended 也可续。 */
     public function renew(Tenant $tenant, Adoption $adoption, Request $request)
     {
         abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
-        abort_unless($adoption->status === AdoptionStatus::Active, 422, '仅生效中可续费');
+        abort_unless(in_array($adoption->status, [AdoptionStatus::Active, AdoptionStatus::Ended], true), 422, '当前状态不可续费');
 
         $coupon = $request->user()->coupons()
             ->where('status', 'unused')
@@ -162,5 +181,60 @@ class MyPlotController extends Controller
         }
 
         return ['months' => $months, 'today_month' => $todayMonth];
+    }
+
+    /**
+     * F4 R4.1：渲染期合成系统节点（物候 + 农事常识），不写库。
+     * 用 FarmLogType::Daily 做标签映射，占位 3 个近期日期的系统节点，
+     * 给家人沉默的"我的田"补上陪伴感底，家人实拍一有便置顶覆盖。
+     */
+    private function buildSystemNodes(array $plotIds, array $stages): Collection
+    {
+        if (empty($plotIds)) {
+            return collect();
+        }
+
+        $plot = Plot::find($plotIds[0]);
+        $codes = $plot ? $plot->code : '光彩田';
+        $days = [now(), now()->subDay(), now()->subDays(3)];
+        $nodes = [];
+        $i = 0;
+        foreach ($days as $at) {
+            $stage = $stages[(int) $at->format('n')] ?? $stages[12];
+            $nodes[] = new SystemTimelineNode(
+                type: FarmLogType::Daily,
+                title: $stage['label'] . ' · 节气物候',
+                content: $stage['label'] . '期间，' . $codes . '正进入本月的物候阶段，留意田间长势。',
+                occurred_at: $at->toDateTimeImmutable(),
+                is_system: true,
+            );
+            $i++;
+        }
+
+        return collect($nodes);
+    }
+
+    /**
+     * F7：我的丰收产量面 —— 本季合计 kg + 历季曲线（按 season_year 聚合）。
+     * 仅统计 adoption->adoptable 对应田块的采收，复用 Harvest 既有字段，不加字段。
+     */
+    private function buildYieldSummary(Plot $plot, int $seasonYear): array
+    {
+        $thisYearKg = (float) Harvest::query()
+            ->where('plot_id', $plot->id)
+            ->where('season_year', $seasonYear)
+            ->sum('dry_weight_kg');
+
+        $seasons = Harvest::query()
+            ->where('plot_id', $plot->id)
+            ->select('season_year', Harvest::raw('sum(dry_weight_kg) as kg'))
+            ->groupBy('season_year')
+            ->orderBy('season_year')
+            ->pluck('kg', 'season_year');
+
+        return [
+            'this_year_kg' => round($thisYearKg, 1),
+            'seasons' => $seasons,
+        ];
     }
 }

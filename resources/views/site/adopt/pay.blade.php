@@ -13,23 +13,28 @@
     </div>
 
     @if ($adoption->status->value === 'pending_payment')
-      <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px;line-height:1.7">
+      @php $resume = app(\App\Services\AdoptionService::class)->resumePayment($adoption); @endphp
+      @if ($resume)
+        <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px;line-height:1.7">
+          @if (! config('wechat.mock') && filled($request->user()->openid))
+            微信支付(商户主体:花乌巷食品)
+          @else
+            <span class="text-warn font-medium">⚠️ 开发期模拟支付</span>
+            真接需微信客户端登录 + 商户凭证(P1)。
+          @endif
+        </p>
         @if (! config('wechat.mock') && filled($request->user()->openid))
-          微信支付(商户主体:花乌巷食品)
+          <button class="btn btn-primary btn-block btn-lg" id="wx-pay" type="button">微信支付 ¥{{ number_format($adoption->annual_fee) }}</button>
         @else
-          <span class="text-warn font-medium">⚠️ 开发期模拟支付</span>
-          真接需微信客户端登录 + 商户凭证(P1)。
+          <form method="POST" action="{{ route('tenant.adopt.confirm-pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+            @csrf
+            <button class="btn btn-soft btn-block btn-lg" type="submit">模拟支付成功</button>
+          </form>
         @endif
-      </p>
-      @if (! config('wechat.mock') && filled($request->user()->openid))
-        <button class="btn btn-primary btn-block btn-lg" id="wx-pay" type="button">微信支付 ¥{{ number_format($adoption->annual_fee) }}</button>
       @else
-        <form method="POST" action="{{ route('tenant.adopt.confirm-pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
-          @csrf
-          <button class="btn btn-soft btn-block btn-lg" type="submit">模拟支付成功</button>
-        </form>
+        <p class="text-sm" style="color:var(--ds-text-warn);margin-bottom:16px">订单已过期(超过 72h 未支付)。</p>
+        <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">返回我的认养</a>
       @endif
-
     @elseif ($adoption->status->value === 'pending_agreement')
       <div class="ok mb-4">订单已支付成功</div>
       <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px">下一步签署认养协议即可生效。</p>

@@ -5,10 +5,12 @@ namespace Tests\Unit;
 use App\Enums\AdjustmentType;
 use App\Models\Adoption;
 use App\Models\AdoptionAdjustment;
+use App\Models\Farm;
 use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\AdjustmentService;
 use App\Services\WeChatPayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,6 +34,14 @@ class AdjustmentServiceTest extends TestCase
     private function baseData(): array
     {
         $tenant = Tenant::create(['slug' => 'test', 'name' => '测试村', 'status' => 'active']);
+        $farm = Farm::create(['tenant_id' => $tenant->id, 'name' => '光彩基地']);
+        $user = User::create([
+            'tenant_id' => $tenant->id,
+            'phone' => '13800000001',
+            'password' => 'secret123',
+            'nickname' => '单元测试',
+            'role' => 'villager',
+        ]);
         $plan = Plan::create([
             'tenant_id' => $tenant->id,
             'name' => '一分地',
@@ -47,7 +57,7 @@ class AdjustmentServiceTest extends TestCase
         ]);
         $plot = Plot::create([
             'tenant_id' => $tenant->id,
-            'farm_id' => 1,
+            'farm_id' => $farm->id,
             'plan_id' => $plan->id,
             'type' => 'plot',
             'code' => 'FD-01',
@@ -56,11 +66,11 @@ class AdjustmentServiceTest extends TestCase
         $adoption = Adoption::create([
             'tenant_id' => $tenant->id,
             'adoption_no' => 'AD-UNIT-001',
-            'user_id' => 1,
+            'user_id' => $user->id,
             'adoptable_type' => Plot::class,
             'adoptable_id' => $plot->id,
             'plan_id' => $plan->id,
-            'farm_id' => 1,
+            'farm_id' => $farm->id,
             'season_year' => 2026,
             'annual_fee' => 5000,
             'start_date' => '2026-03-01',
@@ -74,6 +84,8 @@ class AdjustmentServiceTest extends TestCase
     {
         $data = $this->baseData();
         Harvest::create([
+            'tenant_id' => $data['tenant']->id,
+            'farm_id' => $data['plot']->farm_id,
             'plot_id' => $data['plot']->id,
             'season_year' => 2026,
             'harvested_at' => '2026-09-15',
@@ -91,6 +103,8 @@ class AdjustmentServiceTest extends TestCase
     {
         $data = $this->baseData();
         Harvest::create([
+            'tenant_id' => $data['tenant']->id,
+            'farm_id' => $data['plot']->farm_id,
             'plot_id' => $data['plot']->id,
             'season_year' => 2026,
             'harvested_at' => '2026-09-15',
@@ -111,6 +125,8 @@ class AdjustmentServiceTest extends TestCase
     {
         $data = $this->baseData();
         Harvest::create([
+            'tenant_id' => $data['tenant']->id,
+            'farm_id' => $data['plot']->farm_id,
             'plot_id' => $data['plot']->id,
             'season_year' => 2026,
             'harvested_at' => '2026-09-15',
@@ -129,6 +145,8 @@ class AdjustmentServiceTest extends TestCase
     {
         $data = $this->baseData();
         Harvest::create([
+            'tenant_id' => $data['tenant']->id,
+            'farm_id' => $data['plot']->farm_id,
             'plot_id' => $data['plot']->id,
             'season_year' => 2026,
             'harvested_at' => '2026-09-15',
@@ -145,9 +163,10 @@ class AdjustmentServiceTest extends TestCase
 
     public function test_apply走退款分支并置已应用(): void
     {
+        $data = $this->baseData();
         $adj = AdoptionAdjustment::create([
-            'tenant_id' => 1,
-            'adoption_id' => 1,
+            'tenant_id' => $data['tenant']->id,
+            'adoption_id' => $data['adoption']->id,
             'season_year' => 2026,
             'type' => AdjustmentType::RefundProrated->value,
             'amount' => 300.0,

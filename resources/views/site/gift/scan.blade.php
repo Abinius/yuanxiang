@@ -35,7 +35,13 @@
     </div>
 
     <div class="mt-4">
-      <a class="btn btn-primary btn-lg" href="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}">成为云乡民,认养你的田 ›</a>
+      @php
+        $ctaUrl = route('tenant.login', ['tenant' => $tenant->slug]);
+        if ($referralCode) {
+          $ctaUrl = rtrim($ctaUrl, '/') . '?ref=' . urlencode($referralCode);
+        }
+      @endphp
+      <a class="btn btn-primary btn-lg" href="{{ $ctaUrl }}">成为云乡民,认养你的田 ›</a>
     </div>
   </div>
 @endsection

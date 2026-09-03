@@ -169,6 +169,52 @@ class AdoptionService
     }
 
     /**
+     * 弃付到期：订单创建 +72h 仍未支付 → 可续；超期则 markCancelled，释放田块。
+     */
+    public function expiresAt(Adoption $adoption): \Illuminate\Support\Carbon
+    {
+        return $adoption->created_at->copy()->addHours(72);
+    }
+
+    public function isExpired(Adoption $adoption): bool
+    {
+        return $adoption->status === AdoptionStatus::PendingPayment && now()->gt($this->expiresAt($adoption));
+    }
+
+    /** 续费 / 继续支付：仅限 pending_payment 且未过期。超期走重新下单。 */
+    public function resumePayment(Adoption $adoption): bool
+    {
+        return $adoption->status === AdoptionStatus::PendingPayment && ! $this->isExpired($adoption);
+    }
+
+    /** 批量过期未付单（日调度调用）：pending_payment + 超过 72h → 取消并释放田块。 */
+    public function expirePendingOrders(): int
+    {
+        $cutoff = now()->subHours(72);
+        $expired = Adoption::query()
+            ->where('status', AdoptionStatus::PendingPayment->value)
+            ->where('created_at', '<=', $cutoff)
+            ->get();
+
+        $count = 0;
+        foreach ($expired as $adoption) {
+            $adoption->update(['status' => AdoptionStatus::Cancelled->value]);
+
+            // 释放田块（本季节点已被占用的可能性：仅 pending_payment 占用，取消后回到可认养）
+            if ($adoption->adoptable_type === Plot::class) {
+                $plot = $adoption->adoptable;
+                if ($plot->status === PlotStatus::Adopted) {
+                    $plot->update(['status' => PlotStatus::Available->value]);
+                }
+            }
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * 签署认养协议 + 命名 → 生效。地块置已认养；拼团田末株认养后置售罄。
      */
     public function signAgreement(Adoption $adoption, string $namedLabel): void

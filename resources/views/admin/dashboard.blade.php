@@ -9,10 +9,18 @@
       <p class="lede">{{ $tenant->name }} · 经营看板概览</p>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><div class="num sm">{{ $stats['conversion'] }}%</div><div class="label">认养转化率</div></div>
-      <div class="hero-stat"><div class="num sm">{{ $stats['attainment'] === null ? '—' : $stats['attainment'].'%' }}</div><div class="label">产出达标率</div></div>
-      <div class="hero-stat"><div class="num sm">{{ $stats['traceRate'] === null ? '—' : $stats['traceRate'].'%' }}</div><div class="label">溯源查看率</div></div>
-      <div class="hero-stat"><div class="num sm">{{ $stats['renewalIntent'] }}</div><div class="label">续费意向</div></div>
+      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+        <div class="num sm">{{ $stats['conversion'] }}%</div><div class="label">认养转化率</div>
+      </a>
+      <a class="hero-stat" href="{{ route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+        <div class="num sm">{{ $stats['attainment'] === null ? '—' : $stats['attainment'].'%' }}</div><div class="label">产出达标率</div>
+      </a>
+      <a class="hero-stat" href="{{ route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+        <div class="num sm">{{ $stats['traceRate'] === null ? '—' : $stats['traceRate'].'%' }}</div><div class="label">溯源查看率</div>
+      </a>
+      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug, 'status' => 'active']) }}" style="text-decoration:none;color:inherit">
+        <div class="num sm">{{ $stats['renewalIntent'] }}</div><div class="label">续费意向</div>
+      </a>
     </div>
   </div>
 
@@ -41,6 +49,10 @@
       <a class="card card-link" href="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}">
         <div class="num">{{ $deliveryCount }}</div>
         <div class="label">配送单</div>
+      </a>
+      <a class="card card-link" href="{{ route('tenant.admin.shipments.index', ['tenant' => $tenant->slug]) }}" style="border-color:var(--color-brand-300)">
+        <div class="num sm serif text-brand">🚚</div>
+        <div class="label">统一发货台</div>
       </a>
       <a class="card card-link" href="{{ route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug]) }}">
         <div class="num">{{ $adjustmentCount }}</div>

@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
+        // F8 R8.2：全局 web 前置，把 ?ref=CODE 存进 session 供下单表单预填
+        $middleware->web(\App\Http\Middleware\PreserveReferralCode::class);
+
         // 微信支付回调由微信侧验签，跳过 CSRF
         $middleware->validateCsrfTokens(except: ['pay/wechat/notify']);
 
@@ -38,4 +42,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // F2 R2.1：每日 07:00 回收超期弃付单并释放田块
+        $schedule->command('adoption:expire-pending')->dailyAt('07:00');
+        // F4 R4.2：每日 06:00 推送"该发动态了"给 3 天未录的家人们
+        $schedule->command('family:remind-post')->dailyAt('06:00');
+        // F9：每日 08:00 续费到期提醒（30/7/1 天）+ auto_renew 临期自动建单
+        $schedule->command('adoption:renewal-reminder')->dailyAt('08:00');
+    })
+    ->create();

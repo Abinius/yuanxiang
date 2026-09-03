@@ -5,14 +5,21 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">缺产补/退管理</h1>
-    <form method="POST" action="{{ route('tenant.admin.adjustments.settle', ['tenant' => $tenant->slug]) }}">
-      @csrf
-      <div class="flex items-center gap-2">
-        <label class="text-sm">结算年度</label>
+    <div class="flex items-center gap-2" style="flex-wrap:wrap">
+      <form method="POST" action="{{ route('tenant.admin.adjustments.apply-all', ['tenant' => $tenant->slug]) }}" onsubmit="return confirm('批量应用当前年度所有待处理补退?refund 会走微信退款。')">
+        @csrf
         <input class="select" type="number" name="season_year" min="2000" max="2100" value="{{ now()->year }}" required style="width:90px">
-        <button class="btn btn-primary btn-sm" type="submit">生成补退</button>
-      </div>
-    </form>
+        <button class="btn btn-ghost btn-sm" type="submit">批量应用</button>
+      </form>
+      <form method="POST" action="{{ route('tenant.admin.adjustments.settle', ['tenant' => $tenant->slug]) }}">
+        @csrf
+        <div class="flex items-center gap-2">
+          <label class="text-sm">结算年度</label>
+          <input class="select" type="number" name="season_year" min="2000" max="2100" value="{{ now()->year }}" required style="width:90px">
+          <button class="btn btn-primary btn-sm" type="submit">生成补退</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   @if (session('ok'))

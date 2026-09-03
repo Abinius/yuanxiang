@@ -94,4 +94,27 @@ class AdjustmentService
 
         $adjustment->forceFill(['status' => 'applied'])->save();
     }
+
+    /** A3 批量应用：按年度把所有 pending 补退一并 apply（幂等，已应用跳过）。@return int */
+    public function applyAll(Tenant $tenant, int $seasonYear): int
+    {
+        $pending = AdoptionAdjustment::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('season_year', $seasonYear)
+            ->where('status', 'pending')
+            ->get();
+
+        $applied = 0;
+        foreach ($pending as $adjustment) {
+            try {
+                $this->apply($adjustment);
+                $applied++;
+            } catch (\Throwable $e) {
+                // 单条失败（如退款异常）不阻断批量，留待人工处理
+                report($e);
+            }
+        }
+
+        return $applied;
+    }
 }

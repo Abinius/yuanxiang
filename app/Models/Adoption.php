@@ -99,4 +99,10 @@ class Adoption extends Model
     {
         return $this->hasMany(Settlement::class);
     }
+
+    /** F9：距离到期剩余天数（负数=已过到期日；无 end_date 返回 null）。 */
+    public function daysRemaining(): ?int
+    {
+        return $this->end_date ? now()->startOfDay()->diffInDays($this->end_date->copy()->startOfDay(), false) : null;
+    }
 }

@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\DeliveryController as AdminDeliveries;
 use App\Http\Controllers\Admin\FarmLogController as AdminFarmLogs;
 use App\Http\Controllers\Admin\GiftBoxController as AdminGiftBoxes;
+use App\Http\Controllers\Admin\ShipmentWorkbenchController as AdminShipments;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotions;
+use App\Http\Controllers\Admin\PlotController as AdminPlots;
 use App\Http\Controllers\Admin\SettingsController as AdminSettings;
 use App\Http\Controllers\Admin\ShortLinkController as AdminShortLinks;
 use App\Http\Controllers\Admin\TraceCodeController as AdminTraceCodes;
@@ -138,8 +140,14 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::get('/trace-codes/print', [AdminTraceCodes::class, 'print'])->name('tenant.admin.trace-codes.print');
 
         Route::get('/adoptions', [AdminAdoptions::class, 'index'])->name('tenant.admin.adoptions.index');
+        Route::get('/adoptions/create', [AdminAdoptions::class, 'create'])->name('tenant.admin.adoptions.create');
+        Route::post('/adoptions', [AdminAdoptions::class, 'store'])->name('tenant.admin.adoptions.store');
         Route::get('/farm-logs', [AdminFarmLogs::class, 'index'])->name('tenant.admin.farm-logs.index');
         Route::delete('/farm-logs/{farm_log}', [AdminFarmLogs::class, 'destroy'])->name('tenant.admin.farm-logs.destroy');
+
+        // F1 地块故事
+        Route::get('/plots', [AdminPlots::class, 'index'])->name('tenant.admin.plots.index');
+        Route::post('/plots/{plot}/story', [AdminPlots::class, 'updateStory'])->name('tenant.admin.plots.story');
 
         Route::get('/deliveries', [AdminDeliveries::class, 'index'])->name('tenant.admin.deliveries.index');
         Route::get('/deliveries/create', [AdminDeliveries::class, 'create'])->name('tenant.admin.deliveries.create');
@@ -147,8 +155,15 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::post('/deliveries/{delivery}/ship', [AdminDeliveries::class, 'ship'])->name('tenant.admin.deliveries.ship');
         Route::get('/deliveries/print', [AdminDeliveries::class, 'print'])->name('tenant.admin.deliveries.print');
 
+        // A2 统一发货台：聚合配送 + 礼盒两个出库队列
+        Route::get('/shipments', [AdminShipments::class, 'index'])->name('tenant.admin.shipments.index');
+        Route::post('/shipments/deliveries/{delivery}/ship', [AdminShipments::class, 'shipDelivery'])->name('tenant.admin.shipments.delivery.ship');
+        Route::post('/shipments/gifts/{giftBox}/ship', [AdminShipments::class, 'shipGift'])->name('tenant.admin.shipments.gift.ship');
+        Route::post('/shipments/gifts/{giftBox}/making', [AdminShipments::class, 'makeGift'])->name('tenant.admin.shipments.gift.making');
+
         Route::get('/adjustments', [AdminAdjustments::class, 'index'])->name('tenant.admin.adjustments.index');
         Route::post('/adjustments/settle', [AdminAdjustments::class, 'settle'])->name('tenant.admin.adjustments.settle');
+        Route::post('/adjustments/apply-all', [AdminAdjustments::class, 'applyAll'])->name('tenant.admin.adjustments.apply-all');
         Route::post('/adjustments/{adjustment}/apply', [AdminAdjustments::class, 'apply'])->name('tenant.admin.adjustments.apply');
 
         Route::get('/gift-boxes', [AdminGiftBoxes::class, 'index'])->name('tenant.admin.gift-boxes.index');
@@ -175,9 +190,15 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         // 录入（按 farm_members.permission_scope 限权，tenant_admin 直通）
         Route::get('/logs/create', [FamilyLogs::class, 'create'])->name('tenant.family.logs.create');
         Route::post('/logs', [FamilyLogs::class, 'store'])->name('tenant.family.logs.store');
+        Route::get('/logs/{farm_log}/edit', [FamilyLogs::class, 'edit'])->name('tenant.family.logs.edit');
+        Route::post('/logs/{farm_log}', [FamilyLogs::class, 'update'])->name('tenant.family.logs.update');
         Route::get('/fertilizer/create', [FamilyFertilizer::class, 'create'])->name('tenant.family.fertilizer.create');
         Route::post('/fertilizer', [FamilyFertilizer::class, 'store'])->name('tenant.family.fertilizer.store');
+        Route::get('/fertilizer/{batch}/edit', [FamilyFertilizer::class, 'edit'])->name('tenant.family.fertilizer.edit');
+        Route::post('/fertilizer/{batch}', [FamilyFertilizer::class, 'update'])->name('tenant.family.fertilizer.update');
         Route::get('/harvest/create', [FamilyHarvest::class, 'create'])->name('tenant.family.harvest.create');
         Route::post('/harvest', [FamilyHarvest::class, 'store'])->name('tenant.family.harvest.store');
+        Route::get('/harvest/{harvest}/edit', [FamilyHarvest::class, 'edit'])->name('tenant.family.harvest.edit');
+        Route::post('/harvest/{harvest}', [FamilyHarvest::class, 'update'])->name('tenant.family.harvest.update');
     });
 });
