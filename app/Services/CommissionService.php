@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AdoptionStatus;
 use App\Models\Adoption;
 use App\Models\CommissionLedger;
 use App\Models\Payout;
@@ -15,45 +14,32 @@ use Illuminate\Support\Facades\DB;
  * M4 分销佣金：推荐人按会员 tier 比例分得佣金。
  *
  * 一切费率/门槛/冷却期读 tenants.settings（M2），零硬编码。
- *   - 会员 tier：按推荐人近 365 天认养消费额对照 settings.member.tiers 门槛。
+ *   - 会员 tier：委托 MemberService 按近 365 天消费判定；佣金 tier 最低 red
+ *     （新人 level 0 也按红人算佣金，作为拉新激励），故无 'new' 档。
  *   - 佣金率：settings.commission.rates.{red,expert,partner}(%)。
  *   - 冷却期：settings.commission.cooldown_days，过后 pending→available。
  *   - 提现：扣减 available → 建 payout(type=commission, status=pending 待 admin 审核)。
  */
 class CommissionService
 {
-    public function __construct(private readonly SettingsService $settings)
-    {
+    public function __construct(
+        private readonly SettingsService $settings,
+        private readonly MemberService $members,
+    ) {
     }
 
-    /** 推荐人近 365 天认养消费额（作为买家）。 */
+    /** 推荐人近 365 天认养消费额（作为买家）。委托 MemberService，避免重复聚合。 */
     public function rollingSpend(User $user): float
     {
-        $cutoff = Carbon::now()->subYear()->toDateString();
-
-        return (float) Adoption::query()
-            ->where('tenant_id', $user->tenant_id)
-            ->where('user_id', $user->id)
-            ->whereIn('status', [AdoptionStatus::Active->value, AdoptionStatus::Ended->value])
-            ->where('start_date', '>=', $cutoff)
-            ->sum('annual_fee');
+        return $this->members->rollingSpend($user);
     }
 
-    /** 按滚动消费判定 tier（门槛来自 settings.member.tiers）。 */
+    /** 按滚动消费判定 tier（门槛来自 settings.member.tiers）；佣金最低 red。 */
     public function tierOf(User $user): string
     {
-        $tiers = $this->settings->member($user->tenant)['tiers'] ?? [];
-        $spend = $this->rollingSpend($user);
+        $level = max(1, $this->members->computeLevel($user));
 
-        if ($spend >= (int) ($tiers['partner'] ?? PHP_INT_MAX)) {
-            return 'partner';
-        }
-
-        if ($spend >= (int) ($tiers['expert'] ?? PHP_INT_MAX)) {
-            return 'expert';
-        }
-
-        return 'red';
+        return MemberService::TIER_BY_LEVEL[$level] ?? 'red';
     }
 
     /** 指定 tier 佣金率(%)（读 settings.commission.rates）。 */

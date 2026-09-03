@@ -26,6 +26,7 @@ use App\Http\Controllers\Site\ContractController;
 use App\Http\Controllers\Site\GiftBoxController;
 use App\Http\Controllers\Site\GiftScanController;
 use App\Http\Controllers\Site\LiveController;
+use App\Http\Controllers\Site\MemberController;
 use App\Http\Controllers\Site\MyPlotController;
 use App\Http\Controllers\Site\ReferralController;
 use App\Http\Controllers\Site\ScanController;
@@ -109,6 +110,8 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
     Route::get('/my', [MyPlotController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.index');
     Route::get('/my/referral', [ReferralController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.referral');
     Route::post('/my/commission/cash-out', [ReferralController::class, 'cashOut'])->middleware(['auth', 'tenant.member'])->name('tenant.my.commission.cash-out');
+    // M5 会员等级页
+    Route::get('/my/member', [MemberController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.member');
     Route::post('/my/plot/{adoption}/renew', [MyPlotController::class, 'renew'])->middleware(['auth', 'tenant.member'])->name('tenant.my.renew');
     Route::post('/my/plot/{adoption}/auto-renew', [MyPlotController::class, 'autoRenew'])->middleware(['auth', 'tenant.member'])->name('tenant.my.auto-renew');
     Route::get('/my/plot/{adoption}', [MyPlotController::class, 'show'])->middleware(['auth', 'tenant.member'])->name('tenant.my.plot');

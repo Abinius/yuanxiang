@@ -52,5 +52,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('adoption:renewal-reminder')->dailyAt('08:00');
         // M4：每日 06:30 佣金冷却期结算（pending → available）
         $schedule->command('commission:settle')->dailyAt('06:30');
+        // M5：每日 06:40 会员等级日终重算（消费达标升级）
+        $schedule->command('member:recalculate')->dailyAt('06:40');
+        // M5：每月 1 日 09:00 发放本月生日权益券
+        $schedule->command('member:birthday-benefit')->monthlyOn(1, '09:00');
     })
     ->create();

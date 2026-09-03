@@ -25,6 +25,7 @@ class AdoptionService
         private readonly PromotionService $promotions,
         private readonly ContractService $contracts,
         private readonly CommissionService $commissions,
+        private readonly MemberService $members,
     ) {
     }
 
@@ -235,6 +236,9 @@ class AdoptionService
         $this->contracts->createFor($adoption, $signedIp);
 
         $this->commissions->credit($adoption);
+
+        // M5：认养生效后即时同步买家会员等级（消费达标即升级）
+        $this->members->syncLevel($adoption->user);
 
         $this->occupyPlot($adoption);
     }
