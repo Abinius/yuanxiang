@@ -46,7 +46,7 @@ class Controller extends FrameworkController
                 'farm_id' => $farm->id,
                 'user_id' => $user->id,
                 'relation' => 'tenant_admin',
-                'permission_scope' => ['farm_log', 'fertilizer', 'harvest'],
+                'permission_scope' => ['farm_log', 'fertilizer', 'harvest', 'plot'],
             ]);
         }
 

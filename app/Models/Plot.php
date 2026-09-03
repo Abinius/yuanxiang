@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AdoptionStatus;
 use App\Enums\PlotStatus;
 use App\Enums\PlotType;
 use App\Models\Concerns\TenantScoped;
@@ -77,6 +78,17 @@ class Plot extends Model
     public function adoptions()
     {
         return $this->morphMany(Adoption::class, 'adoptable');
+    }
+
+    /**
+     * F1.3 删除保护：是否存在在约/在途认养（待支付/待签约/生效中）。
+     * 有则在约权益，禁止删除田地；已到期/已取消的不阻止。
+     */
+    public function hasInFlightAdoptions(): bool
+    {
+        return $this->adoptions()
+            ->whereNotIn('status', [AdoptionStatus::Ended->value, AdoptionStatus::Cancelled->value])
+            ->exists();
     }
 
     /** 溯源/动态范围：分地→自身；拼团田→组+其下株；株→株+父组。 */

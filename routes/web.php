@@ -18,6 +18,7 @@ use App\Http\Controllers\Family\DashboardController as FamilyDashboard;
 use App\Http\Controllers\Family\FarmLogController as FamilyLogs;
 use App\Http\Controllers\Family\FertilizerBatchController as FamilyFertilizer;
 use App\Http\Controllers\Family\HarvestController as FamilyHarvest;
+use App\Http\Controllers\Family\PlotController as FamilyPlots;
 use App\Http\Controllers\Pay\WeChatPayController;
 use App\Http\Controllers\Site\AdoptController;
 use App\Http\Controllers\Site\GiftBoxController;
@@ -145,8 +146,13 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::get('/farm-logs', [AdminFarmLogs::class, 'index'])->name('tenant.admin.farm-logs.index');
         Route::delete('/farm-logs/{farm_log}', [AdminFarmLogs::class, 'destroy'])->name('tenant.admin.farm-logs.destroy');
 
-        // F1 地块故事
+        // F1 地块动态管理（admin CRUD + 故事）
         Route::get('/plots', [AdminPlots::class, 'index'])->name('tenant.admin.plots.index');
+        Route::get('/plots/create', [AdminPlots::class, 'create'])->name('tenant.admin.plots.create');
+        Route::post('/plots', [AdminPlots::class, 'store'])->name('tenant.admin.plots.store');
+        Route::get('/plots/{plot}/edit', [AdminPlots::class, 'edit'])->name('tenant.admin.plots.edit');
+        Route::put('/plots/{plot}', [AdminPlots::class, 'update'])->name('tenant.admin.plots.update');
+        Route::delete('/plots/{plot}', [AdminPlots::class, 'destroy'])->name('tenant.admin.plots.destroy');
         Route::post('/plots/{plot}/story', [AdminPlots::class, 'updateStory'])->name('tenant.admin.plots.story');
 
         Route::get('/deliveries', [AdminDeliveries::class, 'index'])->name('tenant.admin.deliveries.index');
@@ -200,5 +206,12 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::post('/harvest', [FamilyHarvest::class, 'store'])->name('tenant.family.harvest.store');
         Route::get('/harvest/{harvest}/edit', [FamilyHarvest::class, 'edit'])->name('tenant.family.harvest.edit');
         Route::post('/harvest/{harvest}', [FamilyHarvest::class, 'update'])->name('tenant.family.harvest.update');
+
+        // F1.2 田地录入（家人建/改，限本基地；删除走 admin）
+        Route::get('/plots', [FamilyPlots::class, 'index'])->name('tenant.family.plots.index');
+        Route::get('/plots/create', [FamilyPlots::class, 'create'])->name('tenant.family.plots.create');
+        Route::post('/plots', [FamilyPlots::class, 'store'])->name('tenant.family.plots.store');
+        Route::get('/plots/{plot}/edit', [FamilyPlots::class, 'edit'])->name('tenant.family.plots.edit');
+        Route::put('/plots/{plot}', [FamilyPlots::class, 'update'])->name('tenant.family.plots.update');
     });
 });
