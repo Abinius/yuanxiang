@@ -22,10 +22,20 @@
       </div>
     @endif
 
+    @php $gk = $plot->guaranteeKg(); @endphp
+    @if ($gk !== null)
+      <div class="sub-card mb-3" style="padding:14px 18px;background:var(--ds-bg-layer-2);border-left:3px solid var(--color-brand-500)">
+        <div class="text-xs muted mb-1" style="letter-spacing:.12em">保底承诺</div>
+        <p class="text-sm" style="margin:0;color:var(--ds-text-soft)">
+          保底 {{ rtrim(rtrim(number_format($gk, 2), '0'), '.') }} kg 干果/年；不足由丰欠共担池补齐，超额归你。
+        </p>
+      </div>
+    @endif
+
     <div class="rule-block">
       <div class="rule-row">
         <span class="rule-key">交付</span>
-        <span>{{ $plot->type->value === 'plant' ? '保底 0.5kg/株/年(池均摊)' : '保底 15kg 干果/年 · 丰欠共担' }}</span>
+        <span>{{ $gk !== null ? '保底 '.rtrim(rtrim(number_format($gk, 2), '0'), '.').'kg 干果/年 · 丰欠共担' : '按采收实际产出交付 · 丰欠共担' }}</span>
       </div>
       <div class="rule-row">
         <span class="rule-key">权益</span>

@@ -12,6 +12,7 @@
     @include('site.partials.nameplate', ['adoption' => $adoption])
 
     <div class="flex justify-end gap-2 mt-3">
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.contract', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">认养合同</a>
       <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.gift.index', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">节日礼盒</a>
       <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.nameplate', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">分享铭牌</a>
     </div>

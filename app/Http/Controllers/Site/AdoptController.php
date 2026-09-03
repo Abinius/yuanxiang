@@ -144,7 +144,7 @@ class AdoptController extends Controller
             'named_label' => ['required', 'string', 'max:30'],
         ]);
 
-        $this->adoptions->signAgreement($adoption, $data['named_label']);
+        $this->adoptions->signAgreement($adoption, $data['named_label'], $request->ip());
 
         return redirect()->route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]);
     }

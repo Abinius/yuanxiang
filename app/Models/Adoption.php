@@ -60,6 +60,11 @@ class Adoption extends Model
         return $this->morphTo();
     }
 
+    public function contract()
+    {
+        return $this->hasOne(\App\Models\Contract::class);
+    }
+
     public function plan()
     {
         return $this->belongsTo(Plan::class);

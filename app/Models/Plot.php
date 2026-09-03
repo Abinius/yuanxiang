@@ -91,6 +91,17 @@ class Plot extends Model
             ->exists();
     }
 
+    /**
+     * 保底产量(kg)：取方案 delivery_rule.guarantee_kg（P0 信任文案数据源）。
+     * 不足由丰欠共担池补齐；未配置返回 null。
+     */
+    public function guaranteeKg(): ?float
+    {
+        $rule = $this->plan?->delivery_rule;
+
+        return isset($rule['guarantee_kg']) ? (float) $rule['guarantee_kg'] : null;
+    }
+
     /** 溯源/动态范围：分地→自身；拼团田→组+其下株；株→株+父组。 */
     public function relatedPlotIds(): array
     {

@@ -21,6 +21,7 @@ use App\Http\Controllers\Family\HarvestController as FamilyHarvest;
 use App\Http\Controllers\Family\PlotController as FamilyPlots;
 use App\Http\Controllers\Pay\WeChatPayController;
 use App\Http\Controllers\Site\AdoptController;
+use App\Http\Controllers\Site\ContractController;
 use App\Http\Controllers\Site\GiftBoxController;
 use App\Http\Controllers\Site\GiftScanController;
 use App\Http\Controllers\Site\LiveController;
@@ -110,6 +111,7 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
     Route::post('/my/plot/{adoption}/auto-renew', [MyPlotController::class, 'autoRenew'])->middleware(['auth', 'tenant.member'])->name('tenant.my.auto-renew');
     Route::get('/my/plot/{adoption}', [MyPlotController::class, 'show'])->middleware(['auth', 'tenant.member'])->name('tenant.my.plot');
     Route::get('/my/plot/{adoption}/nameplate', [MyPlotController::class, 'nameplate'])->middleware(['auth', 'tenant.member'])->name('tenant.my.nameplate');
+    Route::get('/my/plot/{adoption}/contract', [ContractController::class, 'show'])->middleware(['auth', 'tenant.member'])->name('tenant.my.contract');
     Route::post('/my/plot/{adoption}/deliveries/{delivery}/receive', [MyPlotController::class, 'receive'])->middleware(['auth', 'tenant.member'])->name('tenant.my.delivery.receive');
 
     // 节日礼盒（权益抵扣定制，owner-gated）

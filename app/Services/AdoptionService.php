@@ -21,8 +21,10 @@ use Illuminate\Support\Str;
  */
 class AdoptionService
 {
-    public function __construct(private readonly PromotionService $promotions)
-    {
+    public function __construct(
+        private readonly PromotionService $promotions,
+        private readonly ContractService $contracts,
+    ) {
     }
 
     public function createOrder(User $user, Plot $plot, array $addressData, array $options = []): Adoption
@@ -217,7 +219,7 @@ class AdoptionService
     /**
      * 签署认养协议 + 命名 → 生效。地块置已认养；拼团田末株认养后置售罄。
      */
-    public function signAgreement(Adoption $adoption, string $namedLabel): void
+    public function signAgreement(Adoption $adoption, string $namedLabel, ?string $signedIp = null): void
     {
         abort_unless($adoption->status === AdoptionStatus::PendingAgreement, 422, '当前状态不可签署协议');
 
@@ -227,6 +229,8 @@ class AdoptionService
             'end_date' => $adoption->start_date->copy()->addYear(),
             'status' => AdoptionStatus::Active->value,
         ]);
+
+        $this->contracts->createFor($adoption, $signedIp);
 
         $this->occupyPlot($adoption);
     }
