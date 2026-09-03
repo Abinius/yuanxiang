@@ -43,6 +43,7 @@ class LoginController extends Controller
             $field => $account,
             'password' => $credentials['password'],
             'tenant_id' => $tenant->id,
+            'is_disabled' => false,
         ], (bool) $request->boolean('remember'));
 
         if (! $ok) {

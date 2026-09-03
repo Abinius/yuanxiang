@@ -30,6 +30,7 @@ class AuthController extends Controller
             $field => $account,
             'password' => $data['password'],
             'role' => 'platform_admin',
+            'is_disabled' => false,
         ]);
 
         if (! $ok) {

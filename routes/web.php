@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\PlotController as AdminPlots;
 use App\Http\Controllers\Admin\SettingsController as AdminSettings;
 use App\Http\Controllers\Admin\ShortLinkController as AdminShortLinks;
 use App\Http\Controllers\Admin\TraceCodeController as AdminTraceCodes;
+use App\Http\Controllers\Admin\UserController as AdminUsers;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Family\DashboardController as FamilyDashboard;
 use App\Http\Controllers\Family\FarmLogController as FamilyLogs;
@@ -196,6 +197,15 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::get('/commissions', [AdminCommissions::class, 'ledger'])->name('tenant.admin.commissions.ledger');
         Route::post('/commissions/payouts/{payout}/approve', [AdminCommissions::class, 'approve'])->name('tenant.admin.commissions.approve');
         Route::post('/commissions/payouts/{payout}/reject', [AdminCommissions::class, 'reject'])->name('tenant.admin.commissions.reject');
+
+        // 1.6 商户后台账号管理（本租户家人/云乡民/商户子管理员）
+        Route::get('/users', [AdminUsers::class, 'index'])->name('tenant.admin.users.index');
+        Route::get('/users/create', [AdminUsers::class, 'create'])->name('tenant.admin.users.create');
+        Route::post('/users', [AdminUsers::class, 'store'])->name('tenant.admin.users.store');
+        Route::get('/users/{user}/edit', [AdminUsers::class, 'edit'])->name('tenant.admin.users.edit');
+        Route::put('/users/{user}', [AdminUsers::class, 'update'])->name('tenant.admin.users.update');
+        Route::post('/users/{user}/toggle', [AdminUsers::class, 'toggle'])->name('tenant.admin.users.toggle');
+        Route::post('/users/{user}/reset-password', [AdminUsers::class, 'resetPassword'])->name('tenant.admin.users.reset-password');
         Route::get('/short-links', [AdminShortLinks::class, 'index'])->name('tenant.admin.short-links.index');
         Route::get('/short-links/create', [AdminShortLinks::class, 'create'])->name('tenant.admin.short-links.create');
         Route::post('/short-links', [AdminShortLinks::class, 'store'])->name('tenant.admin.short-links.store');

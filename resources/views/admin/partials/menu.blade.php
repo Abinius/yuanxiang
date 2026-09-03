@@ -72,6 +72,11 @@
        data-label="短链接">
       <span class="menu-icon"><x-lucide-link /></span><span class="menu-text">短链接</span>
     </a>
+    <a class="menu-link {{ str_starts_with($current, 'tenant.admin.users') ? 'active' : '' }}"
+       href="{{ route('tenant.admin.users.index', ['tenant' => $tenant->slug]) }}"
+       data-label="账号管理">
+      <span class="menu-icon"><x-lucide-user-cog /></span><span class="menu-text">账号管理</span>
+    </a>
   </div>
 
   <div class="menu-group menu-group-soft">

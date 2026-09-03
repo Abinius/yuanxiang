@@ -24,6 +24,7 @@ class User extends Authenticatable
         'openid',
         'unionid',
         'role',
+        'is_disabled',
         'village_card_no',
         'joined_year',
         'password_set_at',
