@@ -50,5 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('family:remind-post')->dailyAt('06:00');
         // F9：每日 08:00 续费到期提醒（30/7/1 天）+ auto_renew 临期自动建单
         $schedule->command('adoption:renewal-reminder')->dailyAt('08:00');
+        // M4：每日 06:30 佣金冷却期结算（pending → available）
+        $schedule->command('commission:settle')->dailyAt('06:30');
     })
     ->create();

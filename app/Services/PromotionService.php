@@ -108,8 +108,8 @@ class PromotionService
         ]);
     }
 
-    /** 新客下单填推荐码：给新客发 new_customer 券、给推荐人发 renewal 券。 */
-    public function redeemReferral(string $code, User $newUser): void
+    /** 新客下单填推荐码：给新客发 new_customer 券、给推荐人发 renewal 券，返回推荐人。 */
+    public function redeemReferral(string $code, User $newUser): User
     {
         $referral = Coupon::query()
             ->where('code', $code)
@@ -131,6 +131,8 @@ class PromotionService
             'tenant_id' => $referrer->tenant_id, 'user_id' => $referrer->id,
             'promotion_id' => $renewPromo->id, 'status' => 'unused', 'issued_at' => now(),
         ]);
+
+        return $referrer;
     }
 
     /** 续费：建下一季新单（原 plot，season_year+1，可带 renewal 券抵扣）。 */

@@ -24,6 +24,7 @@ class AdoptionService
     public function __construct(
         private readonly PromotionService $promotions,
         private readonly ContractService $contracts,
+        private readonly CommissionService $commissions,
     ) {
     }
 
@@ -167,6 +168,7 @@ class AdoptionService
             ]);
 
             $adoption->update(['status' => AdoptionStatus::Cancelled->value]);
+            $this->commissions->freezeFor($adoption);
         });
     }
 
@@ -231,6 +233,8 @@ class AdoptionService
         ]);
 
         $this->contracts->createFor($adoption, $signedIp);
+
+        $this->commissions->credit($adoption);
 
         $this->occupyPlot($adoption);
     }

@@ -12,7 +12,9 @@ class Payout extends Model
 
     protected $fillable = [
         'tenant_id',
+        'type',
         'farm_id',
+        'user_id',
         'amount',
         'method',
         'status',
@@ -35,5 +37,15 @@ class Payout extends Model
     public function farm()
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function ledgerRows()
+    {
+        return $this->hasMany(CommissionLedger::class);
     }
 }

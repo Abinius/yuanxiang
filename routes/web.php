@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdjustmentController as AdminAdjustments;
 use App\Http\Controllers\Admin\AdoptionController as AdminAdoptions;
 use App\Http\Controllers\Admin\CameraController as AdminCameras;
+use App\Http\Controllers\Admin\CommissionController as AdminCommissions;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\DeliveryController as AdminDeliveries;
 use App\Http\Controllers\Admin\FarmLogController as AdminFarmLogs;
@@ -107,6 +108,7 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
     // 我的田（云乡民：铭牌 + 生长日历 + 农事动态 + 分享）
     Route::get('/my', [MyPlotController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.index');
     Route::get('/my/referral', [ReferralController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.referral');
+    Route::post('/my/commission/cash-out', [ReferralController::class, 'cashOut'])->middleware(['auth', 'tenant.member'])->name('tenant.my.commission.cash-out');
     Route::post('/my/plot/{adoption}/renew', [MyPlotController::class, 'renew'])->middleware(['auth', 'tenant.member'])->name('tenant.my.renew');
     Route::post('/my/plot/{adoption}/auto-renew', [MyPlotController::class, 'autoRenew'])->middleware(['auth', 'tenant.member'])->name('tenant.my.auto-renew');
     Route::get('/my/plot/{adoption}', [MyPlotController::class, 'show'])->middleware(['auth', 'tenant.member'])->name('tenant.my.plot');
@@ -186,6 +188,11 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
 
         Route::get('/settings', [AdminSettings::class, 'edit'])->name('tenant.admin.settings.edit');
         Route::put('/settings', [AdminSettings::class, 'update'])->name('tenant.admin.settings.update');
+
+        // M4 佣金/提现审核
+        Route::get('/commissions', [AdminCommissions::class, 'ledger'])->name('tenant.admin.commissions.ledger');
+        Route::post('/commissions/payouts/{payout}/approve', [AdminCommissions::class, 'approve'])->name('tenant.admin.commissions.approve');
+        Route::post('/commissions/payouts/{payout}/reject', [AdminCommissions::class, 'reject'])->name('tenant.admin.commissions.reject');
         Route::get('/short-links', [AdminShortLinks::class, 'index'])->name('tenant.admin.short-links.index');
         Route::get('/short-links/create', [AdminShortLinks::class, 'create'])->name('tenant.admin.short-links.create');
         Route::post('/short-links', [AdminShortLinks::class, 'store'])->name('tenant.admin.short-links.store');

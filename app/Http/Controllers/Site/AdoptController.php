@@ -91,9 +91,12 @@ class AdoptController extends Controller
 
         $adoption = $this->adoptions->createOrder($request->user(), $plot, $data);
 
-        // 3.4 老带新：下单填推荐码 → 新客/推荐人各得券
+        // 3.4 + M4：下单填推荐码 → 新客/推荐人各得券 + 记录推荐关系（佣金据此结算）
         if (! empty($data['referral_code'])) {
-            $this->promotions->redeemReferral($data['referral_code'], $request->user());
+            $referrer = $this->promotions->redeemReferral($data['referral_code'], $request->user());
+            if ($referrer) {
+                $adoption->update(['referred_by_user_id' => $referrer->id]);
+            }
         }
 
         return redirect()->route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]);

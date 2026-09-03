@@ -222,7 +222,7 @@ class RenewalPromotionTest extends TestCase
 
     public function test_referral_page_graceful_when_no_promotion_configured(): void
     {
-        // 全新库（不跑 PromotionSeeder）：推荐活动未配置时页面友好降级，不再 422
+        // 全新库（不跑 PromotionSeeder）：推荐活动未配置时页面正常渲染分销中心（M4），不再 422
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
         $user = $this->makeUser();
@@ -230,6 +230,8 @@ class RenewalPromotionTest extends TestCase
         $this->actingAs($user)
             ->get("/t/{$t->slug}/my/referral")
             ->assertOk()
-            ->assertSee('推荐活动暂未开启');
+            ->assertSee('我的分销')
+            ->assertSee('佣金账户')
+            ->assertSee('推荐业绩');
     }
 }

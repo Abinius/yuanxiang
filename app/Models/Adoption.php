@@ -15,6 +15,7 @@ class Adoption extends Model
         'tenant_id',
         'adoption_no',
         'user_id',
+        'referred_by_user_id',
         'adoptable_type',
         'adoptable_id',
         'plan_id',
@@ -53,6 +54,16 @@ class Adoption extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function referredBy()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
+    public function commissionLedger()
+    {
+        return $this->hasOne(CommissionLedger::class);
     }
 
     public function adoptable()
