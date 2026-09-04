@@ -40,11 +40,6 @@ class GiftBox extends Model
         ];
     }
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     public function adoption()
     {
         return $this->belongsTo(Adoption::class);

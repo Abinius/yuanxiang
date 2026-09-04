@@ -18,7 +18,7 @@ class CommissionController extends Controller
 {
     public function ledger(Tenant $tenant, Request $request)
     {
-        $base = CommissionLedger::query()->where('tenant_id', $tenant->id);
+        $base = CommissionLedger::query();
 
         return view('admin.commissions.index', [
             'tenant' => $tenant,
@@ -30,7 +30,6 @@ class CommissionController extends Controller
             ],
             'items' => $base->with(['user', 'adoption.adoptable'])->orderByDesc('created_at')->limit(100)->get(),
             'payouts' => Payout::query()
-                ->where('tenant_id', $tenant->id)
                 ->where('type', 'commission')
                 ->with('user')
                 ->orderByDesc('created_at')

@@ -22,11 +22,12 @@ trait HandlesTenantContext
 {
     protected function withTenantContext(int $tenantId, callable $fn): void
     {
+        $prev = TenantContext::id();
         TenantContext::set($tenantId);
         try {
             $fn();
         } finally {
-            TenantContext::reset();
+            TenantContext::set($prev);
         }
     }
 }

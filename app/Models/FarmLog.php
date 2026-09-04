@@ -49,11 +49,6 @@ class FarmLog extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
     public function plot()
     {
         return $this->belongsTo(Plot::class);

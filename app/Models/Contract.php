@@ -32,14 +32,4 @@ class Contract extends Model
             'signed_at' => 'datetime',
         ];
     }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function adoption()
-    {
-        return $this->belongsTo(Adoption::class);
-    }
 }

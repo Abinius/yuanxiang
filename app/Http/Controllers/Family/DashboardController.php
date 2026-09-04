@@ -22,24 +22,20 @@ class DashboardController extends Controller
             $scopes = ['farm_log', 'fertilizer', 'harvest'];
         } else {
             $scopes = $user->farmMemberships()
-                ->where('tenant_id', $tenant->id)
                 ->first()?->permission_scope ?? [];
         }
 
         // 最近录入（只读，方便家人核对已提交内容）
         $recentLogs = FarmLog::query()
-            ->where('tenant_id', $tenant->id)
             ->with('plot')
             ->orderByDesc('occurred_at')
             ->limit(5)
             ->get();
         $recentBatches = FertilizerBatch::query()
-            ->where('tenant_id', $tenant->id)
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
         $recentHarvests = Harvest::query()
-            ->where('tenant_id', $tenant->id)
             ->with('plot')
             ->orderByDesc('harvested_at')
             ->limit(5)
@@ -50,11 +46,9 @@ class DashboardController extends Controller
         $todos = [
             'stage' => config('goji.stages')[$todayMonth] ?? null,
             'giftDrafting' => GiftBox::query()
-                ->where('tenant_id', $tenant->id)
                 ->whereIn('status', ['draft', 'making'])
                 ->count(),
             'expiringAdoptions' => Adoption::query()
-                ->where('tenant_id', $tenant->id)
                 ->where('status', 'active')
                 ->whereBetween('end_date', [now(), now()->addDays(30)])
                 ->count(),

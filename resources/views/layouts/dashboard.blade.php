@@ -10,7 +10,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 @vite('resources/css/app.css')
 <title>@yield('title', '后台') · {{ $tenant->name ?? '光彩云村庄平台' }}</title>
-@stack('head')
 </head>
 <body>
 <nav class="nav-admin">

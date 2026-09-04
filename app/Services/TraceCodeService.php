@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Harvest;
 use App\Models\TraceCode;
-use Illuminate\Support\Str;
+use App\Support\Code;
 
 /**
  * 溯源码生成：按采收（harvest）批量生成 N 条「每箱一码」。
@@ -13,8 +13,6 @@ use Illuminate\Support\Str;
  */
 class TraceCodeService
 {
-    private const MAX_COLLISION_RETRY = 5;
-
     /**
      * @param  int  $count       生成数量（每箱一码）
      * @param  int|null  $adoptionId  绑定到具体认养单；null 则留空（独立生码场景）
@@ -40,14 +38,6 @@ class TraceCodeService
 
     private function uniqueCode(): string
     {
-        for ($attempt = 0; $attempt < self::MAX_COLLISION_RETRY; $attempt++) {
-            $code = 'TC'.now()->format('Ymd').'-'.strtoupper(Str::random(8));
-            if (! TraceCode::where('code', $code)->exists()) {
-                return $code;
-            }
-        }
-
-        // 8 位大写字母+数字空间极大，碰撞几乎不可能；兜底抛错防静默重复
-        throw new \RuntimeException('溯源码生成碰撞，请重试');
+        return Code::dated('TC', fn ($c) => TraceCode::where('code', $c)->exists(), 8, '溯源码');
     }
 }

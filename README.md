@@ -26,7 +26,7 @@
 
 ## 领域模型
 
-Tenant · User · Plot · Farm · FarmMember · FarmLog · FertilizerBatch · Harvest · Adoption · Payment · Delivery · TraceCode · GiftBox · Promotion · Coupon · ShortLink · Settlement · Payout · CommissionRule · SubscriptionPlan · Plan · Organization · Address · DetectionReport · Post · PushMessage · AdoptionAdjustment · Camera
+Tenant · User · Plot · Farm · FarmMember · FarmLog · FertilizerBatch · Harvest · Adoption · Payment · Delivery · TraceCode · GiftBox · Promotion · Coupon · ShortLink · Payout · Plan · Organization · Address · DetectionReport · PushMessage · AdoptionAdjustment · Camera
 
 ## 本地开发
 

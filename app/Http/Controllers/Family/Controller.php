@@ -25,7 +25,6 @@ class Controller extends FrameworkController
 
         return FarmMember::query()
             ->where('user_id', $user->id)
-            ->where('tenant_id', $tenant->id)
             ->first();
     }
 
@@ -39,7 +38,7 @@ class Controller extends FrameworkController
         $user = $request->user();
 
         if ($user->role === UserRole::TenantAdmin) {
-            $farm = Farm::where('tenant_id', $tenant->id)->firstOrFail();
+            $farm = Farm::firstOrFail();
 
             return new FarmMember([
                 'tenant_id' => $tenant->id,

@@ -74,9 +74,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Coupon::class);
     }
-
-    public function isPlatformAdmin(): bool
-    {
-        return $this->role === UserRole::PlatformAdmin;
-    }
 }

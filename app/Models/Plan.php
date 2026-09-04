@@ -31,11 +31,6 @@ class Plan extends Model
         ];
     }
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     public function plots()
     {
         return $this->hasMany(Plot::class);

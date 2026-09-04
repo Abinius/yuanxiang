@@ -34,16 +34,6 @@ class DetectionReport extends Model
         ];
     }
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
     public function plot()
     {
         return $this->belongsTo(Plot::class);

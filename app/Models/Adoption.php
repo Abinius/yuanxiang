@@ -56,11 +56,6 @@ class Adoption extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function referredBy()
-    {
-        return $this->belongsTo(User::class, 'referred_by_user_id');
-    }
-
     public function commissionLedger()
     {
         return $this->hasOne(CommissionLedger::class);
@@ -81,11 +76,6 @@ class Adoption extends Model
         return $this->belongsTo(Plan::class);
     }
 
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
     public function payments()
     {
         return $this->morphMany(Payment::class, 'payable');
@@ -99,21 +89,6 @@ class Adoption extends Model
     public function giftBoxes()
     {
         return $this->hasMany(GiftBox::class);
-    }
-
-    public function adjustments()
-    {
-        return $this->hasMany(AdoptionAdjustment::class);
-    }
-
-    public function traceCodes()
-    {
-        return $this->hasMany(TraceCode::class);
-    }
-
-    public function settlements()
-    {
-        return $this->hasMany(Settlement::class);
     }
 
     /** F9：距离到期剩余天数（负数=已过到期日；无 end_date 返回 null）。 */

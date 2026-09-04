@@ -34,28 +34,8 @@ class Harvest extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
     public function plot()
     {
         return $this->belongsTo(Plot::class);
-    }
-
-    public function handler()
-    {
-        return $this->belongsTo(User::class, 'handler_id');
-    }
-
-    public function deliveries()
-    {
-        return $this->hasMany(Delivery::class);
-    }
-
-    public function traceCodes()
-    {
-        return $this->hasMany(TraceCode::class);
     }
 }

@@ -44,18 +44,4 @@ class SettingsService
     {
         return $this->get($tenant, 'contract', []);
     }
-
-    /**
-     * 按田地类型取默认年费（admin 建块时预填；单块 plots.price_yearly 仍可覆盖）。
-     */
-    public function priceYearlyByType(Tenant $tenant, string $plotType): ?int
-    {
-        $p = $this->pricing($tenant);
-
-        return match ($plotType) {
-            'plot' => $p['fendi_yearly'] ?? null,
-            'plant' => $p['zhu_yearly'] ?? null,
-            default => null,
-        };
-    }
 }

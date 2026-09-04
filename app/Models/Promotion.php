@@ -29,14 +29,4 @@ class Promotion extends Model
             'ends_at' => 'datetime',
         ];
     }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function coupons()
-    {
-        return $this->hasMany(Coupon::class);
-    }
 }

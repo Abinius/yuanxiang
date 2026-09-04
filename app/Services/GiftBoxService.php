@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Enums\GiftBoxStatus;
 use App\Models\Adoption;
 use App\Models\GiftBox;
+use App\Support\Code;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * 3.3 节日礼盒：权益额度校验创建 → 定制（收礼人/寄语/亲笔签）→ 制作 → 发货 → 送达。
@@ -80,14 +80,7 @@ class GiftBoxService
 
     private function uniqueCode(): string
     {
-        for ($i = 0; $i < 5; $i++) {
-            $code = 'GB'.now()->format('Ymd').'-'.strtoupper(Str::random(8));
-            if (! GiftBox::where('code', $code)->exists()) {
-                return $code;
-            }
-        }
-
-        throw new \RuntimeException('礼盒码生成碰撞');
+        return Code::dated('GB', fn ($c) => GiftBox::where('code', $c)->exists(), 8, '礼盒码');
     }
 
     private function decodeSignature(string $dataUrl): string

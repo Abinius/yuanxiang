@@ -28,7 +28,6 @@ class PlotController extends Controller
     public function index(Tenant $tenant, Request $request)
     {
         $plots = Plot::query()
-            ->where('tenant_id', $tenant->id)
             ->orderBy('order_index')
             ->orderBy('code')
             ->get();
@@ -41,9 +40,9 @@ class PlotController extends Controller
         return view('admin.plots.form', [
             'tenant' => $tenant,
             'plot' => new Plot(),
-            'farms' => Farm::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'farms' => Farm::orderBy('name')->get(),
+            'plans' => Plan::orderBy('name')->get(),
+            'groups' => Plot::where('type', PlotType::Group)->orderBy('code')->get(),
             'pricing' => $this->settings->pricing($tenant),
         ]);
     }
@@ -66,9 +65,9 @@ class PlotController extends Controller
         return view('admin.plots.form', [
             'tenant' => $tenant,
             'plot' => $plot,
-            'farms' => Farm::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'farms' => Farm::orderBy('name')->get(),
+            'plans' => Plan::orderBy('name')->get(),
+            'groups' => Plot::where('type', PlotType::Group)->orderBy('code')->get(),
             'pricing' => $this->settings->pricing($tenant),
         ]);
     }

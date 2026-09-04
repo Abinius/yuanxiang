@@ -25,7 +25,6 @@
   }
 </style>
 @include('site.partials.seo')
-@stack('head')
 </head>
 <body>
 <nav class="nav">

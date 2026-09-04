@@ -30,14 +30,4 @@ class Payment extends Model
             'refund_at' => 'datetime',
         ];
     }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function payable()
-    {
-        return $this->morphTo();
-    }
 }

@@ -39,33 +39,8 @@ class Farm extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function operatorOrg()
-    {
-        return $this->belongsTo(Organization::class, 'operator_org_id');
-    }
-
     public function plots()
     {
         return $this->hasMany(Plot::class);
-    }
-
-    public function farmMembers()
-    {
-        return $this->hasMany(FarmMember::class);
-    }
-
-    public function cameras()
-    {
-        return $this->hasMany(Camera::class);
-    }
-
-    public function harvests()
-    {
-        return $this->hasMany(Harvest::class);
-    }
-
-    public function farmLogs()
-    {
-        return $this->hasMany(FarmLog::class);
     }
 }

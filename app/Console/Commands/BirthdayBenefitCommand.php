@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Adoption;
 use App\Models\Coupon;
 use App\Models\Promotion;
 use App\Models\Tenant;

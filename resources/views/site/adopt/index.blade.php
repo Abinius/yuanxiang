@@ -30,7 +30,7 @@
           <div class="meta">{{ $p->mu_area }} 亩 · 命名/监控/溯源/礼盒</div>
           <div class="mt-2">
             <span class="tag {{ $p->status->value === 'available' ? 'tag-available' : ($p->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
-              {{ $statusLabels[$p->status->value] }}
+              {{ $p->status->label() }}
             </span>
           </div>
         </a>

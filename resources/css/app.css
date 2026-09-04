@@ -771,19 +771,6 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
   transition: background var(--ds-duration-s) var(--ds-ease);
 }
 .pager a:hover { background: var(--color-brand-50); border-color: var(--color-brand-500); }
-.pager .muted { color: var(--ds-text-mute); }
-.pager .pages {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.pager .pages .cur {
-  padding: 6px 12px;
-  border-radius: var(--ds-r-sm);
-  background: var(--color-brand-500);
-  color: #fff;
-  font-weight: 600;
-}
 
 /* ====================== 后台:sidebar + dashboard 布局 ===================== */
 

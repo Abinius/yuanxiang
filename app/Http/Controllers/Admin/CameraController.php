@@ -19,7 +19,6 @@ class CameraController extends Controller
     public function index(Tenant $tenant, Request $request)
     {
         $cameras = Camera::query()
-            ->where('tenant_id', $tenant->id)
             ->with('plot')
             ->orderByDesc('id')
             ->get();
@@ -29,7 +28,7 @@ class CameraController extends Controller
 
     public function create(Tenant $tenant, Request $request)
     {
-        $plots = Plot::where('tenant_id', $tenant->id)->orderBy('code')->get();
+        $plots = Plot::orderBy('code')->get();
 
         return view('admin.cameras.form', [
             'tenant' => $tenant,
@@ -41,7 +40,7 @@ class CameraController extends Controller
     public function store(Tenant $tenant, Request $request)
     {
         $data = $this->validateData($request, $tenant);
-        $farm = Farm::where('tenant_id', $tenant->id)->firstOrFail();
+        $farm = Farm::firstOrFail();
 
         $camera = new Camera($data);
         $camera->tenant_id = $tenant->id;
@@ -55,7 +54,7 @@ class CameraController extends Controller
     public function edit(Tenant $tenant, Camera $camera, Request $request)
     {
         abort_if($camera->tenant_id !== $tenant->id, 404);
-        $plots = Plot::where('tenant_id', $tenant->id)->orderBy('code')->get();
+        $plots = Plot::orderBy('code')->get();
 
         return view('admin.cameras.form', compact('tenant', 'camera', 'plots'));
     }

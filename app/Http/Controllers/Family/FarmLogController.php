@@ -24,7 +24,6 @@ class FarmLogController extends Controller
 
         // G2：常用地块置顶（该家人最近 3 次录入的 plot_id，其余按 code）
         $recentIds = FarmLog::query()
-            ->where('tenant_id', $tenant->id)
             ->where('author_id', $request->user()->id)
             ->whereNotNull('plot_id')
             ->orderByDesc('occurred_at')
@@ -33,14 +32,13 @@ class FarmLogController extends Controller
             ->unique()
             ->values();
         $recentOrder = $recentIds->flip(); // plot_id → 0(最近),1,2
-        $plots = Plot::where('tenant_id', $tenant->id)->where('type', 'plot')
+        $plots = Plot::where('type', 'plot')
             ->orderBy('code')
             ->get()
             ->sortBy(fn ($p) => $recentOrder->get($p->id, PHP_INT_MAX))
             ->values();
         $types = collect(FarmLogType::cases())->map(fn ($t) => ['value' => $t->value, 'label' => $t->label()])->all();
         $batches = FertilizerBatch::query()
-            ->where('tenant_id', $tenant->id)
             ->orderBy('batch_no')
             ->get(['id', 'batch_no', 'produced_at']);
 
@@ -136,10 +134,9 @@ class FarmLogController extends Controller
         abort_if($farmLog->author_id !== $request->user()->id && $request->user()->role->value !== 'tenant_admin', 404);
         abort_if($farmLog->tenant_id !== $tenant->id, 404);
 
-        $plots = Plot::where('tenant_id', $tenant->id)->where('type', 'plot')->orderBy('code')->get();
+        $plots = Plot::where('type', 'plot')->orderBy('code')->get();
         $types = collect(FarmLogType::cases())->map(fn ($t) => ['value' => $t->value, 'label' => $t->label()])->all();
         $batches = FertilizerBatch::query()
-            ->where('tenant_id', $tenant->id)
             ->orderBy('batch_no')
             ->get(['id', 'batch_no', 'produced_at']);
 

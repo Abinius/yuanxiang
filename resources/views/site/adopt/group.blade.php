@@ -18,7 +18,7 @@
         <div class="meta">单株 · 命名/监控/溯源</div>
         <div class="mt-2">
           <span class="tag {{ $pl->status->value === 'available' ? 'tag-available' : ($pl->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
-            {{ $statusLabels[$pl->status->value] }}
+            {{ $pl->status->label() }}
           </span>
         </div>
       </a>

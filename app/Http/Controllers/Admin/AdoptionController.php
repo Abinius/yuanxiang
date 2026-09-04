@@ -36,7 +36,6 @@ class AdoptionController extends Controller
     public function create(Tenant $tenant, Request $request)
     {
         $plots = Plot::query()
-            ->where('tenant_id', $tenant->id)
             ->where('status', 'available')
             ->with('plan')
             ->orderBy('code')
@@ -55,7 +54,7 @@ class AdoptionController extends Controller
             'named_label' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $plot = Plot::where('tenant_id', $tenant->id)->findOrFail($data['plot_id']);
+        $plot = Plot::findOrFail($data['plot_id']); // TenantScoped 上下文内自动过滤
         abort_if($plot->status !== \App\Enums\PlotStatus::Available, 422, '该田块当前不可认养');
 
         $user = User::where('tenant_id', $tenant->id)->where('phone', $data['phone'])->first();

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\AdoptionStatus;
 use App\Models\Adoption;
-use App\Models\User;
 use App\Tenancy\TenantContext;
 
 /**

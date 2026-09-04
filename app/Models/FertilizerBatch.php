@@ -26,19 +26,4 @@ class FertilizerBatch extends Model
             'produced_at' => 'date',
         ];
     }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
-    public function farmLogs()
-    {
-        return $this->hasMany(FarmLog::class);
-    }
 }

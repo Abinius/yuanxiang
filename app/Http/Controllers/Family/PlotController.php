@@ -26,8 +26,8 @@ class PlotController extends Controller
             'tenant' => $tenant,
             'plot' => new Plot(),
             'member' => $member,
-            'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'plans' => Plan::orderBy('name')->get(),
+            'groups' => Plot::where('type', PlotType::Group)->orderBy('code')->get(),
         ]);
     }
 
@@ -48,8 +48,7 @@ class PlotController extends Controller
     public function index(Tenant $tenant, Request $request)
     {
         $member = $this->assertScope($request, 'plot');
-        $plots = Plot::where('tenant_id', $tenant->id)
-            ->where('farm_id', $member->farm_id)
+        $plots = Plot::where('farm_id', $member->farm_id)
             ->orderBy('code')
             ->get();
 
@@ -66,8 +65,8 @@ class PlotController extends Controller
             'tenant' => $tenant,
             'plot' => $plot,
             'member' => $member,
-            'plans' => Plan::where('tenant_id', $tenant->id)->orderBy('name')->get(),
-            'groups' => Plot::where('tenant_id', $tenant->id)->where('type', PlotType::Group)->orderBy('code')->get(),
+            'plans' => Plan::orderBy('name')->get(),
+            'groups' => Plot::where('type', PlotType::Group)->orderBy('code')->get(),
         ]);
     }
 

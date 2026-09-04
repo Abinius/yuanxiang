@@ -7,7 +7,6 @@ use App\Models\Adoption;
 use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * M5 会员阶梯：按近 365 天认养消费实时聚合判定等级，持久化到 users.member_level。

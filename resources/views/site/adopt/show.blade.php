@@ -7,7 +7,7 @@
     <div class="flex items-center justify-between mb-2">
       <h1 style="font-size:var(--ds-h2);margin:0">{{ $plot->code }}</h1>
       <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : ($plot->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
-        {{ $statusLabels[$plot->status->value] }}
+        {{ $plot->status->label() }}
       </span>
     </div>
     <p class="lede mb-4">

@@ -20,11 +20,6 @@ class TraceCode extends Model
         'chain_hash',
     ];
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     public function adoption()
     {
         return $this->belongsTo(Adoption::class);

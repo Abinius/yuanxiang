@@ -24,18 +24,8 @@ class FarmMember extends Model
         ];
     }
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
     }
 }

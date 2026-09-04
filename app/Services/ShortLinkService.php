@@ -31,11 +31,6 @@ class ShortLinkService
         return $link;
     }
 
-    public function makeUrl(Tenant $tenant, ShortLink $link): string
-    {
-        return route('tenant.short-link.redirect', ['tenant' => $tenant->slug, 'code' => $link->code]);
-    }
-
     private function uniqueCode(?string $custom = null): string
     {
         if ($custom) {

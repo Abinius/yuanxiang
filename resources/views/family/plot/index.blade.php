@@ -27,7 +27,7 @@
       <div class="card" style="padding:16px">
         <div class="flex justify-between items-center mb-2">
           <span class="font-medium serif text-brand">{{ $plot->code }}</span>
-          <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : 'tag-off' }}">{{ $plot->status->value }}</span>
+          <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : 'tag-off' }}">{{ $plot->status->label() }}</span>
         </div>
         <a class="btn btn-ghost btn-sm" href="{{ route('tenant.family.plots.edit', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">编辑</a>
       </div>

@@ -35,16 +35,6 @@ class Plot extends Model
         ];
     }
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class);
-    }
-
     public function plan()
     {
         return $this->belongsTo(Plan::class);
@@ -58,16 +48,6 @@ class Plot extends Model
     public function children()
     {
         return $this->hasMany(self::class, 'parent_plot_id');
-    }
-
-    public function cameras()
-    {
-        return $this->hasMany(Camera::class);
-    }
-
-    public function farmLogs()
-    {
-        return $this->hasMany(FarmLog::class);
     }
 
     public function harvests()
@@ -113,15 +93,5 @@ class Plot extends Model
             PlotType::Plant => array_filter([$this->id, $this->parent_plot_id], fn ($v) => $v !== null),
             PlotType::Plot => [$this->id],
         };
-    }
-
-    public function detectionReports()
-    {
-        return $this->hasMany(DetectionReport::class);
-    }
-
-    public function traceCodes()
-    {
-        return $this->hasMany(TraceCode::class);
     }
 }

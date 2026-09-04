@@ -5,9 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Farm;
 use App\Models\FarmLog;
 use App\Models\FarmMember;
-use App\Models\User;
 use App\Services\WechatTemplateService;
-use App\Tenancy\TenantContext;
+use App\Tenancy\HandlesTenantContext;
 use Illuminate\Console\Command;
 
 /**
@@ -16,6 +15,8 @@ use Illuminate\Console\Command;
  */
 class RemindFamilyToPost extends Command
 {
+    use HandlesTenantContext;
+
     protected $signature = 'family:remind-post';
 
     protected $description = '每日推送该发动态提醒给 3 天未录农事的家人们';
@@ -44,7 +45,7 @@ class RemindFamilyToPost extends Command
         $sent = 0;
 
         foreach ($staleFarms as $farm) {
-            $this->withTenantContext($farm, function () use ($farm, &$sent) {
+            $this->withTenantContext($farm->tenant_id, function () use ($farm, &$sent) {
                 $members = FarmMember::query()
                     ->where('farm_id', $farm->id)
                     ->with('user')
@@ -72,17 +73,5 @@ class RemindFamilyToPost extends Command
         $this->info("已提醒 {$sent} 位家人发动态（{$staleFarms->count()} 个农场地块静默）");
 
         return self::SUCCESS;
-    }
-
-    /** 按租户作用域执行（Command 内手动，复用 Job 的 HandlesTenantContext 思路）。 */
-    private function withTenantContext(Farm $farm, callable $fn): void
-    {
-        $prev = TenantContext::id();
-        TenantContext::set($farm->tenant_id);
-        try {
-            $fn();
-        } finally {
-            TenantContext::set($prev);
-        }
     }
 }

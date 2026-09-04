@@ -71,8 +71,8 @@
       <div class="field">
         <label>状态</label>
         <select name="status" class="select">
-          @foreach (['available' => '可认养', 'adopted' => '已认养', 'sold_out' => '已售罄', 'offline' => '下架'] as $v => $lbl)
-            <option value="{{ $v }}" @selected(old('status', $plot->status?->value ?? 'available') === $v)>{{ $lbl }}</option>
+          @foreach (\App\Enums\PlotStatus::cases() as $st)
+            <option value="{{ $st->value }}" @selected(old('status', $plot->status?->value ?? 'available') === $st->value)>{{ $st->label() }}</option>
           @endforeach
         </select>
       </div>

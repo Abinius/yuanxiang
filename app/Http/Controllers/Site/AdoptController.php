@@ -15,13 +15,6 @@ use Illuminate\Http\Request;
 
 class AdoptController extends Controller
 {
-    private const STATUS_LABELS = [
-        'available' => '可认养',
-        'adopted' => '已认养',
-        'sold_out' => '售罄',
-        'offline' => '下架',
-    ];
-
     public function __construct(
         private readonly AdoptionService $adoptions,
         private readonly WeChatPayService $pay,
@@ -33,7 +26,6 @@ class AdoptController extends Controller
     {
         // F5：转化前回放 —— 公开的直播/解说内容（video_url 非空）在认养页可见，信任卖点
         $replays = \App\Models\FarmLog::query()
-            ->where('tenant_id', $tenant->id)
             ->where('is_public', true)
             ->whereIn('type', ['live_broadcast', 'explain'])
             ->whereNotNull('video_url')
@@ -46,7 +38,6 @@ class AdoptController extends Controller
             'tenant' => $tenant,
             'plots' => Plot::where('type', 'plot')->orderBy('order_index')->get(),
             'groups' => Plot::where('type', 'group')->withCount('children')->orderBy('order_index')->get(),
-            'statusLabels' => self::STATUS_LABELS,
             'replays' => $replays,
         ]);
     }
@@ -62,7 +53,6 @@ class AdoptController extends Controller
                 'tenant' => $tenant,
                 'plot' => $plot,
                 'plants' => $plants,
-                'statusLabels' => self::STATUS_LABELS,
             ]);
         }
 
@@ -70,7 +60,6 @@ class AdoptController extends Controller
             'tenant' => $tenant,
             'plot' => $plot,
             'plan' => $plot->plan,
-            'statusLabels' => self::STATUS_LABELS,
             'seo' => ['description' => $plot->code.' · 认养 '.number_format($plot->price_yearly).' 元/年 · 宁夏红寺堡枸杞认养，生态种植全程可溯源'],
         ]);
     }

@@ -23,7 +23,6 @@ class LiveController extends Controller
     public function index(Tenant $tenant, Request $request)
     {
         $cameras = Camera::query()
-            ->where('tenant_id', $tenant->id)
             ->with('plot')
             ->orderByRaw("status='online' desc, id asc")
             ->get();

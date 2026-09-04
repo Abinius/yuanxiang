@@ -16,9 +16,4 @@ class Organization extends Model
         'license_scope',
         'status',
     ];
-
-    public function tenants()
-    {
-        return $this->hasMany(Tenant::class, 'operator_org_id');
-    }
 }

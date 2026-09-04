@@ -37,7 +37,6 @@ class DeliveryController extends Controller
     public function create(Tenant $tenant, Request $request)
     {
         $harvests = Harvest::query()
-            ->where('tenant_id', $tenant->id)
             ->with('plot')
             ->orderByDesc('harvested_at')
             ->get();
