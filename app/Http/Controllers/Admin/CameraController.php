@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * 摄像头后台管理（tenant_admin）。P3 硬件到位后在此填真实流地址/凭证。
- * 路由-param 位置性：Tenant 在前、Camera 在后；显式 tenant_id 守卫。
+ * 路由-param 位置性：Tenant 在前、Camera 在后。
  */
 class CameraController extends Controller
 {

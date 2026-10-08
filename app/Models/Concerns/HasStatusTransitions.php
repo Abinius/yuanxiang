@@ -19,7 +19,10 @@ trait HasStatusTransitions
     }
 
     /**
-     * 转移状态并落库；非法转移 422。
+     * 转移状态并落库；非法转移 422，并发抢改 409。
+     *
+     * 落库用条件更新（compare-and-swap：WHERE status = 读到的当前态），
+     * 并发下后到的请求 affected=0 而不是静默覆盖——防重复发货/重复签约双写。
      *
      * @param  array<string, mixed>  $attributes  同一次保存顺带写入的其他字段（如 named_label/shipped_at）
      */
@@ -33,6 +36,18 @@ trait HasStatusTransitions
             "当前状态「{$current->label()}」不可转移到「{$to->label()}」"
         );
 
-        $this->update(array_merge(['status' => $to->value], $attributes));
+        $changes = array_merge(['status' => $to->value], $attributes);
+        if ($this->usesTimestamps()) {
+            $changes['updated_at'] = $this->freshTimestamp();
+        }
+
+        $affected = $this->newQuery()
+            ->whereKey($this->getKey())
+            ->where('status', $current->value)
+            ->update($changes);
+
+        abort_if($affected === 0, 409, '该单据已被其他操作变更，请刷新后重试');
+
+        $this->forceFill($changes)->syncOriginal();
     }
 }

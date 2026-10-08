@@ -7,6 +7,7 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
+use App\Services\PromotionService;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -152,6 +153,87 @@ class AdoptionExpiryTest extends TestCase
         $this->assertSame(0, $exit);
         $adoption = Adoption::latest()->firstOrFail();
         $this->assertSame('pending_payment', $adoption->status->value);
+    }
+
+    /** 弃付回收后，同一地块同季必须能再次下单（旧唯一索引不含 status，会永久锁死该地块）。 */
+    public function test_plot_can_be_reordered_after_an_order_expires(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $first = $this->villager();
+        $this->makeOrder($first);
+
+        Carbon::setTestNow(now()->addHours(74));
+        Artisan::call('adoption:expire-pending');
+        Carbon::setTestNow(null);
+
+        $plot = Plot::where('type', 'plot')->first();
+        $second = $this->villager('13800000011');
+
+        $this->actingAs($second)
+            ->post("/adopt/{$plot->id}/order", [
+                'name' => '李四',
+                'phone' => '13800000011',
+                'province' => '宁夏',
+                'city' => '吴忠',
+                'district' => '红寺堡',
+                'detail' => '光彩村 2 号',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($second->id, Adoption::orderByDesc('id')->firstOrFail()->user_id);
+    }
+
+    /** 退款取消后，同一地块同季同样必须能再次下单。 */
+    public function test_plot_can_be_reordered_after_refund(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $first = $this->villager();
+        $adoption = $this->makeOrder($first);
+
+        $service = app(AdoptionService::class);
+        $service->confirmMockPayment($adoption);
+        $service->signAgreement($adoption, '阿林的光彩田');
+        $service->markRefunded($adoption->fresh());
+
+        $plot = Plot::where('type', 'plot')->first();
+        $second = $this->villager('13800000012');
+
+        $this->actingAs($second)
+            ->post("/adopt/{$plot->id}/order", [
+                'name' => '王五',
+                'phone' => '13800000012',
+                'province' => '宁夏',
+                'city' => '吴忠',
+                'district' => '红寺堡',
+                'detail' => '光彩村 3 号',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($second->id, Adoption::orderByDesc('id')->firstOrFail()->user_id);
+    }
+
+    /** 续费弃付单被回收，不得释放上一季仍在约的地块。 */
+    public function test_expiring_renewal_keeps_plot_of_active_adoption(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $user = $this->villager();
+        $adoption = $this->makeOrder($user);
+
+        $service = app(AdoptionService::class);
+        $service->confirmMockPayment($adoption);
+        $service->signAgreement($adoption, '阿林的光彩田');
+
+        $plot = $adoption->adoptable->fresh();
+        $this->assertSame('adopted', $plot->status->value);
+
+        app(PromotionService::class)->renew($user, $adoption->fresh());
+
+        Carbon::setTestNow(now()->addHours(74));
+        Artisan::call('adoption:expire-pending');
+
+        // 续费单已取消，但原认养仍在约 —— 地块不能被放回可认养
+        $this->assertSame('cancelled', Adoption::orderByDesc('id')->firstOrFail()->status->value);
+        $this->assertSame('adopted', $plot->fresh()->status->value);
     }
 
     // ── F3 起名并入成功流 ────────────────────────────────────

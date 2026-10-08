@@ -19,7 +19,7 @@ class AdoptionController extends Controller
     ) {
     }
 
-    /** 订单列表（租户内，TenantScoped 自动过滤；状态筛选 + 分页）。 */
+    /** 订单列表（状态筛选 + 分页）。 */
     public function index(Request $request)
     {
         $adoptions = Adoption::query()

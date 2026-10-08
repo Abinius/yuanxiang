@@ -97,6 +97,6 @@
   </section>
 
   <footer class="site-footer">
-    {{ config('site.defaults.footer_copyright', '宁夏花乌巷食品有限公司') }} · 光彩云村庄
+    {{ config('site.defaults.footer_copyright', '宁夏花乌巷食品有限公司') }} · 陌上原乡
   </footer>
 @endsection

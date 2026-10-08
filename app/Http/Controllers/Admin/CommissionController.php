@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdoptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CommissionLedger;
 use App\Models\Payout;
@@ -40,6 +41,13 @@ class CommissionController extends Controller
     {
         abort_if($payout->type !== 'commission', 404);
         abort_unless($payout->status === 'pending', 422, '该提现已处理');
+
+        // 放款前复核：对应认养已取消/退款的流水不应再付（freezeFor 已冻结，这里是最后一道闸）
+        abort_if(
+            $payout->ledgerRows()->whereHas('adoption', fn ($q) => $q->where('status', AdoptionStatus::Cancelled->value))->exists(),
+            422,
+            '该提现已包含退款/取消认养的佣金，请驳回后让用户重新发起'
+        );
 
         $payout->update(['status' => 'paid', 'paid_at' => now()]);
 

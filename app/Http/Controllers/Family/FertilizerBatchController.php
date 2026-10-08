@@ -46,17 +46,19 @@ class FertilizerBatchController extends Controller
             ->with('ok', '有机肥批次已录入');
     }
 
-    /** G8：编辑（复用 create 视图）。fertilizer scope 已限权；批次为共享投入品，tenant_admin 直改。 */
+    /** G8：编辑（复用 create 视图）。scope 只放行进门，跨基地批次还要判归属。 */
     public function edit(FertilizerBatch $batch, Request $request)
     {
-        $this->assertScope($request, 'fertilizer');
+        $member = $this->assertScope($request, 'fertilizer');
+        abort_if($batch->farm_id !== $member->farm_id, 403);
 
         return view('family.fertilizer.create', compact('batch'));
     }
 
     public function update(FertilizerBatch $batch, Request $request)
     {
-        $this->assertScope($request, 'fertilizer');
+        $member = $this->assertScope($request, 'fertilizer');
+        abort_if($batch->farm_id !== $member->farm_id, 403);
 
         $data = $request->validate([
             'batch_no' => ['required', 'string', 'max:60', Rule::unique('fertilizer_batches', 'batch_no')->where('tenant_id', Tenant::current()->id)->ignore($batch->id)],

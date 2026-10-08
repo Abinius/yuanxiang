@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 /**
  * 3.2 缺产补/退管理（tenant_admin）：按年度结算（保底规则引擎）→ 应用（部分退款）。
- * 路由-param 位置性：Tenant 在前、Adjustment 在后；显式 tenant_id 守卫。
+ * 路由-param 位置性：Tenant 在前、Adjustment 在后。
  */
 class AdjustmentController extends Controller
 {

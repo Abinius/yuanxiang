@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 /**
  * 农事内容后台管理（tenant_admin）：列表 + 软删。
- * 路由-param 位置性：Tenant 在前、FarmLog 在后；显式 tenant_id 守卫。
+ * 路由-param 位置性：Tenant 在前、FarmLog 在后。
  */
 class FarmLogController extends Controller
 {

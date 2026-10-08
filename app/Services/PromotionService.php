@@ -109,15 +109,22 @@ class PromotionService
     }
 
     /** 新客下单填推荐码：给新客发 new_customer 券、给推荐人发 renewal 券，返回推荐人。 */
-    public function redeemReferral(string $code, User $newUser): User
+    /**
+     * 下单填推荐码：同租户内校验 → 首次下单才发券（新客立减 + 推荐人续费券）。
+     * 同人反复填码只计一次，否则券可无限囤。
+     */
+    public function redeemReferral(string $code, User $newUser, Adoption $adoption): User
     {
         $referral = Coupon::query()
             ->where('code', $code)
             ->whereHas('promotion', fn ($q) => $q->where('type', 'referral'))
             ->first();
-        abort_if(! $referral || $referral->user_id === $newUser->id, 422, '推荐码无效或不可自荐');
-
-        $referrer = $referral->user;
+        $referrer = $referral?->user;
+        abort_if(! $referrer, 422, '推荐码无效');
+        abort_if($referrer->tenant_id !== $newUser->tenant_id, 422, '推荐码无效');
+        abort_if($referrer->id === $newUser->id, 422, '推荐码无效或不可自荐');
+        // 首单才发奖：本次下单已落库，故排除它再看是否还有别的单
+        abort_if($newUser->adoptions()->whereKeyNot($adoption->id)->exists(), 422, '推荐奖励仅限首单');
 
         $newPromo = Promotion::where('tenant_id', $newUser->tenant_id)->where('type', 'new_customer')->where('status', 'active')->first();
         $renewPromo = Promotion::where('tenant_id', $referrer->tenant_id)->where('type', 'renewal')->where('status', 'active')->first();

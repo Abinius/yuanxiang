@@ -8,6 +8,7 @@ use App\Models\Adoption;
 use App\Models\GiftBox;
 use App\Services\GiftBoxService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * 3.3 节日礼盒（云乡民）：我的田 → 按权益额度定制礼盒（收礼人/寄语/亲笔签）。
@@ -79,7 +80,7 @@ class GiftBoxController extends Controller
         $data = $request->validate([
             'recipient_name' => ['required', 'string', 'max:60'],
             'recipient_phone' => ['required', 'string', 'max:20'],
-            'address_id' => ['nullable', 'integer'],
+            'address_id' => ['nullable', 'integer', Rule::exists('addresses', 'id')->where('user_id', $request->user()->id)],
             'message' => ['nullable', 'string', 'max:500'],
             'signature' => ['nullable', 'string'],
         ]);

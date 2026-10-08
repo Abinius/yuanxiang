@@ -76,7 +76,7 @@ class AdoptController extends Controller
 
         // 3.4 + M4：下单填推荐码 → 新客/推荐人各得券 + 记录推荐关系（佣金据此结算）
         if (! empty($data['referral_code'])) {
-            $referrer = $this->promotions->redeemReferral($data['referral_code'], $request->user());
+            $referrer = $this->promotions->redeemReferral($data['referral_code'], $request->user(), $adoption);
             if ($referrer) {
                 $adoption->update(['referred_by_user_id' => $referrer->id]);
             }
@@ -95,6 +95,8 @@ class AdoptController extends Controller
     public function confirmPay(Request $request, Adoption $adoption)
     {
         abort_if($adoption->user_id !== $request->user()->id, 404);
+        // dev-only 通道：真实环境 WECHAT_MOCK=false，必须走微信回调，不留无门禁的"支付成功"入口。
+        abort_unless(config('wechat.mock'), 404);
 
         $this->adoptions->confirmMockPayment($adoption);
 

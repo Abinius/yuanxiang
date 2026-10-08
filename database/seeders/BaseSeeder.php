@@ -9,7 +9,7 @@ use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
 /**
- * 基础数据：运营主体（花乌巷食品/青狐互动）+ 首租户（光彩云村庄）
+ * 基础数据：运营主体（花乌巷食品/青狐互动）+ 首租户（陌上原乡）
  * + 基地 + 认养方案（一分地/单株，丰欠共担/保底细则见 DB 设计 §4.1）
  */
 class BaseSeeder extends Seeder
@@ -30,7 +30,7 @@ class BaseSeeder extends Seeder
 
         $tenant = Tenant::create([
             'slug' => 'guangcai',
-            'name' => '光彩云村庄',
+            'name' => '陌上原乡',
             'operator_org_id' => $hua->id,
             'status' => 'active',
             'settings' => ['brand' => ['primary' => '#3F6B4F', 'accent' => '#A8791E']],

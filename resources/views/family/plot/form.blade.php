@@ -46,15 +46,9 @@
       </select>
     </div>
 
-    <div class="card-grid grid-2 mb-4">
-      <div class="field">
-        <label>面积(亩)</label>
-        <input class="input" type="number" step="0.01" name="mu_area" min="0" value="{{ old('mu_area', $plot->mu_area ?? '') }}">
-      </div>
-      <div class="field">
-        <label>年费快照(元,可选)</label>
-        <input class="input" type="number" name="price_yearly" min="0" value="{{ old('price_yearly', $plot->price_yearly ?? '') }}">
-      </div>
+    <div class="field mb-4">
+      <label>面积(亩)</label>
+      <input class="input" type="number" step="0.01" name="mu_area" min="0" value="{{ old('mu_area', $plot->mu_area ?? '') }}">
     </div>
 
     <div class="field" id="parent-field" style="{{ (old('type', $plot->type?->value) === 'plant') ? '' : 'display:none' }}">
@@ -67,19 +61,9 @@
       </select>
     </div>
 
-    <div class="card-grid grid-2 mb-4">
-      <div class="field">
-        <label>状态</label>
-        <select name="status" class="select">
-          @foreach (\App\Enums\PlotStatus::cases() as $st)
-            <option value="{{ $st->value }}" @selected(old('status', $plot->status?->value ?? 'available') === $st->value)>{{ $st->label() }}</option>
-          @endforeach
-        </select>
-      </div>
-      <div class="field">
-        <label>排序</label>
-        <input class="input" type="number" name="order_index" min="0" value="{{ old('order_index', $plot->order_index ?? 0) }}">
-      </div>
+    <div class="field mb-4">
+      <label>排序</label>
+      <input class="input" type="number" name="order_index" min="0" value="{{ old('order_index', $plot->order_index ?? 0) }}">
     </div>
 
     <div class="field mb-4">

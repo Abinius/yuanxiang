@@ -5,7 +5,7 @@
 @section('content')
   <div class="panel" style="max-width:560px;margin:0 auto;text-align:center">
     <div class="np-eyebrow" style="letter-spacing:0.18em;font-size:var(--ds-body-xs);color:var(--ds-text-mute);font-weight:500">
-      来自光彩云村庄 · 云乡民的节日礼盒
+      来自陌上原乡 · 云乡民的节日礼盒
     </div>
     <h1 style="font-size:var(--ds-h2);margin:10px 0">{{ $giftBox->festival->label() }}祝福{{ $giftBox->year }}</h1>
 

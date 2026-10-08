@@ -8,6 +8,7 @@ use App\Models\Adoption;
 use App\Models\Delivery;
 use App\Models\Harvest;
 use App\Models\Plot;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 3.1 配送链路：按采收打单（为 plot 的 active 认养人建 pending 配送单）→ 发货 → 签收。
@@ -29,30 +30,34 @@ class DeliveryService
             ->where('status', AdoptionStatus::Active)
             ->get();
 
-        $created = [];
-        foreach ($adoptions as $adoption) {
-            $exists = Delivery::query()
-                ->where('adoption_id', $adoption->id)
-                ->where('harvest_id', $harvest->id)
-                ->exists();
-            if ($exists) {
-                continue;
+        return DB::transaction(function () use ($harvest, $adoptions) {
+            $created = [];
+            foreach ($adoptions as $adoption) {
+                if (Delivery::query()
+                    ->where('adoption_id', $adoption->id)
+                    ->where('harvest_id', $harvest->id)
+                    ->exists()
+                ) {
+                    continue;
+                }
+
+                // 配送单与溯源码必须原子写入：只打单不生成码会留下孤儿配送单
+                $delivery = Delivery::create([
+                    'tenant_id' => $harvest->tenant_id,
+                    'adoption_id' => $adoption->id,
+                    'harvest_id' => $harvest->id,
+                    'address_id' => $this->pickAddressId($adoption),
+                    'spec' => ['packing' => '保底分装'],
+                    'status' => DeliveryStatus::Pending->value,
+                ]);
+
+                // 唯一约束 (adoption_id, harvest_id) 兜住并发双击
+                $this->traceCodes->generate($harvest, 1, $adoption->id);
+                $created[] = $delivery;
             }
 
-            $created[] = Delivery::create([
-                'tenant_id' => $harvest->tenant_id,
-                'adoption_id' => $adoption->id,
-                'harvest_id' => $harvest->id,
-                'address_id' => $this->pickAddressId($adoption),
-                'spec' => ['packing' => '保底分装'],
-                'status' => DeliveryStatus::Pending->value,
-            ]);
-
-            // 每箱一码：绑定到该认养人 + 本次采收（adoption_id+harvest_id 与配送一一对应）
-            $this->traceCodes->generate($harvest, 1, $adoption->id);
-        }
-
-        return $created;
+            return $created;
+        });
     }
 
     public function markShipped(Delivery $delivery, string $trackingNo, ?string $carrier = null): void

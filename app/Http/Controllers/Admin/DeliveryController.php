@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 /**
  * 3.1 配送管理（tenant_admin）：按采收打单 → 发货（录运单）→ 打印打单。
  * 签收由认养人在 C 端「我的田」确认（MyPlotController::receive）。
- * 路由-param 位置性：Tenant 在前、Delivery 在后；显式 tenant_id 守卫。
+ * 路由-param 位置性：Tenant 在前、Delivery 在后。
  */
 class DeliveryController extends Controller
 {

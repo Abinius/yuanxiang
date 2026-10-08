@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  *
  * - 田地不再硬编码（PlotSeeder 仅作测试种子）；生产田地由此 CRUD。
  * - 删除保护（F1.3）：存在在约/在途认养的田地禁止删除 → 409；改用下架(offline)。
- * - 路由-param 位置性：Tenant 在前、Plot 在后；显式 tenant_id 守卫。
+ * - 路由-param 位置性：Tenant 在前、Plot 在后。
  * - 校验规则见 App\Support\PlotRules（与家人端共用一份）。
  */
 class PlotController extends Controller

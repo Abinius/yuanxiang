@@ -45,6 +45,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // F2 R2.1：每日 07:00 回收超期弃付单并释放田块
         $schedule->command('adoption:expire-pending')->dailyAt('07:00');
+        // 每日 07:10 把 end_date 已过的生效中认养推进到「已到期」（转移图早已声明，此前无调用点）
+        $schedule->command('adoption:expire-active')->dailyAt('07:10');
         // F4 R4.2：每日 06:00 推送"该发动态了"给 3 天未录的家人们
         $schedule->command('family:remind-post')->dailyAt('06:00');
         // F9：每日 08:00 续费到期提醒（30/7/1 天）+ auto_renew 临期自动建单

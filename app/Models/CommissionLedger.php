@@ -35,4 +35,9 @@ class CommissionLedger extends Model
     {
         return $this->belongsTo(Adoption::class);
     }
+
+    public function payout()
+    {
+        return $this->belongsTo(Payout::class);
+    }
 }

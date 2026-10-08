@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 @vite('resources/css/app.css')
-<title>平台后台登录 · 光彩云村庄</title>
+<title>平台后台登录 · 陌上原乡</title>
 <style>
   .login-page {
     min-height: 100vh;
@@ -51,7 +51,7 @@
     <div class="login-head">
       <div class="brand-mark">
         <span class="brand-dot" aria-hidden="true"></span>
-        光彩云村庄
+        陌上原乡
       </div>
       <p class="sub">平台管理后台</p>
     </div>

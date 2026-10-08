@@ -104,12 +104,20 @@ class CommissionService
         });
     }
 
-    /** 认养退款/取消：冻结未结算佣金（已提现不追回，MVP 简化）。 */
+    /**
+     * 认养退款/取消：冻结尚未真正流出的佣金。
+     * 已 settled 但 payout 仍 pending（钱未放款）的一并冻结，否则 approve 会在
+     * 认养退款后照付；payout 已 paid 的按 MVP 口径不追回。
+     */
     public function freezeFor(Adoption $adoption): void
     {
         CommissionLedger::query()
             ->where('adoption_id', $adoption->id)
-            ->whereIn('status', ['pending', 'available'])
+            ->whereIn('status', ['pending', 'available', 'settled'])
+            ->where(function ($q) {
+                $q->whereNull('payout_id')
+                    ->orWhereHas('payout', fn ($p) => $p->where('status', '!=', 'paid'));
+            })
             ->update(['status' => 'frozen']);
     }
 
@@ -160,25 +168,36 @@ class CommissionService
                 ->orderBy('created_at')
                 ->get();
 
+            // 条件更新（status=available）即 compare-and-swap：并发下有人抢走部分流水时
+            // 实扣不足 → 整事务回滚，不产生「金额大于实扣」的空头提现单。
+            $sum = 0.0;
             $left = $amount;
             foreach ($rows as $row) {
                 if ($left <= 0) {
                     break;
                 }
-                if ((float) $row->amount <= $left) {
-                    $left -= (float) $row->amount;
-                    $row->status = 'settled';
-                    $row->settled_at = Carbon::now();
-                    $row->payout_id = $payout->id;
-                    $row->save();
-                } else {
-                    $row->amount = round((float) $row->amount - $left, 2);
-                    $row->save();
-                    $left = 0;
+
+                $take = min((float) $row->amount, $left);
+                $steal = $take < (float) $row->amount;   // 部分扣 = 需改写该行金额
+
+                $affected = CommissionLedger::query()
+                    ->whereKey($row->id)
+                    ->where('status', 'available')
+                    ->update([
+                        'status' => 'settled',
+                        'settled_at' => Carbon::now(),
+                        'payout_id' => $payout->id,
+                        'amount' => $steal ? round((float) $row->amount - $take, 2) : (float) $row->amount,
+                    ]);
+
+                if ($affected === 1) {
+                    $sum = round($sum + $take, 2);
+                    $left = round($left - $take, 2);
                 }
             }
 
-            abort_if($left > 0.009, 422, '可提现余额不足');
+            // 事务回滚会撤掉刚建的 payout；金额不符 = 并发抢占或余额不足
+            abort_if(round($sum, 2) !== round($amount, 2), 422, '可提现余额不足或已被其他操作占用，请刷新后重试');
 
             return $payout;
         });

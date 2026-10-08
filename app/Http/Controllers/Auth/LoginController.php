@@ -64,7 +64,9 @@ class LoginController extends Controller
                 ['tenant_id' => Tenant::current()->id, 'nickname' => $mock['nickname'], 'role' => UserRole::Villager->value]
             );
 
-            return $this->loginCrossTenantGuarded($user, Tenant::current());
+            abort_if($user->is_disabled, 403, '该账号已被停用，请联系客服');
+
+            return $this->loginCrossTenantGuarded($user);
         }
 
         return redirect()->away($this->wechat->authorizeUrl(Tenant::current()));
@@ -89,7 +91,9 @@ class LoginController extends Controller
             ]
         );
 
-        return $this->loginCrossTenantGuarded($user, Tenant::current());
+        abort_if($user->is_disabled, 403, '该账号已被停用，请联系客服');
+
+        return $this->loginCrossTenantGuarded($user);
     }
 
     public function bindPhone(Request $request)
@@ -119,8 +123,8 @@ class LoginController extends Controller
     }
 
     /**
-     * 微信登录跨租户守卫：openid 已属于其他云村庄时不在本租户自动登录，
-     * 防「以他租户身份进入本租户上下文」打通跨租户越权（P0 修复）。
+     * 登录后按角色跳转：单租户下 users 已带 tenant_id，无需再判跨租户上下文。
+     * openid 会复用已存在的账号（含家人/管理员身份），所以停用拦截要在各登录入口做。
      */
     private function loginCrossTenantGuarded(User $user): RedirectResponse
     {

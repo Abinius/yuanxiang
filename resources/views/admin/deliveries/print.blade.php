@@ -11,7 +11,7 @@
   <div class="picking-list">
     @foreach ($deliveries as $d)
       <div class="sheet">
-        <div class="head">光彩云村庄 · 打单</div>
+        <div class="head">陌上原乡 · 打单</div>
         <div>认养单：{{ $d->adoption?->adoption_no ?? '—' }}</div>
         <div>认养人：{{ $d->adoption?->user?->nickname ?? '—' }}（{{ $d->adoption?->user?->phone ?? '—' }}）</div>
         <div>田块：{{ $d->harvest?->plot?->code ?? '—' }} · {{ $d->harvest?->season_year ?? '—' }} 年度</div>

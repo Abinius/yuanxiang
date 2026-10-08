@@ -88,7 +88,7 @@ class AdjustmentService
                 $adjustment->adoption,
                 $adjustment->reason ?? '缺产折算退费',
                 (float) $adjustment->amount,
-                'RF-'.$adjustment->id,
+                'RF-ADJ-'.$adjustment->id,
             );
         }
 

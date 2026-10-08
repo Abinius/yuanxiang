@@ -6,6 +6,7 @@ use App\Enums\AdoptionStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PlotStatus;
 use App\Enums\PlotType;
+use App\Exceptions\OrderCancelledWhilePaying;
 use App\Models\Address;
 use App\Models\Adoption;
 use App\Models\Payment;
@@ -126,6 +127,12 @@ class AdoptionService
             return;
         }
 
+        // 竞态：支付在途时订单被弃付回收或退款。钱已到账 → 交给调用方退款，
+        // 不能静默 422 让微信回调无限重试、客户资金滞留。
+        if (! $adoption->canTransitionTo(AdoptionStatus::PendingAgreement)) {
+            throw new OrderCancelledWhilePaying($adoption);
+        }
+
         DB::transaction(function () use ($payment, $adoption, $meta) {
             $payment->transitionTo(PaymentStatus::Paid, [
                 'paid_at' => now(),
@@ -152,6 +159,11 @@ class AdoptionService
      */
     public function markRefunded(Adoption $adoption): void
     {
+        // 终态不能再退（已取消/已到期）：否则重复点击退款会让钱已出、单据卡在已支付。
+        if (! $adoption->canTransitionTo(AdoptionStatus::Cancelled)) {
+            return;
+        }
+
         $payment = $adoption->payments()
             ->where('status', PaymentStatus::Paid->value)
             ->latest('id')
@@ -166,7 +178,31 @@ class AdoptionService
 
             $adoption->transitionTo(AdoptionStatus::Cancelled);
             $this->commissions->freezeFor($adoption);
+            $this->releasePlot($adoption);
         });
+    }
+
+    /**
+     * 取消/退款后把地块放回可认养 —— 仅当本块地已无任何在约认养。
+     * 只看 plot->status 会误伤：续费单弃付时，地块正被上一季仍在约的认养占着。
+     */
+    private function releasePlot(Adoption $adoption): void
+    {
+        if ($adoption->adoptable_type !== Plot::class) {
+            return;
+        }
+
+        $plot = $adoption->adoptable;
+        if (! $plot || $plot->hasInFlightAdoptions()) {
+            return;
+        }
+
+        $plot->update(['status' => PlotStatus::Available->value]);
+
+        // 株档：本株放回可用后，拼团田不再售罄
+        if ($plot->parent_plot_id && $plot->parent?->status === PlotStatus::SoldOut) {
+            $plot->parent->update(['status' => PlotStatus::Available->value]);
+        }
     }
 
     /**
@@ -200,14 +236,7 @@ class AdoptionService
         $count = 0;
         foreach ($expired as $adoption) {
             $adoption->transitionTo(AdoptionStatus::Cancelled);
-
-            // 释放田块（本季节点已被占用的可能性：仅 pending_payment 占用，取消后回到可认养）
-            if ($adoption->adoptable_type === Plot::class) {
-                $plot = $adoption->adoptable;
-                if ($plot->status === PlotStatus::Adopted) {
-                    $plot->update(['status' => PlotStatus::Available->value]);
-                }
-            }
+            $this->releasePlot($adoption);
 
             $count++;
         }
@@ -220,20 +249,24 @@ class AdoptionService
      */
     public function signAgreement(Adoption $adoption, string $namedLabel, ?string $signedIp = null): void
     {
-        $adoption->transitionTo(AdoptionStatus::Active, [
-            'named_label' => $namedLabel,
-            'agreement_signed_at' => now(),
-            'end_date' => $adoption->start_date->copy()->addYear(),
-        ]);
+        // 一次签约横跨认养/合同/佣金/会员/地块五处写入，必须同事务——
+        // 中途失败不能留下"已生效但无合同无佣金"的半套状态（且状态已变无法重试）。
+        DB::transaction(function () use ($adoption, $namedLabel, $signedIp) {
+            $adoption->transitionTo(AdoptionStatus::Active, [
+                'named_label' => $namedLabel,
+                'agreement_signed_at' => now(),
+                'end_date' => $adoption->start_date->copy()->addYear(),
+            ]);
 
-        $this->contracts->createFor($adoption, $signedIp);
+            $this->contracts->createFor($adoption, $signedIp);
 
-        $this->commissions->credit($adoption);
+            $this->commissions->credit($adoption);
 
-        // M5：认养生效后即时同步买家会员等级（消费达标即升级）
-        $this->members->syncLevel($adoption->user);
+            // M5：认养生效后即时同步买家会员等级（消费达标即升级）
+            $this->members->syncLevel($adoption->user);
 
-        $this->occupyPlot($adoption);
+            $this->occupyPlot($adoption);
+        });
     }
 
     private function occupyPlot(Adoption $adoption): void

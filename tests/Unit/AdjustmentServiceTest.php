@@ -177,7 +177,7 @@ class AdjustmentServiceTest extends TestCase
         $mockPay = Mockery::mock(WeChatPayService::class);
         $mockPay->shouldReceive('requestRefund')
             ->once()
-            ->with(Mockery::on(fn ($a) => true), Mockery::anyOf('欠收折算退费', '缺产折算退费'), 300.0, 'RF-'.$adj->id);
+            ->with(Mockery::on(fn ($a) => true), Mockery::anyOf('欠收折算退费', '缺产折算退费'), 300.0, 'RF-ADJ-'.$adj->id);
 
         $service = new AdjustmentService($mockPay);
         $service->apply($adj);

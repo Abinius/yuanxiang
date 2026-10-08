@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 /**
  * 3.3 礼盒后台（tenant_admin）：印制 → 发货（运单）→ 送达 + 贺卡打印。
- * 路由-param 位置性：Tenant 在前、GiftBox 在后；显式 tenant_id 守卫。
+ * 路由-param 位置性：Tenant 在前、GiftBox 在后。
  */
 class GiftBoxController extends Controller
 {

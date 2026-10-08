@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
  */
 class PlotController extends Controller
 {
+    /** 家人不能改的字段：定价与上下架是经营决策，归商户后台。 */
+    private const FAMILY_READONLY = ['price_yearly', 'status'];
+
     public function create(Request $request)
     {
         $member = $this->assertScope($request, 'plot');
@@ -29,8 +32,9 @@ class PlotController extends Controller
     public function store(Request $request)
     {
         $member = $this->assertScope($request, 'plot');
-        $data = $request->validate(PlotRules::rules(Tenant::current(), $request, null, $member->farm_id));
+        $data = $request->validate(PlotRules::rules(Tenant::current(), $request, null, $member->farm_id, self::FAMILY_READONLY));
         $data['farm_id'] = $member->farm_id;
+        $data['status'] = 'available';
 
         $plot = new Plot($data);
         $plot->tenant_id = Tenant::current()->id;
@@ -63,8 +67,8 @@ class PlotController extends Controller
         $member = $this->assertScope($request, 'plot');
         abort_if($plot->farm_id !== $member->farm_id, 403);
 
-        // 家人不可改 farm_id（PlotRules 在传 farmId 时本就不收该字段）
-        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot, $member->farm_id)))->save();
+        // 家人不可改 farm_id（PlotRules 在传 farmId 时本就不收该字段）与定价/上下架
+        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot, $member->farm_id, self::FAMILY_READONLY)))->save();
 
         return redirect()->route('tenant.family.plots.index', [])
             ->with('ok', '地块已更新');

@@ -16,8 +16,9 @@ final class PlotRules
 {
     /**
      * @param  int|null  $farmId  家人端传本基地 id（farm_id 不进表单，由控制器强制写入）；null = 后台可指定
+     * @param  array  $readonly  家人端不能改的字段（定价与上下架状态属经营决策，归后台）
      */
-    public static function rules(Tenant $tenant, Request $request, ?Plot $plot = null, ?int $farmId = null): array
+    public static function rules(Tenant $tenant, Request $request, ?Plot $plot = null, ?int $farmId = null, array $readonly = []): array
     {
         $rules = [
             'plan_id' => ['nullable', Rule::exists('plans', 'id')->where('tenant_id', $tenant->id)],
@@ -40,6 +41,6 @@ final class PlotRules
             $rules = ['farm_id' => ['required', Rule::exists('farms', 'id')->where('tenant_id', $tenant->id)]] + $rules;
         }
 
-        return $rules;
+        return array_diff_key($rules, array_flip($readonly));
     }
 }

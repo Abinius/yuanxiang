@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Enums\PaymentStatus;
 use App\Models\Adoption;
+use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Yansongda\LaravelPay\Facades\Pay;
 
 /**
@@ -66,12 +66,15 @@ class WeChatPayService
     /**
      * 向微信发起退款（仅接口调用；DB 状态由 AdoptionService::markRefunded 落库）。
      * $amount 为空 = 全额退；3.2 欠收折算退费用部分金额。
-     * $outRefundNo 为空 = 随机单号；补退传确定性单号（'RF-<adjustment_id>'）使微信侧按 out_refund_no 幂等去重，防重试二次退费。
+     * $outRefundNo 为空 = 按认养单确定性生成；补退传 'RF-ADJ-<adjustment_id>' 区分。
+     * 微信按 out_refund_no 幂等去重，重试不会二次退费。
      */
-    public function requestRefund(Adoption $adoption, string $reason = '认养取消', ?float $amount = null, ?string $outRefundNo = null): void
+    public function requestRefund(Adoption $adoption, string $reason = '认养取消', ?float $amount = null, ?string $outRefundNo = null, ?Payment $payment = null): void
     {
-        $payment = $adoption->payments()
-            ->where('status', PaymentStatus::Paid->value)
+        // 取金额基准：未指定时找本单尚未退款的支付。竞态场景下该支付在本地仍是 pending
+        //（钱已扣但落库时被弃付回收打断），同样要按它的金额退。
+        $payment ??= $adoption->payments()
+            ->where('status', '!=', PaymentStatus::Refunded->value)
             ->latest('id')
             ->first();
 
@@ -87,7 +90,9 @@ class WeChatPayService
 
         Pay::wechat()->refund([
             'out_trade_no' => $adoption->adoption_no,
-            'out_refund_no' => $outRefundNo ?? 'RF'.now()->format('Ymd').'-'.strtoupper(Str::random(6)),
+            // out_refund_no 必须确定性：微信按它幂等去重。随机单号会让"微信成功但落库失败"
+            // 的重试变成二次真退费。
+            'out_refund_no' => $outRefundNo ?? 'RF-AD-'.$adoption->id,
             'reason' => $reason,
             'amount' => [
                 'refund' => $refundCents,

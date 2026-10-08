@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Pay;
 
+use App\Exceptions\OrderCancelledWhilePaying;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Adoption;
 use App\Services\AdoptionService;
@@ -32,10 +34,14 @@ class WeChatPayController extends Controller
                 ->first();
 
             if ($adoption) {
-                $this->adoptions->markPaid($adoption, [
-                    'transaction_id' => $data['transaction_id'],
-                    'method' => 'wechat',
-                ]);
+                try {
+                    $this->adoptions->markPaid($adoption, [
+                        'transaction_id' => $data['transaction_id'],
+                        'method' => 'wechat',
+                    ]);
+                } catch (OrderCancelledWhilePaying) {
+                    $this->refundCancelledOrder($adoption, $data['transaction_id']);
+                }
             }
 
             return $this->pay->notifySuccess();
@@ -44,5 +50,28 @@ class WeChatPayController extends Controller
 
             return response('FAIL', 500);
         }
+    }
+
+    /**
+     * 竞态收口：订单在支付期间被弃付回收/退款，钱已到账 → 自动退款并把支付单记为已退。
+     * 确定性 out_refund_no，微信重试回调不会二次退费。
+     */
+    private function refundCancelledOrder(Adoption $adoption, ?string $transactionId): void
+    {
+        $payment = $adoption->payments()
+            ->where('status', PaymentStatus::Pending->value)
+            ->latest('id')
+            ->first();
+
+        if (! $payment) {
+            return;
+        }
+
+        $this->pay->requestRefund($adoption, '订单已过期取消，自动退款', null, 'RF-AD-'.$adoption->id, $payment);
+
+        $payment->transitionTo(PaymentStatus::Refunded, [
+            'refund_at' => now(),
+            'transaction_id' => $transactionId ?? $payment->transaction_id,
+        ]);
     }
 }

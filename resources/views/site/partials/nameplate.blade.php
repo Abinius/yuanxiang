@@ -2,7 +2,7 @@
     $shareable = $shareable ?? false;
 @endphp
 <div class="nameplate {{ $shareable ? 'center' : '' }}">
-    <div class="np-eyebrow">光彩云村庄 · 云乡民</div>
+    <div class="np-eyebrow">陌上原乡 · 云乡民</div>
     <div class="np-label">{{ $adoption->named_label ?: '未命名' }}</div>
     <div class="np-meta">{{ $adoption->adoptable->code ?? '—' }} · {{ $adoption->season_year }} 年度</div>
     <div class="mt-2">

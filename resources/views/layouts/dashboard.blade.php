@@ -8,7 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 @vite('resources/css/app.css')
-<title>@yield('title', '后台') · {{ $tenant->name ?? '光彩云村庄平台' }}</title>
+<title>@yield('title', '后台') · {{ $tenant->name ?? '陌上原乡平台' }}</title>
 </head>
 <body>
 <nav class="nav-admin">
@@ -20,7 +20,7 @@
         </svg>
       </button>
     @endif
-    <span class="brand">{{ $tenant->name ?? '光彩云村庄平台' }}</span>
+    <span class="brand">{{ $tenant->name ?? '陌上原乡平台' }}</span>
   </div>
   <div class="nav-right">
     @if ($isAdmin)

@@ -200,7 +200,7 @@ class AdjustmentTest extends TestCase
                 Mockery::on(fn ($adoption) => $adoption->id === $adjustment->adoption_id),
                 Mockery::type('string'),
                 Mockery::on(fn ($amount) => abs((float) $amount - 450.0) < 0.001),
-                Mockery::on(fn ($refundNo) => $refundNo === 'RF-'.$adjustment->id),
+                Mockery::on(fn ($refundNo) => $refundNo === 'RF-ADJ-'.$adjustment->id),
             )
             ->andReturn(null);
 

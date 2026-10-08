@@ -12,7 +12,7 @@
     <div class="login-head">
       <div class="brand-mark">
         <span class="brand-dot" aria-hidden="true"></span>
-        光彩云村庄
+        陌上原乡
       </div>
       <p class="sub">{{ $tenant->name }} · 云乡民登录</p>
     </div>

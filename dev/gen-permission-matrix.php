@@ -4,6 +4,7 @@
 // 用法：php dev/gen-permission-matrix.php
 
 require 'vendor/autoload.php';
+require __DIR__.'/route-auth.php';
 $app = require 'bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
@@ -29,16 +30,7 @@ foreach ($router->getRoutes() as $route) {
         $domain = '云乡民（我的田／云监看）';
     }
 
-    $guards = $route->gatherMiddleware();
-    $auth = '公开';
-    if (isset($guards['auth'])) {
-        $auth = '登录';
-        foreach ($guards as $mw => $params) {
-            if ($mw === 'role') {
-                $auth = '登录 + role：' . (is_array($params) ? implode(' / ', $params) : (string) $params);
-            }
-        }
-    }
+    $auth = routeAuthLabel($route->gatherMiddleware());
 
     // action 归属控制器类名（简短显示）；闭包路由标记为 [闭包]
     $action = $route->getActionName();

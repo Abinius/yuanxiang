@@ -17,11 +17,12 @@ enum PaymentStatus: string
         };
     }
 
-    /** 退款即终态；退款后不重付，重付走新一季新单。 */
+    /** 退款即终态；退款后不重付，重付走新一季新单。
+     *  Pending→Refunded 用于竞态：钱已扣但认养单已被弃付回收/退款，需原路退。 */
     public function transitions(): array
     {
         return match ($this) {
-            self::Pending => [self::Paid],
+            self::Pending => [self::Paid, self::Refunded],
             self::Paid => [self::Refunded],
             self::Refunded => [],
         };
