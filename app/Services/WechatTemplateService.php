@@ -16,6 +16,24 @@ use Illuminate\Support\Facades\Http;
  */
 class WechatTemplateService
 {
+    /**
+     * 批量推送给认养人：只发 openid 非空的账号（微信模板消息必需）。
+     * 2.7 动态推送与 3.1 采收通知共用，避免各自重复「查人 + 循环」。
+     *
+     * @param  array<int|string>  $userIds
+     */
+    public function sendToAdopters(array $userIds, string $templateKey, array $data): void
+    {
+        $recipients = User::query()
+            ->whereIn('id', $userIds)
+            ->whereNotNull('openid')
+            ->get();
+
+        foreach ($recipients as $user) {
+            $this->send($user, $templateKey, $data);
+        }
+    }
+
     public function send(User $user, string $templateKey, array $data): void
     {
         $message = PushMessage::create([

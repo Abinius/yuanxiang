@@ -6,7 +6,6 @@ use App\Enums\AdoptionStatus;
 use App\Models\Adoption;
 use App\Models\Harvest;
 use App\Models\Plot;
-use App\Models\User;
 use App\Services\WechatTemplateService;
 use App\Tenancy\HandlesTenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,22 +36,16 @@ class SendHarvestNoticeJob implements ShouldQueue
                 ->where('adoptable_id', $harvest->plot_id)
                 ->where('status', AdoptionStatus::Active)
                 ->pluck('user_id')
-                ->unique();
+                ->unique()
+                ->all();
 
-            $recipients = User::query()
-                ->whereIn('id', $userIds)
-                ->whereNotNull('openid')
-                ->get();
-
-            foreach ($recipients as $user) {
-                $templates->send($user, 'harvest_notice', [
-                    'url' => route('tenant.home', ['tenant' => $harvest->tenant->slug]),
-                    'data' => [
-                        'thing1' => ['value' => $harvest->plot?->code ?? '你的田'],
-                        'thing2' => ['value' => mb_substr($harvest->notes ?? '今天采了，正在打单配送', 0, 20)],
-                    ],
-                ]);
-            }
+            $templates->sendToAdopters($userIds, 'harvest_notice', [
+                'url' => route('tenant.home', ['tenant' => $harvest->tenant->slug]),
+                'data' => [
+                    'thing1' => ['value' => $harvest->plot?->code ?? '你的田'],
+                    'thing2' => ['value' => mb_substr($harvest->notes ?? '今天采了，正在打单配送', 0, 20)],
+                ],
+            ]);
         });
     }
 }

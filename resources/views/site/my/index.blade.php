@@ -7,6 +7,7 @@
     <div class="page-header">
       <h1 class="page-title">我的认养</h1>
       <a class="back-link" href="{{ route('tenant.my.referral', ['tenant' => $tenant->slug]) }}">我的推荐码 ›</a>
+      <a class="back-link" href="{{ route('tenant.my.member', ['tenant' => $tenant->slug]) }}">会员等级 ›</a>
     </div>
 
     @if (session('ok'))

@@ -5,6 +5,7 @@
 @section('content')
   <div class="page-header">
     <h1 class="page-title">订单管理</h1>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.adoptions.create', ['tenant' => $tenant->slug]) }}">+ 手动建单</a>
     <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">刷新</a>
   </div>
 

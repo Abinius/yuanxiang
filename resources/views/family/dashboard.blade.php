@@ -21,6 +21,7 @@
       'harvest'    => '采收',
     ];
     $scopeNames = array_map(fn ($s) => $scopeLabels[$s] ?? $s, $scopes ?? []);
+    $isAdmin = auth()->user()->role->value === 'tenant_admin';
   @endphp
 
   <h1 class="hero-title mb-2" style="font-size:var(--ds-h2)">{{ $tenant->name }} · 家人录入端</h1>
@@ -102,7 +103,12 @@
         <div class="card mb-1" style="padding:12px 16px;margin-bottom:8px">
           <div class="flex justify-between items-center">
             <span class="font-medium">{{ $log->title }}</span>
-            <span class="muted text-xs">{{ $log->occurred_at?->format('Y-m-d') }}</span>
+            <span class="flex items-center gap-2">
+              <span class="muted text-xs">{{ $log->occurred_at?->format('Y-m-d') }}</span>
+              @if ($isAdmin || $log->author_id === auth()->id())
+                <a class="text-xs" href="{{ route('tenant.family.logs.edit', ['tenant' => $tenant->slug, 'farm_log' => $log]) }}">编辑</a>
+              @endif
+            </span>
           </div>
           <div class="muted text-xs mt-1">
             {{ $log->plot?->code ?? '—' }} · {{ $log->type->label() }}
@@ -120,7 +126,12 @@
         <div class="card mb-1" style="padding:12px 16px;margin-bottom:8px">
           <div class="flex justify-between items-center">
             <span class="font-medium mono">{{ $batch->batch_no }}</span>
-            <span class="muted text-xs">{{ $batch->produced_at?->format('Y-m-d') }}</span>
+            <span class="flex items-center gap-2">
+              <span class="muted text-xs">{{ $batch->produced_at?->format('Y-m-d') }}</span>
+              @if (in_array('fertilizer', $scopes ?? []))
+                <a class="text-xs" href="{{ route('tenant.family.fertilizer.edit', ['tenant' => $tenant->slug, 'batch' => $batch]) }}">编辑</a>
+              @endif
+            </span>
           </div>
           <div class="muted text-xs mt-1">
             {{ $batch->nxlb_ref ? 'NXLB '.$batch->nxlb_ref : 'NXLB 投入品批次' }}
@@ -137,7 +148,12 @@
         <div class="card mb-1" style="padding:12px 16px;margin-bottom:8px">
           <div class="flex justify-between items-center">
             <span class="font-medium">{{ $harvest->plot?->code ?? '—' }}</span>
-            <span class="muted text-xs">{{ $harvest->harvested_at?->format('Y-m-d') }}</span>
+            <span class="flex items-center gap-2">
+              <span class="muted text-xs">{{ $harvest->harvested_at?->format('Y-m-d') }}</span>
+              @if ($isAdmin || $harvest->handler_id === auth()->id())
+                <a class="text-xs" href="{{ route('tenant.family.harvest.edit', ['tenant' => $tenant->slug, 'harvest' => $harvest]) }}">编辑</a>
+              @endif
+            </span>
           </div>
           <div class="muted text-xs mt-1">
             {{ $harvest->season_year }} 年度 · {{ $harvest->dry_weight_kg }} kg

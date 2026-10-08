@@ -50,7 +50,7 @@ composer dev    # serve + queue:listen + pail + vite 并发
 php artisan config:clear && php artisan test
 ```
 
-167 tests（含安全基线 + 保底规则引擎单元测试）。
+273 tests（含安全基线 + 保底规则引擎单元测试）。
 
 ## 设计系统
 

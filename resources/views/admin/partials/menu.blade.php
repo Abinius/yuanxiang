@@ -39,6 +39,16 @@
        data-label="配送管理">
       <span class="menu-icon"><x-lucide-truck /></span><span class="menu-text">配送管理</span>
     </a>
+    <a class="menu-link {{ str_starts_with($current, 'tenant.admin.shipments') ? 'active' : '' }}"
+       href="{{ route('tenant.admin.shipments.index', ['tenant' => $tenant->slug]) }}"
+       data-label="统一发货台">
+      <span class="menu-icon"><x-lucide-package /></span><span class="menu-text">统一发货台</span>
+    </a>
+    <a class="menu-link {{ str_starts_with($current, 'tenant.admin.plots') ? 'active' : '' }}"
+       href="{{ route('tenant.admin.plots.index', ['tenant' => $tenant->slug]) }}"
+       data-label="地块管理">
+      <span class="menu-icon"><x-lucide-map-pin /></span><span class="menu-text">地块管理</span>
+    </a>
   </div>
 
   <div class="menu-group">
@@ -57,6 +67,11 @@
        href="{{ route('tenant.admin.promotions.index', ['tenant' => $tenant->slug]) }}"
        data-label="促销">
       <span class="menu-icon"><x-lucide-megaphone /></span><span class="menu-text">促销</span>
+    </a>
+    <a class="menu-link {{ str_starts_with($current, 'tenant.admin.commissions') ? 'active' : '' }}"
+       href="{{ route('tenant.admin.commissions.ledger', ['tenant' => $tenant->slug]) }}"
+       data-label="佣金审核">
+      <span class="menu-icon"><x-lucide-wallet /></span><span class="menu-text">佣金审核</span>
     </a>
   </div>
 
