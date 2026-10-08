@@ -57,20 +57,16 @@ class DeliveryService
 
     public function markShipped(Delivery $delivery, string $trackingNo, ?string $carrier = null): void
     {
-        $delivery->forceFill([
+        $delivery->transitionTo(DeliveryStatus::Shipped, [
             'tracking_no' => $trackingNo,
             'carrier' => $carrier,
-            'status' => DeliveryStatus::Shipped->value,
             'shipped_at' => now(),
-        ])->save();
+        ]);
     }
 
     public function markReceived(Delivery $delivery): void
     {
-        $delivery->forceFill([
-            'status' => DeliveryStatus::Delivered->value,
-            'received_at' => now(),
-        ])->save();
+        $delivery->transitionTo(DeliveryStatus::Delivered, ['received_at' => now()]);
     }
 
     private function pickAddressId(Adoption $adoption): ?int

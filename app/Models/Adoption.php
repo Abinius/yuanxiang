@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\AdoptionStatus;
+use App\Models\Concerns\HasStatusTransitions;
 use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Adoption extends Model
 {
-    use SoftDeletes, TenantScoped;
+    use SoftDeletes, TenantScoped, HasStatusTransitions;
 
     protected $fillable = [
         'tenant_id',

@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Enums\GiftBoxStatus;
 use App\Enums\GiftFestival;
+use App\Models\Concerns\HasStatusTransitions;
 use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GiftBox extends Model
 {
-    use SoftDeletes, TenantScoped;
+    use SoftDeletes, TenantScoped, HasStatusTransitions;
 
     protected $fillable = [
         'tenant_id',

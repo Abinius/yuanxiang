@@ -54,28 +54,21 @@ class GiftBoxService
 
     public function markMaking(GiftBox $giftBox): void
     {
-        abort_unless($giftBox->status === GiftBoxStatus::Draft, 422, '仅草稿可开始制作');
-        $giftBox->forceFill(['status' => GiftBoxStatus::Making->value])->save();
+        $giftBox->transitionTo(GiftBoxStatus::Making);
     }
 
     public function markShipped(GiftBox $giftBox, string $trackingNo, ?string $carrier = null): void
     {
-        abort_unless(in_array($giftBox->status, [GiftBoxStatus::Draft, GiftBoxStatus::Making], true), 422, '当前状态不可发货');
-        $giftBox->forceFill([
-            'status' => GiftBoxStatus::Shipped->value,
+        $giftBox->transitionTo(GiftBoxStatus::Shipped, [
             'tracking_no' => $trackingNo,
             'carrier' => $carrier,
             'shipped_at' => now(),
-        ])->save();
+        ]);
     }
 
     public function markDelivered(GiftBox $giftBox): void
     {
-        abort_unless($giftBox->status === GiftBoxStatus::Shipped, 422, '仅已发货可送达');
-        $giftBox->forceFill([
-            'status' => GiftBoxStatus::Delivered->value,
-            'received_at' => now(),
-        ])->save();
+        $giftBox->transitionTo(GiftBoxStatus::Delivered, ['received_at' => now()]);
     }
 
     private function uniqueCode(): string

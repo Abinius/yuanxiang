@@ -20,4 +20,19 @@ enum AdoptionStatus: string
             self::Cancelled => '已取消',
         };
     }
+
+    /**
+     * 状态转移图：续费不原地改状态，而是建新单，故 Ended 无出边。
+     * 退款/弃付到期 → Cancelled（终态）。
+     */
+    public function transitions(): array
+    {
+        return match ($this) {
+            self::PendingPayment => [self::PendingAgreement, self::Cancelled],
+            self::PendingAgreement => [self::Active, self::Cancelled],
+            self::Active => [self::Ended, self::Cancelled],
+            self::Ended => [],
+            self::Cancelled => [],
+        };
+    }
 }

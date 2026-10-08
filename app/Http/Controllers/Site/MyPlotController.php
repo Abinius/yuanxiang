@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Site;
 
 use App\Enums\AdoptionStatus;
-use App\Enums\DeliveryStatus;
 use App\Enums\PlotType;
 use App\Http\Controllers\Controller;
 use App\Enums\FarmLogType;
@@ -92,12 +91,11 @@ class MyPlotController extends Controller
         ]);
     }
 
-    /** C 端确认收货（owner-gated + 状态守卫，仅已发货可签收）。 */
+    /** C 端确认收货（owner-gated；状态守卫在 Delivery::transitionTo 内）。 */
     public function receive(Adoption $adoption, Delivery $delivery, Request $request)
     {
         abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_if($delivery->adoption_id !== $adoption->id, 404);
-        abort_unless($delivery->status === DeliveryStatus::Shipped, 422, '仅已发货可确认收货');
 
         $this->deliveries->markReceived($delivery);
 

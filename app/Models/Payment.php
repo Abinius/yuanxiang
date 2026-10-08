@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatus;
+use App\Models\Concerns\HasStatusTransitions;
 use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
-    use TenantScoped;
+    use TenantScoped, HasStatusTransitions;
 
     protected $fillable = [
         'tenant_id',

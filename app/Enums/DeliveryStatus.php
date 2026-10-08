@@ -16,4 +16,14 @@ enum DeliveryStatus: string
             self::Delivered => '已签收',
         };
     }
+
+    /** 单向链，无回退：已签收不可重发/撤回。 */
+    public function transitions(): array
+    {
+        return match ($this) {
+            self::Pending => [self::Shipped],
+            self::Shipped => [self::Delivered],
+            self::Delivered => [],
+        };
+    }
 }

@@ -127,14 +127,13 @@ class AdoptionService
         }
 
         DB::transaction(function () use ($payment, $adoption, $meta) {
-            $payment->update([
-                'status' => PaymentStatus::Paid->value,
+            $payment->transitionTo(PaymentStatus::Paid, [
                 'paid_at' => now(),
                 'transaction_id' => $meta['transaction_id'] ?? $payment->transaction_id,
                 'method' => $meta['method'] ?? 'wechat',
             ]);
 
-            $adoption->update(['status' => AdoptionStatus::PendingAgreement->value]);
+            $adoption->transitionTo(AdoptionStatus::PendingAgreement);
         });
     }
 
@@ -143,7 +142,7 @@ class AdoptionService
      */
     public function confirmMockPayment(Adoption $adoption): void
     {
-        abort_unless($adoption->status === AdoptionStatus::PendingPayment, 422, '当前状态不支持支付');
+        abort_unless($adoption->canTransitionTo(AdoptionStatus::PendingAgreement), 422, '当前状态不支持支付');
 
         $this->markPaid($adoption, ['method' => 'manual']);
     }
@@ -163,12 +162,9 @@ class AdoptionService
         }
 
         DB::transaction(function () use ($payment, $adoption) {
-            $payment->update([
-                'status' => PaymentStatus::Refunded->value,
-                'refund_at' => now(),
-            ]);
+            $payment->transitionTo(PaymentStatus::Refunded, ['refund_at' => now()]);
 
-            $adoption->update(['status' => AdoptionStatus::Cancelled->value]);
+            $adoption->transitionTo(AdoptionStatus::Cancelled);
             $this->commissions->freezeFor($adoption);
         });
     }
@@ -203,7 +199,7 @@ class AdoptionService
 
         $count = 0;
         foreach ($expired as $adoption) {
-            $adoption->update(['status' => AdoptionStatus::Cancelled->value]);
+            $adoption->transitionTo(AdoptionStatus::Cancelled);
 
             // 释放田块（本季节点已被占用的可能性：仅 pending_payment 占用，取消后回到可认养）
             if ($adoption->adoptable_type === Plot::class) {
@@ -224,13 +220,10 @@ class AdoptionService
      */
     public function signAgreement(Adoption $adoption, string $namedLabel, ?string $signedIp = null): void
     {
-        abort_unless($adoption->status === AdoptionStatus::PendingAgreement, 422, '当前状态不可签署协议');
-
-        $adoption->update([
+        $adoption->transitionTo(AdoptionStatus::Active, [
             'named_label' => $namedLabel,
             'agreement_signed_at' => now(),
             'end_date' => $adoption->start_date->copy()->addYear(),
-            'status' => AdoptionStatus::Active->value,
         ]);
 
         $this->contracts->createFor($adoption, $signedIp);
