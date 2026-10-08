@@ -105,3 +105,8 @@ routes/{web.php, platform.php}
 ## 背景
 
 宁夏红寺堡光彩村枸杞种植家庭出身，全链条内化：种植家庭 + 有机肥厂（NXLB）+ 在地农业劳力 + 品牌 + 平台。6 亩枸杞「云乡民」认养起步，样板田 → 村庄平台。
+
+## 依赖与许可
+
+第三方依赖共 273 个（PHP 运行时 117 + JS 构建期 156），全部为宽松许可（MIT / BSD / ISC / Apache-2.0 / MPL-2.0），无 GPL / AGPL 等传染性依赖。完整清单见 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md)。
+
