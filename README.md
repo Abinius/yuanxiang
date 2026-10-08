@@ -16,7 +16,7 @@
 - **SQLite** 默认（可换 MySQL/PG）；**yansongda/laravel-pay**（微信支付 v3）
 - **mallardduck/blade-lucide-icons** —— `<x-lucide-*>` 图标组件
 - 设计系统：编辑风农业版式令牌（苔绿 `#3F6B4F` / 稻黄 `#A8791E` / 纸白底 / hairline 描边 / 直角化圆角 2·4·6·8px）；`--ds-*` token 系列
-- 字体：Instrument Serif + Noto Serif SC（标题）/ Instrument Sans + Noto Sans SC（正文）/ SF Mono（代码）
+- 字体：纯系统字体栈（宋体系标题 / 系统黑体正文 / 系统等宽），不自托管、不引 CDN，零字体网络请求
 
 ## 架构
 

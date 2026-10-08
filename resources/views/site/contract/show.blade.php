@@ -37,7 +37,9 @@
     </div>
 
     <p class="note text-xs mt-4">
-      本合同为电子合同，条款于签署时按版本 {{ $contract->template_version }} 快照锁定。
+      本合同为电子合同，条款于签署时按版本 {{ $contract->template_version }} 快照锁定；
+      平台通用条款见
+      <a href="{{ route('tenant.agreement.show', ['key' => 'service']) }}">《认养服务协议》</a>。
       如需纸质版，可使用浏览器「打印」功能另存 PDF。
     </p>
 

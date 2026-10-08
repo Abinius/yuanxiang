@@ -28,13 +28,15 @@ class AuthTest extends TestCase
         $this->get("/login")
             ->assertOk()
             ->assertSee('账号登录')
-            ->assertSee('微信一键登录');
+            ->assertSee('微信一键登录')
+            ->assertSee('服务协议')
+            ->assertSee('隐私政策');
     }
 
     public function test_password_login_succeeds_and_redirects(): void
     {
         $t = $this->makeTenant();
-        User::create([
+        $user = User::create([
             'tenant_id' => $t->id,
             'phone' => '13800000001',
             'password' => 'secret123',
@@ -42,9 +44,35 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/login", ['account' => '13800000001', 'password' => 'secret123'])
+        $this->post("/login", ['account' => '13800000001', 'password' => 'secret123', 'agreed' => '1'])
             ->assertRedirect("/");
         $this->assertAuthenticated();
+        $this->assertNotNull($user->fresh()->agreement_accepted_at);
+    }
+
+    public function test_password_login_without_acceptance_is_rejected(): void
+    {
+        $t = $this->makeTenant();
+        User::create([
+            'tenant_id' => $t->id,
+            'phone' => '13800000002',
+            'password' => 'secret123',
+            'role' => UserRole::Villager->value,
+        ]);
+
+        $this->post("/login", ['account' => '13800000002', 'password' => 'secret123'])
+            ->assertSessionHasErrors('agreed');
+        $this->assertGuest();
+    }
+
+    public function test_wechat_login_stamps_agreement_acceptance(): void
+    {
+        $this->makeTenant();
+
+        $this->get("/login/wechat")
+            ->assertRedirect("/");
+        $this->assertAuthenticated();
+        $this->assertNotNull(auth()->user()->fresh()->agreement_accepted_at);
     }
 
     public function test_wrong_password_returns_form_error(): void
@@ -57,7 +85,7 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/login", ['account' => '13800000001', 'password' => 'wrong'])
+        $this->post("/login", ['account' => '13800000001', 'password' => 'wrong', 'agreed' => '1'])
             ->assertSessionHasErrors('account');
         $this->assertGuest();
     }
@@ -72,7 +100,7 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/login", ['account' => 'abin', 'password' => 'secret123'])
+        $this->post("/login", ['account' => 'abin', 'password' => 'secret123', 'agreed' => '1'])
             ->assertRedirect("/");
         $this->assertAuthenticated();
     }

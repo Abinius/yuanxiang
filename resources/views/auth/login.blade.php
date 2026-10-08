@@ -40,6 +40,15 @@
           <label>密码</label>
           <input class="input" type="password" name="password" required autocomplete="current-password">
         </div>
+        <label class="agreement-check">
+          <input type="checkbox" name="agreed" value="1" required>
+          <span>
+            我已阅读并同意
+            <a href="{{ route('tenant.agreement.show', ['key' => 'service']) }}">《服务协议》</a>
+            与
+            <a href="{{ route('tenant.agreement.show', ['key' => 'privacy']) }}">《隐私政策》</a>
+          </span>
+        </label>
         <button class="btn btn-primary btn-block btn-lg" type="submit">登 录</button>
       </form>
       <p class="login-hint">忘记密码？请先微信登录或联系客服</p>
@@ -49,7 +58,7 @@
       <a class="btn btn-wechat btn-block btn-lg" href="{{ route('tenant.login.wechat', []) }}">
         微信一键登录
       </a>
-      <p class="login-hint">微信授权后自动注册为云乡民</p>
+      <p class="login-hint">微信授权即表示同意《服务协议》《隐私政策》，授权后自动注册为云乡民</p>
     </div>
   </div>
 </div>

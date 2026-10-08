@@ -74,7 +74,7 @@ foreach ($npm as $lic => $pkgs) {
     $out .= implode(' · ', $flat) . "\n\n";
 }
 $out .= "## 其他\n\n";
-$out .= "- **字体**：未自托管任何字体文件，也无 CDN 引入，`--font-serif` / `--font-sans` 栈中的字体名加载不到时走系统 fallback，故无字体许可义务（Noto / OFL 亦为宽松许可）。\n";
+$out .= "- **字体**：`--font-sans` / `--font-serif` / `--font-mono` 全为系统字体栈，不自托管字体文件、不引 CDN，无字体许可义务。\n";
 $out .= "- **图片**：`public/` 下无第三方图片；用户上传内容走 `storage/`。\n";
 $out .= "- **图标**：Lucide 图标数据随 `mallardduck/blade-lucide-icons`（MIT）分发，Lucide 本体为 ISC。\n";
 $out .= "- **CI**：`actions/checkout`、`actions/setup-node`、`shivammathur/setup-php` 均为 MIT。\n";

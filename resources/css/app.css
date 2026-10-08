@@ -18,19 +18,15 @@
 @source '../**/*.js';
 
 /* ---------- 字体 ---------- */
-/* Instrument Serif 无可靠自托管/CDN 字体文件，直接跳过 @font-face，
-   依赖 --font-serif 栈里的 Noto Serif SC / Songti SC / STSong 系统 fallback（已测试可用）。
-   如需真上 Instrument Serif，需自托管 .woff2 到此仓库 assets/ 再引用本地 url。 */
+/* 纯系统字体栈：不自托管、不引 CDN，任何环境都不发字体网络请求，也无许可义务。 */
 
 @theme {
   /* 字体栈:标题衬线(品牌感) + 正文系统黑体 + 代码等宽 */
-  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system,
-    'Segoe UI', 'Noto Sans SC', Roboto, sans-serif, 'Apple Color Emoji',
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    'PingFang SC', 'Microsoft YaHei', sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji';
-  --font-serif: 'Instrument Serif', 'Noto Serif SC', 'Songti SC',
-    'STSong', 'SimSun', Georgia, serif;
-  --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas,
-    'Liberation Mono', Menlo, Courier, 'Microsoft YaHei', monospace;
+  --font-serif: 'Songti SC', 'STSong', 'Noto Serif SC', 'SimSun', Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 
   /* 品牌 · 苔绿 moss（主色 #3F6B4F） */
   --color-brand-50:  rgb(241, 245, 240);
@@ -190,6 +186,18 @@
 }
 .login-panel { display: none; }
 .login-panel.active { display: block; }
+.agreement-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: var(--ds-body-xs);
+  color: var(--ds-text-mute);
+  line-height: 1.6;
+}
+.agreement-check input { margin-top: 3px; accent-color: var(--color-brand-500); }
+.agreement-check a { color: var(--color-brand-500); text-decoration: none; }
+.agreement-check a:hover { text-decoration: underline; }
 .login-hint {
   margin-top: 16px;
   font-size: var(--ds-body-xs);
@@ -307,6 +315,8 @@
   color: var(--ds-text-mute);
   font-size: var(--ds-body-xs);
 }
+.site-footer a { color: var(--ds-text-soft); text-decoration: none; }
+.site-footer a:hover { color: var(--color-brand-500); }
 
 /* 眉标(serif 强调前缀) */
 .eyebrow {

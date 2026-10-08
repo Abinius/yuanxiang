@@ -32,6 +32,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'account' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'agreed' => ['accepted'],
         ]);
 
         $account = $credentials['account'];
@@ -50,9 +51,10 @@ class LoginController extends Controller
             throw ValidationException::withMessages(['account' => '账号或密码错误']);
         }
 
+        $this->acceptAgreement($request->user());
         $request->session()->regenerate();
 
-        return redirect()->intended($this->homeFor($request->user(), Tenant::current()));
+        return redirect()->intended($this->homeFor($request->user()));
     }
 
     public function wechat()
@@ -128,11 +130,20 @@ class LoginController extends Controller
      */
     private function loginCrossTenantGuarded(User $user): RedirectResponse
     {
-
         Auth::login($user);
         request()->session()->regenerate();
 
-        return redirect($this->homeFor($user, Tenant::current()));
+        $this->acceptAgreement($user);
+
+        return redirect($this->homeFor($user));
+    }
+
+    /** 首次同意《服务协议》《隐私政策》即留痕（登录勾选与微信授权同义）。 */
+    private function acceptAgreement(User $user): void
+    {
+        if ($user->agreement_accepted_at === null) {
+            $user->forceFill(['agreement_accepted_at' => now()])->save();
+        }
     }
 
     /**

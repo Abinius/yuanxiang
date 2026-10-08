@@ -55,5 +55,6 @@
 <main class="main">
   @yield('content')
 </main>
+@include('site.partials.footer')
 </body>
 </html>

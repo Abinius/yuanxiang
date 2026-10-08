@@ -42,7 +42,7 @@
     <div class="admin-shell">
       <aside class="sidebar" id="admin-sidebar">
         <div class="sidebar-head">
-          <span class="sidebar-title">云乡后台</span>
+          <span class="sidebar-title">{{ $tenant->name ?? '陌上原乡平台' }}后台</span>
         </div>
         @include('admin.partials.menu')
         <div class="sidebar-foot">

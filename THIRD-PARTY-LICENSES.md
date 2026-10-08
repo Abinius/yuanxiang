@@ -191,7 +191,7 @@
 
 ## 其他
 
-- **字体**：未自托管任何字体文件，也无 CDN 引入，`--font-serif` / `--font-sans` 栈中的字体名加载不到时走系统 fallback，故无字体许可义务（Noto / OFL 亦为宽松许可）。
+- **字体**：`--font-sans` / `--font-serif` / `--font-mono` 全为系统字体栈，不自托管字体文件、不引 CDN，无字体许可义务。
 - **图片**：`public/` 下无第三方图片；用户上传内容走 `storage/`。
 - **图标**：Lucide 图标数据随 `mallardduck/blade-lucide-icons`（MIT）分发，Lucide 本体为 ISC。
 - **CI**：`actions/checkout`、`actions/setup-node`、`shivammathur/setup-php` 均为 MIT。

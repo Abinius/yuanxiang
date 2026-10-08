@@ -28,6 +28,7 @@ class User extends Authenticatable
         'village_card_no',
         'joined_year',
         'password_set_at',
+        'agreement_accepted_at',
         'member_level',
         'member_since',
         'birthday',
@@ -45,6 +46,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'password_set_at' => 'datetime',
+            'agreement_accepted_at' => 'datetime',
             'member_since' => 'datetime',
             'birthday' => 'date',
         ];

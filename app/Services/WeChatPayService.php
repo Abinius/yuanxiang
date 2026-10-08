@@ -24,7 +24,7 @@ class WeChatPayService
     {
         $order = [
             'out_trade_no' => $adoption->adoption_no,
-            'description' => '光彩云村庄·认养 '.$adoption->adoption_no,
+            'description' => ($adoption->tenant?->name ?? config('site.defaults.title')).'·认养 '.$adoption->adoption_no,
             'amount' => [
                 'total' => (int) bcmul((string) $adoption->annual_fee, '100', 0),
                 'currency' => 'CNY',

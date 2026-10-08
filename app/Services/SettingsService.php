@@ -43,4 +43,19 @@ class SettingsService
     {
         return $this->get('contract', []);
     }
+
+    public function agreements(): array
+    {
+        return $this->get('agreements', []);
+    }
+
+    /** 页脚三层（版权主体 / 备案号 / 联系方式），空值回落 config 默认。 */
+    public function footer(): array
+    {
+        return [
+            'copyright' => (string) $this->get('footer_copyright', ''),
+            'icp' => (string) $this->get('icp_number', '') ?: null,
+            'contact' => (string) $this->get('contact', '') ?: null,
+        ];
+    }
 }

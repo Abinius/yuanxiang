@@ -20,7 +20,7 @@
   </section>
 
   <section class="section">
-    <div class="section-title">为什么是云乡</div>
+    <div class="section-title">为什么是陌上原乡</div>
     <div class="card-grid grid-3">
       <div class="card">
         <div class="num sm serif text-brand">真实田块</div>
@@ -95,8 +95,4 @@
       </div>
     </details>
   </section>
-
-  <footer class="site-footer">
-    {{ config('site.defaults.footer_copyright', '宁夏花乌巷食品有限公司') }} · 陌上原乡
-  </footer>
 @endsection

@@ -43,7 +43,9 @@
         <button class="btn btn-primary btn-block btn-lg" type="submit">签署协议并命名</button>
       </form>
       <p class="note text-xs" style="margin-top:14px">
-        签署即视为同意认养协议(丰欠共担 / 保底条款);开发期模拟,正式协议文案随法务定稿。
+        签署即视为同意
+        <a href="{{ route('tenant.agreement.show', ['key' => 'service']) }}">《认养服务协议》</a>
+        （含丰欠共担 / 保底条款）；签署后平台按当时条款版本生成《认养合同》快照，可在「我的田」随时打印。
       </p>
 
     @else

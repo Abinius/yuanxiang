@@ -104,7 +104,7 @@ class AdminAccountTest extends TestCase
 
         // 禁用后登录被拦截
         $this->post("/login", [
-            'account' => '13700000003', 'password' => 'secret123',
+            'account' => '13700000003', 'password' => 'secret123', 'agreed' => '1',
         ])->assertSessionHasErrors(['account']);
     }
 
@@ -136,7 +136,7 @@ class AdminAccountTest extends TestCase
 
         // 新密码可登录
         $this->post("/login", [
-            'account' => '13700000004', 'password' => 'newpass123',
+            'account' => '13700000004', 'password' => 'newpass123', 'agreed' => '1',
         ])->assertRedirect();
         $this->assertAuthenticated();
     }

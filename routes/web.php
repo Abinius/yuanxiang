@@ -22,6 +22,7 @@ use App\Http\Controllers\Family\FertilizerBatchController as FamilyFertilizer;
 use App\Http\Controllers\Family\HarvestController as FamilyHarvest;
 use App\Http\Controllers\Family\PlotController as FamilyPlots;
 use App\Http\Controllers\Pay\WeChatPayController;
+use App\Http\Controllers\Site\AgreementController;
 use App\Http\Controllers\Site\AdoptController;
 use App\Http\Controllers\Site\ContractController;
 use App\Http\Controllers\Site\GiftBoxController;
@@ -97,6 +98,11 @@ Route::get('/', function () {
     // 短链接跳转（公开）+ 公开铭牌落地页（外链可打开）
     Route::get('/u/{code}', [ShortLinkController::class, 'redirect'])->middleware('throttle:60,1')->name('tenant.short-link.redirect');
     Route::get('/nameplate/{adoption}', [ShareController::class, 'nameplate'])->name('tenant.share.nameplate');
+
+    // 公开页（登录前也要能看）：公示协议（认养服务协议 / 隐私政策）
+    Route::get('/agreement/{key}', [AgreementController::class, 'show'])
+        ->where('key', 'service|privacy')
+        ->name('tenant.agreement.show');
 
     // 我的田（云乡民：铭牌 + 生长日历 + 农事动态 + 分享）
     Route::get('/my', [MyPlotController::class, 'index'])->middleware(['auth', 'tenant.member'])->name('tenant.my.index');
