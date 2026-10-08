@@ -20,7 +20,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - uses: shivammathur/setup-php@v3
+      # 该 action 无 v3 标签，固定到 semver release
+      - uses: shivammathur/setup-php@2.40.0
         with:
           php-version: '8.2'
           extensions: mbstring, pdo_sqlite, sqlite3, dom, xml, curl, bcmath, tokenizer, gd
