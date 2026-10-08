@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\SettingsService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -22,7 +21,6 @@ class SettingsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -41,7 +39,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/settings")
+            ->get("/admin/settings")
             ->assertOk()
             ->assertSee('品牌主色')
             ->assertSee('SEO');
@@ -53,7 +51,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->put("/t/{$t->slug}/admin/settings", [
+            ->put("/admin/settings", [
                 'brand_primary' => '#123456',
                 'brand_accent' => '#654321',
                 'seo_title' => '测试站点',
@@ -67,7 +65,7 @@ class SettingsTest extends TestCase
         $this->assertSame('测试描述文案', $t->settings['seo']['description']);
 
         // 前台布局 :root 品牌色 + SEO description 即时生效
-        $this->get("/t/{$t->slug}")
+        $this->get("")
             ->assertOk()
             ->assertSee('--primary:#123456', false)
             ->assertSee('测试描述文案');
@@ -83,7 +81,7 @@ class SettingsTest extends TestCase
         ]);
 
         $this->actingAs($villager)
-            ->get("/t/{$t->slug}/admin/settings")
+            ->get("/admin/settings")
             ->assertForbidden();
     }
 
@@ -92,7 +90,7 @@ class SettingsTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}")
+        $this->get("")
             ->assertOk()
             ->assertSee('og:title', false)
             ->assertSee(config('site.defaults.description'));
@@ -106,7 +104,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/settings")
+            ->get("/admin/settings")
             ->assertOk()
             ->assertSee('分地档年费')
             ->assertSee('保底产量')
@@ -120,7 +118,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->put("/t/{$t->slug}/admin/settings", [
+            ->put("/admin/settings", [
                 'fendi_yearly' => 6000,
                 'zhu_yearly' => 360,
                 'guarantee_fendi' => 20,
@@ -159,7 +157,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->put("/t/{$t->slug}/admin/settings", [
+            ->put("/admin/settings", [
                 'rate_partner' => 11, // 超 10% 合规上限
             ])
             ->assertSessionHasErrors('rate_partner');
@@ -171,7 +169,7 @@ class SettingsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->put("/t/{$t->slug}/admin/settings", [
+            ->put("/admin/settings", [
                 'tier_red' => 1,
                 'tier_expert' => 8888,
                 'tier_partner' => 50000,

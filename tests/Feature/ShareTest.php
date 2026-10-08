@@ -7,7 +7,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +22,6 @@ class ShareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -63,7 +61,7 @@ class ShareTest extends TestCase
         $adoption = $user->adoptions()->first();
 
         // guest 未登录可直接打开公开铭牌落地页（外链分享不 404）
-        $this->get("/t/{$t->slug}/nameplate/{$adoption->id}")
+        $this->get("/nameplate/{$adoption->id}")
             ->assertOk()
             ->assertSee('阿林的光彩田')
             ->assertSee('复制链接')
@@ -78,7 +76,7 @@ class ShareTest extends TestCase
         $plot = $user->adoptions()->first()->adoptable;
 
         // 溯源页（公开）渲染分享组件
-        $this->get("/t/{$t->slug}/trace/{$plot->id}")
+        $this->get("/trace/{$plot->id}")
             ->assertOk()
             ->assertSee('复制链接');
     }

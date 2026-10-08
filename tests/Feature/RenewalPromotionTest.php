@@ -10,7 +10,6 @@ use App\Models\Promotion;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -28,7 +27,6 @@ class RenewalPromotionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -91,7 +89,7 @@ class RenewalPromotionTest extends TestCase
         $old = $user->adoptions()->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$old->id}/renew")
+            ->post("/my/plot/{$old->id}/renew")
             ->assertRedirect();
 
         $new = Adoption::where('renewed_from_id', $old->id)->first();
@@ -109,12 +107,12 @@ class RenewalPromotionTest extends TestCase
         $old = $user->adoptions()->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$old->id}/auto-renew")
+            ->post("/my/plot/{$old->id}/auto-renew")
             ->assertRedirect();
         $this->assertTrue($old->fresh()->auto_renew);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$old->id}/auto-renew")
+            ->post("/my/plot/{$old->id}/auto-renew")
             ->assertRedirect();
         $this->assertFalse($old->fresh()->auto_renew);
     }
@@ -132,7 +130,7 @@ class RenewalPromotionTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$old->id}/renew")
+            ->post("/my/plot/{$old->id}/renew")
             ->assertRedirect();
 
         $new = Adoption::where('renewed_from_id', $old->id)->first();
@@ -159,7 +157,7 @@ class RenewalPromotionTest extends TestCase
         $plot = Plot::where('tenant_id', $t->id)->where('type', 'plot')->where('status', 'available')->orderBy('id')->first();
 
         $this->actingAs($newUser)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '王五', 'phone' => '13800000009', 'province' => '宁夏',
                 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '2 号',
                 'referral_code' => 'REF-TEST-001',
@@ -196,7 +194,7 @@ class RenewalPromotionTest extends TestCase
         $user = $this->makeUser();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/promotions")
+            ->get("/admin/promotions")
             ->assertForbidden();
     }
 
@@ -206,7 +204,7 @@ class RenewalPromotionTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/promotions", [
+            ->post("/admin/promotions", [
                 'name' => '新客立减 200',
                 'type' => 'new_customer',
                 'amount' => '200',
@@ -228,7 +226,7 @@ class RenewalPromotionTest extends TestCase
         $user = $this->makeUser();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/referral")
+            ->get("/my/referral")
             ->assertOk()
             ->assertSee('我的分销')
             ->assertSee('佣金账户')

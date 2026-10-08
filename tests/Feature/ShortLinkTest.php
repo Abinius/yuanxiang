@@ -6,7 +6,6 @@ use App\Models\ShortLink;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\ShortLinkService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,7 +21,6 @@ class ShortLinkTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -41,7 +39,7 @@ class ShortLinkTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/short-links", [
+            ->post("/admin/short-links", [
                 'target_url' => url('/t/guangcai/trace/1'),
                 'code' => 'mytrace',
             ])
@@ -60,7 +58,7 @@ class ShortLinkTest extends TestCase
         $target = url('/t/guangcai/adopt');
         $link = app(ShortLinkService::class)->create($t, $target, 'abc123');
 
-        $this->get("/t/{$t->slug}/u/{$link->code}")
+        $this->get("/u/{$link->code}")
             ->assertRedirect($target);
 
         $this->assertSame(1, $link->fresh()->click_count);
@@ -71,17 +69,7 @@ class ShortLinkTest extends TestCase
         $this->seed([BaseSeeder::class, AdminSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/u/nonexist")->assertNotFound();
-    }
-
-    public function test_cross_tenant_code_404(): void
-    {
-        $this->seed([BaseSeeder::class, AdminSeeder::class]);
-        $t = $this->tenant();
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $link = app(ShortLinkService::class)->create($other, url('/'), 'other1');
-
-        $this->get("/t/{$t->slug}/u/{$link->code}")->assertNotFound();
+        $this->get("/u/nonexist")->assertNotFound();
     }
 
     public function test_custom_code_conflict_422(): void
@@ -91,7 +79,7 @@ class ShortLinkTest extends TestCase
         app(ShortLinkService::class)->create($t, url('/'), 'dup001');
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/short-links", [
+            ->post("/admin/short-links", [
                 'target_url' => url('/'),
                 'code' => 'dup001',
             ])

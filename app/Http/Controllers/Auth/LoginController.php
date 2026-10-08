@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Models\User;
 use App\Services\WechatOAuth;
 use Illuminate\Http\RedirectResponse;
@@ -22,12 +22,12 @@ class LoginController extends Controller
     {
     }
 
-    public function show(Tenant $tenant)
+    public function show()
     {
-        return view('auth.login', ['tenant' => $tenant]);
+        return view('auth.login', []);
     }
 
-    public function login(Request $request, Tenant $tenant)
+    public function login(Request $request)
     {
         $credentials = $request->validate([
             'account' => ['required', 'string'],
@@ -42,7 +42,7 @@ class LoginController extends Controller
         $ok = Auth::attempt([
             $field => $account,
             'password' => $credentials['password'],
-            'tenant_id' => $tenant->id,
+            'tenant_id' => Tenant::current()->id,
             'is_disabled' => false,
         ], (bool) $request->boolean('remember'));
 
@@ -52,25 +52,25 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended($this->homeFor($request->user(), $tenant));
+        return redirect()->intended($this->homeFor($request->user(), Tenant::current()));
     }
 
-    public function wechat(Tenant $tenant)
+    public function wechat()
     {
         if ($this->wechat->mockEnabled()) {
             $mock = $this->wechat->mockUser();
             $user = User::firstOrCreate(
                 ['openid' => $mock['openid']],
-                ['tenant_id' => $tenant->id, 'nickname' => $mock['nickname'], 'role' => UserRole::Villager->value]
+                ['tenant_id' => Tenant::current()->id, 'nickname' => $mock['nickname'], 'role' => UserRole::Villager->value]
             );
 
-            return $this->loginCrossTenantGuarded($user, $tenant);
+            return $this->loginCrossTenantGuarded($user, Tenant::current());
         }
 
-        return redirect()->away($this->wechat->authorizeUrl($tenant));
+        return redirect()->away($this->wechat->authorizeUrl(Tenant::current()));
     }
 
-    public function wechatCallback(Request $request, Tenant $tenant)
+    public function wechatCallback(Request $request)
     {
         abort_unless(
             $request->state && hash_equals((string) session('wechat_state'), (string) $request->state),
@@ -82,17 +82,17 @@ class LoginController extends Controller
         $user = User::firstOrCreate(
             ['openid' => $wx['openid']],
             [
-                'tenant_id' => $tenant->id,
+                'tenant_id' => Tenant::current()->id,
                 'nickname' => $wx['nickname'],
                 'unionid' => $wx['unionid'],
                 'role' => UserRole::Villager->value,
             ]
         );
 
-        return $this->loginCrossTenantGuarded($user, $tenant);
+        return $this->loginCrossTenantGuarded($user, Tenant::current());
     }
 
-    public function bindPhone(Request $request, Tenant $tenant)
+    public function bindPhone(Request $request)
     {
         $request->validate(['phone' => ['required', 'regex:/^1\d{10}$/']]);
 
@@ -109,39 +109,38 @@ class LoginController extends Controller
         return back()->with('status', '绑定成功，现在可用账号密码登录');
     }
 
-    public function logout(Request $request, Tenant $tenant)
+    public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect(route('tenant.home', ['tenant' => $tenant->slug]));
+        return redirect(route('tenant.home', []));
     }
 
     /**
      * 微信登录跨租户守卫：openid 已属于其他云村庄时不在本租户自动登录，
      * 防「以他租户身份进入本租户上下文」打通跨租户越权（P0 修复）。
      */
-    private function loginCrossTenantGuarded(User $user, Tenant $tenant): RedirectResponse
+    private function loginCrossTenantGuarded(User $user): RedirectResponse
     {
-        abort_if((int) $user->tenant_id !== $tenant->id, 403, '该微信账号已属于其他云村庄，请使用对应村庄登录');
 
         Auth::login($user);
         request()->session()->regenerate();
 
-        return redirect($this->homeFor($user, $tenant));
+        return redirect($this->homeFor($user, Tenant::current()));
     }
 
     /**
      * 按角色决定登录后落点：云乡民→前台；家人/租户管理员→对应后台；平台管理员→平台后台。
      */
-    private function homeFor(User $user, Tenant $tenant): string
+    private function homeFor(User $user): string
     {
         return match ($user->role) {
-            UserRole::TenantAdmin => route('tenant.admin.dashboard', ['tenant' => $tenant->slug]),
-            UserRole::Family => route('tenant.family.dashboard', ['tenant' => $tenant->slug]),
+            UserRole::TenantAdmin => route('tenant.admin.dashboard', []),
+            UserRole::Family => route('tenant.family.dashboard', []),
             UserRole::PlatformAdmin => route('platform.dashboard'),
-            default => route('tenant.home', ['tenant' => $tenant->slug]),
+            default => route('tenant.home', []),
         };
     }
 }

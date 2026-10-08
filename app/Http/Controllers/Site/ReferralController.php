@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
 use App\Services\CommissionService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
@@ -20,20 +19,19 @@ class ReferralController extends Controller
     ) {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
         $coupon = $this->promotions->getOrCreateReferral($user);
 
         return view('site.my.referral', [
-            'tenant' => $tenant,
             'coupon' => $coupon,
             'commission' => $this->commissions->ledgerFor($user),
             'stats' => $this->commissions->referralStats($user),
         ]);
     }
 
-    public function cashOut(Tenant $tenant, Request $request)
+    public function cashOut(Request $request)
     {
         $user = $request->user();
 

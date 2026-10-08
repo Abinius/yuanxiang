@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\Promotion;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,20 +14,20 @@ use Illuminate\Validation\Rule;
  */
 class PromotionController extends Controller
 {
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $promotions = Promotion::query()->orderByDesc('id')->get();
         $coupons = Coupon::query()->with(['user', 'promotion'])->orderByDesc('id')->limit(100)->get();
 
-        return view('admin.promotions.index', compact('tenant', 'promotions', 'coupons'));
+        return view('admin.promotions.index', compact('promotions', 'coupons'));
     }
 
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
-        return view('admin.promotions.form', compact('tenant'));
+        return view('admin.promotions.form', compact());
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
@@ -38,7 +38,7 @@ class PromotionController extends Controller
         ]);
 
         Promotion::create([
-            'tenant_id' => $tenant->id,
+            'tenant_id' => Tenant::current()->id,
             'name' => $data['name'],
             'type' => $data['type'],
             'rule' => $data['amount'] !== null && $data['amount'] !== ''
@@ -48,7 +48,7 @@ class PromotionController extends Controller
             'status' => 'active',
         ]);
 
-        return redirect()->route('tenant.admin.promotions.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.promotions.index', [])
             ->with('ok', '促销已创建');
     }
 }

@@ -14,7 +14,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\WechatTemplateService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +31,6 @@ class PushTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -136,7 +134,7 @@ class PushTest extends TestCase
         Queue::fake();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'live_broadcast',
                 'title' => '今晚八点开播',
@@ -188,24 +186,4 @@ class PushTest extends TestCase
         $this->assertSame(0, PushMessage::count());
     }
 
-    public function test_other_tenant_user_with_openid_not_receives(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $gcUser = $this->makeActiveAdopter('mock_gc_1');
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        User::create([
-            'tenant_id' => $other->id,
-            'phone' => '13820000001',
-            'openid' => 'mock_other_1',
-            'nickname' => '别村人',
-            'role' => 'villager',
-        ]);
-
-        $log = $this->makeLog(FarmLogType::LiveBroadcast, '开播预告');
-        (new SendFarmLogNoticeJob($log->id))->handle(app(WechatTemplateService::class));
-
-        $this->assertSame(1, PushMessage::count());
-        $this->assertEquals($gcUser->id, PushMessage::first()->user_id);
-    }
 }

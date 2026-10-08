@@ -12,7 +12,7 @@
 
   <div class="product-grid">
     @foreach ($plants as $pl)
-      <a class="product-card" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $pl]) }}">
+      <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $pl]) }}">
         <div class="code">{{ $pl->code }}</div>
         <div class="price">¥300/年</div>
         <div class="meta">单株 · 命名/监控/溯源</div>

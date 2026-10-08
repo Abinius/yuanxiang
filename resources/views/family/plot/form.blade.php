@@ -3,8 +3,8 @@
 @section('title', $plot->exists ? '编辑地块' : '添加地块')
 
 @section('nav_right')
-  <a href="{{ route('tenant.family.plots.index', ['tenant' => $tenant->slug]) }}">地块列表</a>
-  <a href="{{ route('tenant.family.dashboard', ['tenant' => $tenant->slug]) }}">家人首页</a>
+  <a href="{{ route('tenant.family.plots.index', []) }}">地块列表</a>
+  <a href="{{ route('tenant.family.dashboard', []) }}">家人首页</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -15,7 +15,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ $plot->exists ? route('tenant.family.plots.update', ['tenant' => $tenant->slug, 'plot' => $plot]) : route('tenant.family.plots.store', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ $plot->exists ? route('tenant.family.plots.update', ['plot' => $plot]) : route('tenant.family.plots.store', []) }}">
     @csrf
     @if ($plot->exists)
       @method('PUT')

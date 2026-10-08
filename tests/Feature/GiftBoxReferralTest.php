@@ -11,7 +11,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\GiftBoxService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +26,6 @@ class GiftBoxReferralTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -50,7 +48,7 @@ class GiftBoxReferralTest extends TestCase
     {
         $plot = Plot::where('type', 'plot')->first();
         $this->actingAs($user)
-            ->post("/t/{$this->tenant()->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三',
                 'phone' => '13800000030',
                 'province' => '宁夏',
@@ -88,7 +86,7 @@ class GiftBoxReferralTest extends TestCase
 
         $giftBox = $this->makeGiftBox($adoption);
 
-        $this->get("/t/{$t->slug}/gift/{$giftBox->code}")
+        $this->get("/gift/{$giftBox->code}")
             ->assertOk()
             ->assertSee('ref=REF');
     }
@@ -102,24 +100,11 @@ class GiftBoxReferralTest extends TestCase
         $adoption = $this->makeActiveAdoption($user);
         $giftBox = $this->makeGiftBox($adoption);
 
-        $this->get("/t/{$t->slug}/gift/{$giftBox->code}")
+        $this->get("/gift/{$giftBox->code}")
             ->assertOk()
             ->assertSee('云乡民')
             ->assertSee('成为云乡民');
     }
 
     /** 跨租户礼盒码 404（TenantScoped 隔离）。 */
-    public function test_scan_page_isolates_other_tenants(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-        $user = $this->villager();
-        $adoption = $this->makeActiveAdoption($user);
-        $giftBox = $this->makeGiftBox($adoption);
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-
-        $this->get("/t/{$other->slug}/gift/{$giftBox->code}")
-            ->assertNotFound();
-    }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\ShortLinkService;
 
 /**
@@ -15,9 +15,9 @@ class ShortLinkController extends Controller
     {
     }
 
-    public function redirect(Tenant $tenant, string $code)
+    public function redirect(string $code)
     {
-        $link = $this->links->resolve($tenant, $code);
+        $link = $this->links->resolve(Tenant::current(), $code);
         abort_unless($link, 404);
 
         // 安全兜底：仅允许 http(s) 跳转，防 admin 被攻破后制造 javascript: 钓鱼

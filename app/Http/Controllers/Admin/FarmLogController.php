@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FarmLog;
-use App\Models\Tenant;
 use Illuminate\Http\Request;
 
 /**
@@ -13,7 +12,7 @@ use Illuminate\Http\Request;
  */
 class FarmLogController extends Controller
 {
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $logs = FarmLog::query()
             ->with(['plot', 'author'])
@@ -22,15 +21,14 @@ class FarmLogController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.farm_logs.index', compact('tenant', 'logs'));
+        return view('admin.farm_logs.index', compact('logs'));
     }
 
-    public function destroy(Tenant $tenant, FarmLog $farmLog)
+    public function destroy(FarmLog $farmLog)
     {
-        abort_if($farmLog->tenant_id !== $tenant->id, 404);
         $farmLog->delete();
 
-        return redirect()->route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.farm-logs.index', [])
             ->with('ok', '已删除');
     }
 }

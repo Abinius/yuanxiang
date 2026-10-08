@@ -34,12 +34,8 @@ use App\Http\Controllers\Site\ScanController;
 use App\Http\Controllers\Site\ShareController;
 use App\Http\Controllers\Site\ShortLinkController;
 use App\Http\Controllers\Site\TraceController;
+use App\Support\Tenant;
 use Illuminate\Support\Facades\Route;
-
-// 平台公共：选店入口
-Route::get('/', function () {
-    return view('welcome');
-});
 
 // 微信支付回调（微信服务器推送：无租户上下文、免 CSRF/登录）
 Route::post('/pay/wechat/notify', [WeChatPayController::class, 'notify'])->name('pay.wechat.notify');
@@ -53,11 +49,7 @@ Route::get('/robots.txt', function () {
     );
 });
 Route::get('/sitemap.xml', function () {
-    $urls = [];
-    foreach (\App\Models\Tenant::where('status', 'active')->get() as $t) {
-        $urls[] = url('/t/'.$t->slug);
-        $urls[] = url('/t/'.$t->slug.'/adopt');
-    }
+    $urls = [url('/'), url('/adopt')];
     $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
     foreach ($urls as $u) {
         $xml .= "\n  <url><loc>".htmlspecialchars($u, ENT_XML1).'</loc></url>';
@@ -67,14 +59,13 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200, ['Content-Type' => 'application/xml']);
 });
 
-// 租户前台（SaaS 租户空间）：auth-only 资源路由加 tenant.member 防跨租户越权；公开页不加（保持跨租户可分享）
-Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
-    Route::get('/', function (\Illuminate\Http\Request $request) {
-        return view('site.home', [
-            'tenant' => $request->attributes->get('tenant'),
-            'user' => $request->user(),
-        ]);
-    })->name('tenant.home');
+// 租户前台（单租户）：auth-only 资源路由加 tenant.member 防越权；公开页不加（保持可分享）
+Route::get('/', function () {
+    return view('site.home', [
+        'tenant' => Tenant::current(),
+        'user' => auth()->user(),
+    ]);
+})->name('tenant.home');
 
     // 双登录
     Route::get('/login', [LoginController::class, 'show'])->name('tenant.login');
@@ -236,4 +227,3 @@ Route::prefix('t/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::get('/plots/{plot}/edit', [FamilyPlots::class, 'edit'])->name('tenant.family.plots.edit');
         Route::put('/plots/{plot}', [FamilyPlots::class, 'update'])->name('tenant.family.plots.update');
     });
-});

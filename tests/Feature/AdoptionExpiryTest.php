@@ -7,7 +7,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,13 +25,11 @@ class AdoptionExpiryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
         Carbon::setTestNow(null);
     }
 
     protected function tearDown(): void
     {
-        TenantContext::reset();
         Carbon::setTestNow(null);
         parent::tearDown();
     }
@@ -59,7 +56,7 @@ class AdoptionExpiryTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三',
                 'phone' => '13800000010',
                 'province' => '宁夏',
@@ -83,7 +80,7 @@ class AdoptionExpiryTest extends TestCase
         $this->makeOrder($user);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('继续支付');
     }
@@ -99,7 +96,7 @@ class AdoptionExpiryTest extends TestCase
         Carbon::setTestNow(now()->addHours(74));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('订单已过期')
             ->assertDontSee('继续支付');
@@ -116,7 +113,7 @@ class AdoptionExpiryTest extends TestCase
         Carbon::setTestNow(now()->addHours(74));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/adopt/order/{$adoption->id}/pay")
+            ->get("/adopt/order/{$adoption->id}/pay")
             ->assertOk()
             ->assertSee('订单已过期')
             ->assertDontSee('模拟支付成功');
@@ -169,7 +166,7 @@ class AdoptionExpiryTest extends TestCase
         app(AdoptionService::class)->confirmMockPayment($adoption);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/adopt/order/{$adoption->id}/success")
+            ->get("/adopt/order/{$adoption->id}/success")
             ->assertOk()
             ->assertSee('待签署')
             ->assertSee('给这块田起个名字')
@@ -188,7 +185,7 @@ class AdoptionExpiryTest extends TestCase
         $service->signAgreement($adoption, '阿林的光彩田');
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/adopt/order/{$adoption->id}/success")
+            ->get("/adopt/order/{$adoption->id}/success")
             ->assertOk()
             ->assertSee('认养协议已签署')
             ->assertSee('阿林的光彩田')

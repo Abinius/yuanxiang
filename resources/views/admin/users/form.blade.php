@@ -12,7 +12,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ $user->exists ? route('tenant.admin.users.update', ['tenant' => $tenant->slug, 'user' => $user]) : route('tenant.admin.users.store', ['tenant' => $tenant->slug]) }}" style="max-width:520px">
+  <form method="POST" action="{{ $user->exists ? route('tenant.admin.users.update', ['user' => $user]) : route('tenant.admin.users.store', []) }}" style="max-width:520px">
     @csrf
     @method($user->exists ? 'PUT' : 'POST')
 
@@ -52,14 +52,14 @@
 
     <div class="flex gap-2 mt-4">
       <button class="btn btn-primary" type="submit">保存</button>
-      <a class="btn btn-ghost" href="{{ route('tenant.admin.users.index', ['tenant' => $tenant->slug]) }}">返回</a>
+      <a class="btn btn-ghost" href="{{ route('tenant.admin.users.index', []) }}">返回</a>
     </div>
   </form>
 
   @if ($user->exists)
     <hr class="my-6" style="border:0;border-top:1px solid var(--ds-border-l1)">
     <h3 class="mb-2" style="font-size:var(--ds-h3)">重置密码</h3>
-    <form method="POST" action="{{ route('tenant.admin.users.reset-password', ['tenant' => $tenant->slug, 'user' => $user]) }}" style="max-width:520px">
+    <form method="POST" action="{{ route('tenant.admin.users.reset-password', ['user' => $user]) }}" style="max-width:520px">
       @csrf
       <div class="field">
         <label>新密码 *</label>

@@ -6,7 +6,6 @@ use App\Models\Farm;
 use App\Models\FarmLog;
 use App\Models\FarmMember;
 use App\Services\WechatTemplateService;
-use App\Tenancy\HandlesTenantContext;
 use Illuminate\Console\Command;
 
 /**
@@ -15,8 +14,6 @@ use Illuminate\Console\Command;
  */
 class RemindFamilyToPost extends Command
 {
-    use HandlesTenantContext;
-
     protected $signature = 'family:remind-post';
 
     protected $description = '每日推送该发动态提醒给 3 天未录农事的家人们';
@@ -45,29 +42,27 @@ class RemindFamilyToPost extends Command
         $sent = 0;
 
         foreach ($staleFarms as $farm) {
-            $this->withTenantContext($farm->tenant_id, function () use ($farm, &$sent) {
-                $members = FarmMember::query()
-                    ->where('farm_id', $farm->id)
-                    ->with('user')
-                    ->get();
+            $members = FarmMember::query()
+                ->where('farm_id', $farm->id)
+                ->with('user')
+                ->get();
 
-                foreach ($members as $member) {
-                    $user = $member->user;
-                    if (! $user || ! $user->openid) {
-                        continue;
-                    }
-
-                    $this->templates->send($user, 'content', [
-                        'url' => route('tenant.family.dashboard', ['tenant' => $farm->tenant->slug]),
-                        'data' => [
-                            'thing1' => ['value' => '记得发动态'],
-                            'thing2' => ['value' => '你的家人有几天没更新了，来记录一下田间近况吧。'],
-                        ],
-                    ]);
-
-                    $sent++;
+            foreach ($members as $member) {
+                $user = $member->user;
+                if (! $user || ! $user->openid) {
+                    continue;
                 }
-            });
+
+                $this->templates->send($user, 'content', [
+                    'url' => route('tenant.family.dashboard'),
+                    'data' => [
+                        'thing1' => ['value' => '记得发动态'],
+                        'thing2' => ['value' => '你的家人有几天没更新了，来记录一下田间近况吧。'],
+                    ],
+                ]);
+
+                $sent++;
+            }
         }
 
         $this->info("已提醒 {$sent} 位家人发动态（{$staleFarms->count()} 个农场地块静默）");

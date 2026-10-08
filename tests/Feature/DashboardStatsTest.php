@@ -9,7 +9,6 @@ use App\Models\Tenant;
 use App\Models\TraceCode;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -26,7 +25,6 @@ class DashboardStatsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -76,7 +74,7 @@ class DashboardStatsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('经营看板')
             ->assertSee('认养转化率')
@@ -92,7 +90,7 @@ class DashboardStatsTest extends TestCase
         $this->makeActiveAdopter(); // 1 生效 / 1 总单 → 100%
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('<div class="num sm">100%</div><div class="label">认养转化率</div>', false);
     }
@@ -114,7 +112,7 @@ class DashboardStatsTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('<div class="num sm">50%</div><div class="label">产出达标率</div>', false);
     }
@@ -128,7 +126,7 @@ class DashboardStatsTest extends TestCase
         TraceCode::create(['tenant_id' => $t->id, 'code' => 'TC-A-002', 'scanned_count' => 0]);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('<div class="num sm">50%</div><div class="label">溯源查看率</div>', false); // 2 码 1 被扫 → 50%
     }

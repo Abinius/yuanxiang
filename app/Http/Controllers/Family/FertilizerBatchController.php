@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Family;
 
 use App\Models\FertilizerBatch;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,19 +13,19 @@ use Illuminate\Validation\Rule;
  */
 class FertilizerBatchController extends Controller
 {
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $this->assertScope($request, 'fertilizer');
 
-        return view('family.fertilizer.create', compact('tenant'));
+        return view('family.fertilizer.create', compact());
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $member = $this->assertScope($request, 'fertilizer');
 
         $data = $request->validate([
-            'batch_no' => ['required', 'string', 'max:60', Rule::unique('fertilizer_batches', 'batch_no')->where('tenant_id', $tenant->id)],
+            'batch_no' => ['required', 'string', 'max:60', Rule::unique('fertilizer_batches', 'batch_no')->where('tenant_id', Tenant::current()->id)],
             'produced_at' => ['required', 'date'],
             'nxlb_ref' => ['nullable', 'string', 'max:120'],
             'ingredients' => ['nullable', 'string', 'max:1000'],
@@ -33,7 +33,7 @@ class FertilizerBatchController extends Controller
         ]);
 
         $batch = new FertilizerBatch();
-        $batch->tenant_id = $tenant->id;
+        $batch->tenant_id = Tenant::current()->id;
         $batch->farm_id = $member->farm_id;
         $batch->batch_no = $data['batch_no'];
         $batch->produced_at = $data['produced_at'];
@@ -42,26 +42,24 @@ class FertilizerBatchController extends Controller
         $batch->test_report_url = $data['test_report_url'] ?? null;
         $batch->save();
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', '有机肥批次已录入');
     }
 
     /** G8：编辑（复用 create 视图）。fertilizer scope 已限权；批次为共享投入品，tenant_admin 直改。 */
-    public function edit(Tenant $tenant, FertilizerBatch $batch, Request $request)
+    public function edit(FertilizerBatch $batch, Request $request)
     {
         $this->assertScope($request, 'fertilizer');
-        abort_if($batch->tenant_id !== $tenant->id, 404);
 
-        return view('family.fertilizer.create', compact('tenant', 'batch'));
+        return view('family.fertilizer.create', compact('batch'));
     }
 
-    public function update(Tenant $tenant, FertilizerBatch $batch, Request $request)
+    public function update(FertilizerBatch $batch, Request $request)
     {
         $this->assertScope($request, 'fertilizer');
-        abort_if($batch->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
-            'batch_no' => ['required', 'string', 'max:60', Rule::unique('fertilizer_batches', 'batch_no')->where('tenant_id', $tenant->id)->ignore($batch->id)],
+            'batch_no' => ['required', 'string', 'max:60', Rule::unique('fertilizer_batches', 'batch_no')->where('tenant_id', Tenant::current()->id)->ignore($batch->id)],
             'produced_at' => ['required', 'date'],
             'nxlb_ref' => ['nullable', 'string', 'max:120'],
             'ingredients' => ['nullable', 'string', 'max:1000'],
@@ -70,7 +68,7 @@ class FertilizerBatchController extends Controller
 
         $batch->update($data);
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', '已更新');
     }
 }

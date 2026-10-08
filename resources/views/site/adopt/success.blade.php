@@ -16,8 +16,8 @@
       </div>
 
       <div class="flex gap-2" style="margin-top:16px;flex-wrap:wrap">
-        <a class="btn btn-primary btn-lg" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">进入我的田</a>
-        <a class="btn btn-ghost btn-lg" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">继续逛田</a>
+        <a class="btn btn-primary btn-lg" href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">进入我的田</a>
+        <a class="btn btn-ghost btn-lg" href="{{ route('tenant.adopt.index', []) }}">继续逛田</a>
       </div>
 
     @elseif ($adoption->status->value === 'pending_agreement')
@@ -34,7 +34,7 @@
         <div class="alert mt-3">{{ $errors->first() }}</div>
       @endif
 
-      <form method="POST" action="{{ route('tenant.adopt.sign', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}" style="margin-top:16px">
+      <form method="POST" action="{{ route('tenant.adopt.sign', ['adoption' => $adoption]) }}" style="margin-top:16px">
         @csrf
         <div class="field">
           <label>给这块田起个名字(铭牌 / 乡民卡用)</label>
@@ -48,7 +48,7 @@
 
     @else
       <div class="alert">订单状态:{{ $adoption->status->value }}</div>
-      <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">返回认养</a>
+      <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.adopt.index', []) }}">返回认养</a>
     @endif
   </div>
 @endsection

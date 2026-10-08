@@ -58,7 +58,7 @@
 
     <p class="note text-xs" style="margin-top:20px">画面涉及家人与现场人员肖像,已获授权展示。</p>
     <div class="mt-3">
-      <a style="font-size:var(--ds-body-s);color:var(--ds-text-mute)" href="{{ route('tenant.live.index', ['tenant' => $tenant->slug]) }}">返回列表</a>
+      <a style="font-size:var(--ds-body-s);color:var(--ds-text-mute)" href="{{ route('tenant.live.index', []) }}">返回列表</a>
     </div>
   </div>
 @endsection

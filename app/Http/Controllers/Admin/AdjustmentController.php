@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdoptionAdjustment;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\AdjustmentService;
 use Illuminate\Http\Request;
 
@@ -18,46 +18,45 @@ class AdjustmentController extends Controller
     {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $adjustments = AdoptionAdjustment::query()
             ->with(['adoption.user', 'adoption.adoptable', 'adoption.plan'])
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.adjustments.index', compact('tenant', 'adjustments'));
+        return view('admin.adjustments.index', compact('adjustments'));
     }
 
-    public function settle(Tenant $tenant, Request $request)
+    public function settle(Request $request)
     {
         $data = $request->validate([
             'season_year' => ['required', 'integer', 'min:2000', 'max:2100'],
         ]);
 
-        $created = $this->adjustments->runForSeason($tenant, (int) $data['season_year']);
+        $created = $this->adjustments->runForSeason(Tenant::current(), (int) $data['season_year']);
 
-        return redirect()->route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.adjustments.index', [])
             ->with('ok', '已生成 '.count($created).' 条补退');
     }
 
-    public function apply(Tenant $tenant, AdoptionAdjustment $adjustment, Request $request)
+    public function apply(AdoptionAdjustment $adjustment, Request $request)
     {
-        abort_if($adjustment->tenant_id !== $tenant->id, 404);
         $this->adjustments->apply($adjustment);
 
         return back()->with('ok', '已应用');
     }
 
     /** A3 批量应用：按年度把所有 pending 补退一并 apply。 */
-    public function applyAll(Tenant $tenant, Request $request)
+    public function applyAll(Request $request)
     {
         $data = $request->validate([
             'season_year' => ['required', 'integer', 'min:2000', 'max:2100'],
         ]);
 
-        $applied = $this->adjustments->applyAll($tenant, (int) $data['season_year']);
+        $applied = $this->adjustments->applyAll(Tenant::current(), (int) $data['season_year']);
 
-        return redirect()->route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.adjustments.index', [])
             ->with('ok', '已批量应用 '.$applied.' 条补退');
     }
 }

@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">促销管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.promotions.create', ['tenant' => $tenant->slug]) }}">+ 新建促销</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.promotions.create', []) }}">+ 新建促销</a>
   </div>
 
   @if (session('ok'))

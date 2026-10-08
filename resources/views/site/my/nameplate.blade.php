@@ -15,7 +15,7 @@
     </div>
 
     <div class="mt-3 text-center">
-      <a class="back-link" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">返回我的田</a>
+      <a class="back-link" href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">返回我的田</a>
     </div>
   </div>
 

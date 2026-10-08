@@ -56,7 +56,7 @@ class MemberService
     /** 当前消费对应的等级（0-3）。 */
     public function computeLevel(User $user): int
     {
-        $tiers = $this->settings->member($user->tenant)['tiers'] ?? [];
+        $tiers = $this->settings->member()['tiers'] ?? [];
         $spend = $this->rollingSpend($user);
 
         if ($spend >= (float) ($tiers['partner'] ?? PHP_INT_MAX)) {
@@ -121,7 +121,7 @@ class MemberService
     /** 当前等级的下一级门槛（用于升级进度展示）。最高级返回 null。 */
     public function nextThreshold(Tenant $tenant, int $level): ?float
     {
-        $tiers = $this->settings->member($tenant)['tiers'] ?? [];
+        $tiers = $this->settings->member()['tiers'] ?? [];
 
         return match ($level) {
             0 => (float) ($tiers['red'] ?? 1),
@@ -134,7 +134,7 @@ class MemberService
     /** 当前等级权益文案（读 settings.member.benefits，未配置则按默认权益）。 */
     public function benefits(Tenant $tenant, int $level): string
     {
-        $benefits = $this->settings->member($tenant)['benefits'] ?? [];
+        $benefits = $this->settings->member()['benefits'] ?? [];
 
         return $benefits[self::TIER_BY_LEVEL[$level] ?? 'new']
             ?? match ($level) {

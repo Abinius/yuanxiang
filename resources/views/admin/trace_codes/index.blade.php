@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">溯源码管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.trace-codes.create', ['tenant' => $tenant->slug]) }}">+ 生成溯源码</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.trace-codes.create', []) }}">+ 生成溯源码</a>
   </div>
 
   @if (session('ok'))
@@ -45,7 +45,7 @@
                 </span>
               </td>
               <td>
-                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.trace-codes.print', ['tenant' => $tenant->slug, 'ids' => $tc->id]) }}">打印</a>
+                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.trace-codes.print', ['ids' => $tc->id]) }}">打印</a>
               </td>
             </tr>
           @endforeach

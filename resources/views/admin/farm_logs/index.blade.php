@@ -10,7 +10,7 @@
   @endif
 
   <div class="table-bar">
-    <form method="GET" action="{{ route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug]) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:280px">
+    <form method="GET" action="{{ route('tenant.admin.farm-logs.index', []) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:280px">
       <label class="text-sm" style="margin:0">类型</label>
       <select name="type" class="select" style="width:auto" onchange="this.form.submit()">
         <option value="">全部</option>
@@ -58,7 +58,7 @@
                 </span>
               </td>
               <td>
-                <form method="POST" action="{{ route('tenant.admin.farm-logs.destroy', ['tenant' => $tenant->slug, 'farm_log' => $log]) }}" style="display:inline" onsubmit="return confirm('删除该记录?')">
+                <form method="POST" action="{{ route('tenant.admin.farm-logs.destroy', ['farm_log' => $log]) }}" style="display:inline" onsubmit="return confirm('删除该记录?')">
                   @csrf
                   @method('DELETE')
                   <button class="btn btn-danger btn-sm" type="submit">删除</button>

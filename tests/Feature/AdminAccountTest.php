@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Database\Seeders\AdminSeeder;
@@ -22,7 +21,6 @@ class AdminAccountTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -48,7 +46,7 @@ class AdminAccountTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/users")
+            ->get("/admin/users")
             ->assertOk()
             ->assertSee('账号管理');
     }
@@ -59,7 +57,7 @@ class AdminAccountTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/users", [
+            ->post("/admin/users", [
                 'nickname' => '王家人',
                 'phone' => '13700000001',
                 'username' => 'wangfamily',
@@ -81,7 +79,7 @@ class AdminAccountTest extends TestCase
 
         // role 字段白名单不含 platform_admin，校验失败
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/users", [
+            ->post("/admin/users", [
                 'nickname' => '越权',
                 'phone' => '13700000002',
                 'role' => UserRole::PlatformAdmin->value,
@@ -100,12 +98,12 @@ class AdminAccountTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/users/{$target->id}/toggle")
+            ->post("/admin/users/{$target->id}/toggle")
             ->assertRedirect();
         $this->assertTrue((bool) $target->fresh()->is_disabled);
 
         // 禁用后登录被拦截
-        $this->post("/t/{$t->slug}/login", [
+        $this->post("/login", [
             'account' => '13700000003', 'password' => 'secret123',
         ])->assertSessionHasErrors(['account']);
     }
@@ -117,7 +115,7 @@ class AdminAccountTest extends TestCase
         $me = $this->admin();
 
         $this->actingAs($me)
-            ->post("/t/{$t->slug}/admin/users/{$me->id}/toggle")
+            ->post("/admin/users/{$me->id}/toggle")
             ->assertStatus(422);
     }
 
@@ -131,26 +129,16 @@ class AdminAccountTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/users/{$target->id}/reset-password", [
+            ->post("/admin/users/{$target->id}/reset-password", [
                 'password' => 'newpass123',
             ])
             ->assertRedirect();
 
         // 新密码可登录
-        $this->post("/t/{$t->slug}/login", [
+        $this->post("/login", [
             'account' => '13700000004', 'password' => 'newpass123',
         ])->assertRedirect();
         $this->assertAuthenticated();
-    }
-
-    public function test_tenant_admin_cannot_manage_other_tenant_user(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-
-        $this->actingAs($this->admin())
-            ->get("/t/{$other->slug}/admin/users")
-            ->assertForbidden(); // 跨租户，RoleMiddleware 拦截
     }
 
     public function test_villager_cannot_access_admin_users(): void
@@ -163,7 +151,7 @@ class AdminAccountTest extends TestCase
         ]);
 
         $this->actingAs($villager)
-            ->get("/t/{$t->slug}/admin/users")
+            ->get("/admin/users")
             ->assertForbidden();
     }
 

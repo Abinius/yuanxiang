@@ -9,7 +9,6 @@ use App\Models\Tenant;
 use App\Models\TraceCode;
 use App\Models\User;
 use App\Services\TraceCodeService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -27,7 +26,6 @@ class ScanTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -72,7 +70,7 @@ class ScanTest extends TestCase
             'scanned_count' => 0,
         ]);
 
-        $this->get("/t/{$t->slug}/s/{$code->code}")
+        $this->get("/s/{$code->code}")
             ->assertOk()
             ->assertSee($code->code)
             ->assertSee($plot->code)
@@ -86,34 +84,7 @@ class ScanTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/s/TC-NOT-EXIST")
-            ->assertNotFound();
-    }
-
-    public function test_cross_tenant_code_returns_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherPlot = Plot::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $otherFarm->id,
-            'type' => 'plot',
-            'code' => 'X-01',
-            'mu_area' => 0.1,
-            'price_yearly' => 5000,
-        ]);
-        $otherHarvest = $this->makeHarvest($otherPlot);
-        TraceCode::create([
-            'tenant_id' => $other->id,
-            'code' => 'TCOther001',
-            'harvest_id' => $otherHarvest->id,
-            'plot_id' => $otherPlot->id,
-        ]);
-
-        $this->get("/t/{$t->slug}/s/TCOther001")
+        $this->get("/s/TC-NOT-EXIST")
             ->assertNotFound();
     }
 
@@ -126,7 +97,7 @@ class ScanTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/trace-codes", [
+            ->post("/admin/trace-codes", [
                 'harvest_id' => $harvest->id,
                 'count' => 3,
             ])
@@ -159,31 +130,6 @@ class ScanTest extends TestCase
         $this->assertSame(20, $all->pluck('code')->unique()->count());
     }
 
-    public function test_store_rejects_other_tenant_harvest(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
-        $t = $this->tenant();
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherPlot = Plot::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $otherFarm->id,
-            'type' => 'plot',
-            'code' => 'X-01',
-            'mu_area' => 0.1,
-            'price_yearly' => 5000,
-        ]);
-        $otherHarvest = $this->makeHarvest($otherPlot);
-        $admin = User::where('username', 'admin')->firstOrFail();
-
-        $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/trace-codes", [
-                'harvest_id' => $otherHarvest->id,
-                'count' => 1,
-            ])
-            ->assertSessionHasErrors('harvest_id');
-    }
-
     public function test_villager_cannot_access_admin_trace_codes(): void
     {
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
@@ -197,7 +143,7 @@ class ScanTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/trace-codes")
+            ->get("/admin/trace-codes")
             ->assertForbidden();
     }
 
@@ -216,7 +162,7 @@ class ScanTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->get("/t/{$t->slug}/admin/trace-codes/print?ids={$code->id}")
+            ->get("/admin/trace-codes/print?ids={$code->id}")
             ->assertOk()
             ->assertSee('qrcode.min.js', false)
             ->assertSee('TC20260801-PRINT01');

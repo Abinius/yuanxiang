@@ -8,7 +8,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -25,7 +24,6 @@ class ContractTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
         $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
     }
 
@@ -60,14 +58,14 @@ class ContractTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
+            ->post("/adopt/{$plot->id}/order", $this->orderData())
             ->assertRedirect();
 
         $adoption = Adoption::where('adoptable_id', $plot->id)->firstOrFail();
         app(AdoptionService::class)->confirmMockPayment($adoption);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/order/{$adoption->id}/sign", ['named_label' => $label])
+            ->post("/adopt/order/{$adoption->id}/sign", ['named_label' => $label])
             ->assertRedirect();
 
         return $adoption->fresh();
@@ -97,7 +95,7 @@ class ContractTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}/contract")
+            ->get("/my/plot/{$adoption->id}/contract")
             ->assertOk()
             ->assertSee('认养合同')
             ->assertSee($adoption->contract->contract_no);
@@ -111,7 +109,7 @@ class ContractTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($other)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}/contract")
+            ->get("/my/plot/{$adoption->id}/contract")
             ->assertNotFound();
     }
 
@@ -123,11 +121,11 @@ class ContractTest extends TestCase
 
         // 下单但未签约
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData());
+            ->post("/adopt/{$plot->id}/order", $this->orderData());
         $adoption = Adoption::where('adoptable_id', $plot->id)->firstOrFail();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}/contract")
+            ->get("/my/plot/{$adoption->id}/contract")
             ->assertNotFound();
     }
 

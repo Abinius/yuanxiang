@@ -7,7 +7,7 @@ use App\Jobs\SendFarmLogNoticeJob;
 use App\Models\FarmLog;
 use App\Models\FertilizerBatch;
 use App\Models\Plot;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
  */
 class FarmLogController extends Controller
 {
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $this->assertScope($request, 'farm_log');
 
@@ -42,17 +42,17 @@ class FarmLogController extends Controller
             ->orderBy('batch_no')
             ->get(['id', 'batch_no', 'produced_at']);
 
-        return view('family.farm_log.create', compact('tenant', 'plots', 'types', 'batches'));
+        return view('family.farm_log.create', compact('plots', 'types', 'batches'));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $member = $this->assertScope($request, 'farm_log');
 
         $data = $request->validate([
-            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', $tenant->id)],
+            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', Tenant::current()->id)],
             'type' => ['required', Rule::enum(FarmLogType::class)],
-            'fertilizer_batch_id' => ['nullable', 'integer', Rule::exists('fertilizer_batches', 'id')->where('tenant_id', $tenant->id)],
+            'fertilizer_batch_id' => ['nullable', 'integer', Rule::exists('fertilizer_batches', 'id')->where('tenant_id', Tenant::current()->id)],
             'title' => ['nullable', 'string', 'max:60'],
             'content' => ['nullable', 'string', 'max:1000'],
             'occurred_at' => ['nullable', 'date'],
@@ -73,7 +73,7 @@ class FarmLogController extends Controller
         $videoUrl = $request->hasFile('video_url') ? $request->file('video_url')->store('farm-logs', 'public') : null;
 
         $log = new FarmLog();
-        $log->tenant_id = $tenant->id;
+        $log->tenant_id = Tenant::current()->id;
         $log->farm_id = $member->farm_id;
         $log->plot_id = $data['plot_id'];
         $log->author_id = $request->user()->id;
@@ -106,7 +106,7 @@ class FarmLogController extends Controller
 
         $label = FarmLogType::from($data['type'])->label();
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', $label.'已发布');
     }
 
@@ -128,11 +128,10 @@ class FarmLogController extends Controller
     }
 
     /** G8：编辑入口（复用 create 视图）。仅作者本人或 tenant_admin 可改。 */
-    public function edit(Tenant $tenant, FarmLog $farmLog, Request $request)
+    public function edit(FarmLog $farmLog, Request $request)
     {
         $this->assertScope($request, 'farm_log');
         abort_if($farmLog->author_id !== $request->user()->id && $request->user()->role->value !== 'tenant_admin', 404);
-        abort_if($farmLog->tenant_id !== $tenant->id, 404);
 
         $plots = Plot::where('type', 'plot')->orderBy('code')->get();
         $types = collect(FarmLogType::cases())->map(fn ($t) => ['value' => $t->value, 'label' => $t->label()])->all();
@@ -140,20 +139,19 @@ class FarmLogController extends Controller
             ->orderBy('batch_no')
             ->get(['id', 'batch_no', 'produced_at']);
 
-        return view('family.farm_log.create', compact('tenant', 'plots', 'types', 'batches', 'farmLog'));
+        return view('family.farm_log.create', compact('plots', 'types', 'batches', 'farmLog'));
     }
 
     /** G8：更新农事动态（作者/tenant_admin）。 */
-    public function update(Tenant $tenant, FarmLog $farmLog, Request $request)
+    public function update(FarmLog $farmLog, Request $request)
     {
         $member = $this->assertScope($request, 'farm_log');
         abort_if($farmLog->author_id !== $request->user()->id && $request->user()->role->value !== 'tenant_admin', 404);
-        abort_if($farmLog->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
-            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', $tenant->id)],
+            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', Tenant::current()->id)],
             'type' => ['required', Rule::enum(FarmLogType::class)],
-            'fertilizer_batch_id' => ['nullable', 'integer', Rule::exists('fertilizer_batches', 'id')->where('tenant_id', $tenant->id)],
+            'fertilizer_batch_id' => ['nullable', 'integer', Rule::exists('fertilizer_batches', 'id')->where('tenant_id', Tenant::current()->id)],
             'title' => ['nullable', 'string', 'max:60'],
             'content' => ['nullable', 'string', 'max:1000'],
             'occurred_at' => ['nullable', 'date'],
@@ -194,7 +192,7 @@ class FarmLogController extends Controller
                 : null,
         ]);
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', '已更新');
     }
 }

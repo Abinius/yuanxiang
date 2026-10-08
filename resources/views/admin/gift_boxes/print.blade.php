@@ -3,8 +3,8 @@
 @section('title', '礼盒贺卡')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.gift-boxes.index', ['tenant' => $tenant->slug]) }}">礼盒列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.gift-boxes.index', []) }}">礼盒列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 

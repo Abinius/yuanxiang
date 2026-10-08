@@ -6,14 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Adoption;
 use App\Services\AdoptionService;
 use App\Services\WeChatPayService;
-use App\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * 微信支付回调（挂租户组之外，不走租户中间件：TenantContext 为 null，
- * 按全局唯一 adoption_no 定位订单，再切到该订单租户上下文落库）。
+ * 微信支付回调：无租户中间件，按全局唯一 adoption_no 定位订单落库。
+ * 单租户下无需切换上下文。
  */
 class WeChatPayController extends Controller
 {
@@ -33,7 +32,6 @@ class WeChatPayController extends Controller
                 ->first();
 
             if ($adoption) {
-                TenantContext::set($adoption->tenant_id);
                 $this->adoptions->markPaid($adoption, [
                     'transaction_id' => $data['transaction_id'],
                     'method' => 'wechat',
@@ -45,8 +43,6 @@ class WeChatPayController extends Controller
             Log::warning('微信支付回调失败', ['error' => $e->getMessage()]);
 
             return response('FAIL', 500);
-        } finally {
-            TenantContext::reset();
         }
     }
 }

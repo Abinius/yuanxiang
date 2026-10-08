@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\GiftBox;
-use App\Models\Tenant;
 use App\Services\GiftBoxService;
 use Illuminate\Http\Request;
 
@@ -18,27 +17,25 @@ class GiftBoxController extends Controller
     {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $giftBoxes = GiftBox::query()
             ->with(['adoption.user', 'adoption.adoptable', 'address'])
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.gift_boxes.index', compact('tenant', 'giftBoxes'));
+        return view('admin.gift_boxes.index', compact('giftBoxes'));
     }
 
-    public function making(Tenant $tenant, GiftBox $giftBox, Request $request)
+    public function making(GiftBox $giftBox, Request $request)
     {
-        abort_if($giftBox->tenant_id !== $tenant->id, 404);
         $this->gifts->markMaking($giftBox);
 
         return back()->with('ok', '已开始制作');
     }
 
-    public function ship(Tenant $tenant, GiftBox $giftBox, Request $request)
+    public function ship(GiftBox $giftBox, Request $request)
     {
-        abort_if($giftBox->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
             'tracking_no' => ['required', 'string', 'max:80'],
@@ -50,15 +47,14 @@ class GiftBoxController extends Controller
         return back()->with('ok', '已发货');
     }
 
-    public function delivered(Tenant $tenant, GiftBox $giftBox, Request $request)
+    public function delivered(GiftBox $giftBox, Request $request)
     {
-        abort_if($giftBox->tenant_id !== $tenant->id, 404);
         $this->gifts->markDelivered($giftBox);
 
         return back()->with('ok', '已送达');
     }
 
-    public function print(Tenant $tenant, Request $request)
+    public function print(Request $request)
     {
         $ids = collect(explode(',', (string) $request->query('ids', '')))
             ->map(fn ($v) => (int) $v)
@@ -67,7 +63,7 @@ class GiftBoxController extends Controller
             ->all();
 
         if (! $ids) {
-            return redirect()->route('tenant.admin.gift-boxes.index', ['tenant' => $tenant->slug]);
+            return redirect()->route('tenant.admin.gift-boxes.index', []);
         }
 
         $giftBoxes = GiftBox::query()
@@ -75,8 +71,6 @@ class GiftBoxController extends Controller
             ->with(['adoption.user', 'address'])
             ->get();
 
-        abort_if($giftBoxes->contains(fn ($g) => $g->tenant_id !== $tenant->id), 404);
-
-        return view('admin.gift_boxes.print', compact('tenant', 'giftBoxes'));
+        return view('admin.gift_boxes.print', compact('giftBoxes'));
     }
 }

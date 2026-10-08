@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">账号管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.users.create', ['tenant' => $tenant->slug]) }}">+ 新建账号</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.users.create', []) }}">+ 新建账号</a>
   </div>
 
   @if (session('ok'))
@@ -41,8 +41,8 @@
           </td>
           <td class="text-xs muted">{{ $u->created_at?->format('Y-m-d') }}</td>
           <td>
-            <a class="text-sm" href="{{ route('tenant.admin.users.edit', ['tenant' => $tenant->slug, 'user' => $u]) }}">编辑</a>
-            <form method="POST" action="{{ route('tenant.admin.users.toggle', ['tenant' => $tenant->slug, 'user' => $u]) }}" class="inline">
+            <a class="text-sm" href="{{ route('tenant.admin.users.edit', ['user' => $u]) }}">编辑</a>
+            <form method="POST" action="{{ route('tenant.admin.users.toggle', ['user' => $u]) }}" class="inline">
               @csrf
               <button class="btn btn-ghost btn-sm" type="submit" @if($u->id === auth()->id()) disabled @endif>{{ $u->is_disabled ? '启用' : '禁用' }}</button>
             </form>

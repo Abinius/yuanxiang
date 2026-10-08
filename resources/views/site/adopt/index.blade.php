@@ -8,7 +8,7 @@
       <div class="section-title"><span>精彩回放 · 认养前先看田里真实现场</span></div>
       <div class="product-grid">
         @foreach ($replays as $r)
-          <a class="product-card" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}#replay-{{ $r->id }}">
+          <a class="product-card" href="{{ route('tenant.adopt.index', []) }}#replay-{{ $r->id }}">
             <div class="code">🎬 {{ $r->type->label() }} · {{ $r->plot?->code ?? '田块' }}</div>
             <div class="meta">{{ $r->title }} · {{ $r->occurred_at?->format('m/d') }}</div>
             <div class="mt-2 text-xs muted">家人现场实录，可见证田间真实长势。</div>
@@ -24,7 +24,7 @@
     </div>
     <div class="product-grid">
       @foreach ($plots as $p)
-        <a class="product-card" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $p]) }}">
+        <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $p]) }}">
           <div class="code">{{ $p->code }}</div>
           <div class="price">¥{{ number_format($p->price_yearly) }}/年</div>
           <div class="meta">{{ $p->mu_area }} 亩 · 命名/监控/溯源/礼盒</div>
@@ -44,7 +44,7 @@
     </div>
     <div class="product-grid">
       @foreach ($groups as $g)
-        <a class="product-card" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $g]) }}">
+        <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $g]) }}">
           <div class="code">{{ $g->code }}</div>
           <div class="price">¥300/株</div>
           <div class="meta">{{ $g->children_count }} 株可认养 · 池均摊</div>

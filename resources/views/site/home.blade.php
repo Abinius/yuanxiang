@@ -8,8 +8,8 @@
         <p class="lede">这里是 {{ $tenant->name }}。认养后可在「我的田」查看生长日历、农事动态与配送进度；实时监控与溯源时间线均已上线。</p>
       </div>
       <div class="hero-stats">
-        <a class="btn btn-primary" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">去看田块</a>
-        <a class="btn btn-ghost" href="{{ route('tenant.live.index', ['tenant' => $tenant->slug]) }}">实时监控</a>
+        <a class="btn btn-primary" href="{{ route('tenant.adopt.index', []) }}">去看田块</a>
+        <a class="btn btn-ghost" href="{{ route('tenant.live.index', []) }}">实时监控</a>
       </div>
     </div>
 
@@ -71,7 +71,7 @@
           <span class="eyebrow">认养即共建</span>
           <span>你的田块会成为村庄平台样板田的一部分,带动本地种植户一起把好枸杞做出来。</span>
         </p>
-        <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">去认养 →</a>
+        <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.index', []) }}">去认养 →</a>
       </div>
     </div>
   </section>

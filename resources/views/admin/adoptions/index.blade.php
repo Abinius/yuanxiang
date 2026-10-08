@@ -5,8 +5,8 @@
 @section('content')
   <div class="page-header">
     <h1 class="page-title">订单管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.adoptions.create', ['tenant' => $tenant->slug]) }}">+ 手动建单</a>
-    <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">刷新</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.adoptions.create', []) }}">+ 手动建单</a>
+    <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', []) }}">刷新</a>
   </div>
 
   @if (session('status'))
@@ -17,7 +17,7 @@
   @endif
 
   <div class="table-bar">
-    <form method="GET" action="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:320px">
+    <form method="GET" action="{{ route('tenant.admin.adoptions.index', []) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:320px">
       <label class="text-sm" style="margin:0">状态</label>
       <select name="status" class="select" style="width:auto" onchange="this.form.submit()">
         <option value="">全部</option>
@@ -69,7 +69,7 @@
               <td>
                 <span class="note text-xs">详情见订单 {{ $adoption->adoption_no }}</span>
                 @if ($paid)
-                  <form method="POST" action="{{ route('tenant.admin.refund', ['tenant' => $tenant->slug, 'adoption' => $adoption->id]) }}" style="display:inline;margin-top:4px">
+                  <form method="POST" action="{{ route('tenant.admin.refund', ['adoption' => $adoption->id]) }}" style="display:inline;margin-top:4px">
                     @csrf
                     <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('确认发起退款？')">退款</button>
                   </form>

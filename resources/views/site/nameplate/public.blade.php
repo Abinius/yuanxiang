@@ -11,7 +11,7 @@
     </div>
 
     <div class="text-center mt-3">
-      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $adoption->adoptable]) }}">认养这块田 ›</a>
+      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['plot' => $adoption->adoptable]) }}">认养这块田 ›</a>
     </div>
     <p class="note text-xs text-center" style="margin-top:10px">宁夏红寺堡 · 生态种植 · 全程可溯源</p>
   </div>

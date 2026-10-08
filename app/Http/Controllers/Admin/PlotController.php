@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Farm;
 use App\Models\Plan;
 use App\Models\Plot;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\SettingsService;
 use App\Support\PlotRules;
 use Illuminate\Http\Request;
@@ -26,68 +26,64 @@ class PlotController extends Controller
     {
     }
 
-    public function index(Tenant $tenant)
+    public function index()
     {
         $plots = Plot::query()
             ->orderBy('order_index')
             ->orderBy('code')
             ->get();
 
-        return view('admin.plots.index', compact('tenant', 'plots'));
+        return view('admin.plots.index', compact('plots'));
     }
 
-    public function create(Tenant $tenant)
+    public function create()
     {
-        return view('admin.plots.form', $this->formData($tenant, new Plot()));
+        return view('admin.plots.form', $this->formData(Tenant::current(), new Plot()));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
-        $plot = new Plot($request->validate(PlotRules::rules($tenant, $request)));
-        $plot->tenant_id = $tenant->id;
+        $plot = new Plot($request->validate(PlotRules::rules(Tenant::current(), $request)));
+        $plot->tenant_id = Tenant::current()->id;
         $plot->save();
 
-        return redirect()->route('tenant.admin.plots.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.plots.index', [])
             ->with('ok', '地块已添加');
     }
 
-    public function edit(Tenant $tenant, Plot $plot)
+    public function edit(Plot $plot)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
-        return view('admin.plots.form', $this->formData($tenant, $plot));
+        return view('admin.plots.form', $this->formData(Tenant::current(), $plot));
     }
 
-    public function update(Tenant $tenant, Plot $plot, Request $request)
+    public function update(Plot $plot, Request $request)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
-        $plot->fill($request->validate(PlotRules::rules($tenant, $request, $plot)))->save();
+        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot)))->save();
 
-        return redirect()->route('tenant.admin.plots.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.plots.index', [])
             ->with('ok', '地块已更新');
     }
 
-    public function destroy(Tenant $tenant, Plot $plot)
+    public function destroy(Plot $plot)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
         // F1.3 删除保护：在约/在途认养存在则禁止删除
         if ($plot->hasInFlightAdoptions()) {
             return redirect()
-                ->route('tenant.admin.plots.index', ['tenant' => $tenant->slug])
+                ->route('tenant.admin.plots.index', [])
                 ->with('error', '该地块有在约认养，无法删除；可改用「下架」停止新认养。');
         }
 
         $plot->delete();
 
-        return redirect()->route('tenant.admin.plots.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.plots.index', [])
             ->with('ok', '地块已删除');
     }
 
-    public function updateStory(Tenant $tenant, Plot $plot, Request $request)
+    public function updateStory(Plot $plot, Request $request)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
             'story' => ['nullable', 'string', 'max:1000'],
@@ -99,15 +95,14 @@ class PlotController extends Controller
     }
 
     /** 新增/编辑共用的表单数据。 */
-    private function formData(Tenant $tenant, Plot $plot): array
+    private function formData(Plot $plot): array
     {
         return [
-            'tenant' => $tenant,
             'plot' => $plot,
             'farms' => Farm::orderBy('name')->get(),
             'plans' => Plan::orderBy('name')->get(),
             'groups' => Plot::where('type', PlotType::Group)->orderBy('code')->get(),
-            'pricing' => $this->settings->pricing($tenant),
+            'pricing' => $this->settings->pricing(),
         ];
     }
 }

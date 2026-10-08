@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">摄像头管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.cameras.create', ['tenant' => $tenant->slug]) }}">+ 添加摄像头</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.cameras.create', []) }}">+ 添加摄像头</a>
   </div>
 
   @if (session('ok'))
@@ -40,8 +40,8 @@
                 </span>
               </td>
               <td class="flex gap-2">
-                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.cameras.edit', ['tenant' => $tenant->slug, 'camera' => $camera]) }}">编辑</a>
-                <form method="POST" action="{{ route('tenant.admin.cameras.destroy', ['tenant' => $tenant->slug, 'camera' => $camera]) }}" onsubmit="return confirm('删除该摄像头?')">
+                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.cameras.edit', ['camera' => $camera]) }}">编辑</a>
+                <form method="POST" action="{{ route('tenant.admin.cameras.destroy', ['camera' => $camera]) }}" onsubmit="return confirm('删除该摄像头?')">
                   @csrf
                   @method('DELETE')
                   <button class="btn btn-danger btn-sm" type="submit">删除</button>

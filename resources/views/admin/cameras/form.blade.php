@@ -3,8 +3,8 @@
 @section('title', $camera->exists ? '编辑摄像头' : '添加摄像头')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.cameras.index', ['tenant' => $tenant->slug]) }}">摄像头列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.cameras.index', []) }}">摄像头列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -15,7 +15,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ $camera->exists ? route('tenant.admin.cameras.update', ['tenant' => $tenant->slug, 'camera' => $camera]) : route('tenant.admin.cameras.store', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ $camera->exists ? route('tenant.admin.cameras.update', ['camera' => $camera]) : route('tenant.admin.cameras.store', []) }}">
     @csrf
     @if ($camera->exists)
       @method('PUT')

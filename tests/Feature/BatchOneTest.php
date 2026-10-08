@@ -14,7 +14,6 @@ use App\Models\TraceCode;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\TraceCodeService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -33,7 +32,6 @@ class BatchOneTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
         Cache::flush();
     }
 
@@ -58,7 +56,7 @@ class BatchOneTest extends TestCase
     {
         $plot = $plot ?? Plot::where('type', 'plot')->first();
         $this->actingAs($user)
-            ->post("/t/{$this->tenant()->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三',
                 'phone' => '13800000050',
                 'province' => '宁夏',
@@ -111,7 +109,7 @@ class BatchOneTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('我的丰收')
             ->assertSee($adoption->season_year)
@@ -127,7 +125,7 @@ class BatchOneTest extends TestCase
         $adoption = $this->makeActiveAdoption($user);
 
         $this->actingAs($user)
-            ->get("/t/{$this->tenant()->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('我的丰收')
             ->assertSee('本季暂无采收记录');
@@ -149,9 +147,9 @@ class BatchOneTest extends TestCase
         $code = collect(app(TraceCodeService::class)->generate($harvest, 1))[0];
 
         Cache::flush();
-        $this->get("/t/{$t->slug}/s/{$code->code}")->assertOk();
-        $this->get("/t/{$t->slug}/s/{$code->code}")->assertOk();
-        $this->get("/t/{$t->slug}/s/{$code->code}")->assertOk();
+        $this->get("/s/{$code->code}")->assertOk();
+        $this->get("/s/{$code->code}")->assertOk();
+        $this->get("/s/{$code->code}")->assertOk();
 
         $this->assertSame(1, $code->fresh()->scanned_count);
     }
@@ -173,7 +171,7 @@ class BatchOneTest extends TestCase
         $code = collect($codes)->first();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/s/{$code->code}")
+            ->get("/s/{$code->code}")
             ->assertOk()
             ->assertSee('你的箱')
             ->assertSee('查看我的田')
@@ -198,7 +196,7 @@ class BatchOneTest extends TestCase
 
         $other = $this->villager('13800000052');
         $this->actingAs($other)
-            ->get("/t/{$t->slug}/s/{$code->code}")
+            ->get("/s/{$code->code}")
             ->assertOk()
             ->assertDontSee('你的箱')
             ->assertDontSee('查看我的田')
@@ -216,7 +214,7 @@ class BatchOneTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($family)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $plot->id,
                 'type' => 'fertilize',
                 'title' => '',
@@ -241,7 +239,7 @@ class BatchOneTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($family)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $plot->id,
                 'type' => 'daily',
                 'title' => '今天的田间',
@@ -263,7 +261,7 @@ class BatchOneTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($family)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $plot->id, 'type' => 'daily',
                 'title' => '原始', 'is_public' => true,
             ])
@@ -272,7 +270,7 @@ class BatchOneTest extends TestCase
         $log = FarmLog::latest()->firstOrFail();
 
         $this->actingAs($family)
-            ->post("/t/{$t->slug}/family/logs/{$log->id}", [
+            ->post("/family/logs/{$log->id}", [
                 'plot_id' => $plot->id, 'type' => 'daily',
                 'title' => '已更新', 'is_public' => true,
             ])
@@ -290,7 +288,7 @@ class BatchOneTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($author)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $plot->id, 'type' => 'daily',
                 'title' => '作者的', 'is_public' => true,
             ])
@@ -299,7 +297,7 @@ class BatchOneTest extends TestCase
 
         $other = $this->familyUser('farm_log', '13900000051');
         $this->actingAs($other)
-            ->post("/t/{$t->slug}/family/logs/{$log->id}", [
+            ->post("/family/logs/{$log->id}", [
                 'plot_id' => $plot->id, 'type' => 'daily',
                 'title' => '篡改', 'is_public' => true,
             ])
@@ -316,7 +314,7 @@ class BatchOneTest extends TestCase
         $plot = Plot::where('tenant_id', $t->id)->where('type', 'plot')->first();
         $plot->update(['story' => '这块田挨着涝坝，夏果格外甜。']);
 
-        $this->get("/t/{$t->slug}/adopt/{$plot->id}")
+        $this->get("/adopt/{$plot->id}")
             ->assertOk()
             ->assertSee('地块故事')
             ->assertSee('这块田挨着涝坝');
@@ -331,7 +329,7 @@ class BatchOneTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/plots/{$plot->id}/story", ['story' => '晨露重，果实甜。'])
+            ->post("/admin/plots/{$plot->id}/story", ['story' => '晨露重，果实甜。'])
             ->assertRedirect();
 
         $this->assertSame('晨露重，果实甜。', $plot->fresh()->story);
@@ -347,13 +345,13 @@ class BatchOneTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('认养转化率')
             ->assertSee('产出达标率')
             ->assertSee('溯源查看率')
             ->assertSee('续费意向')
-            ->assertSee(route('tenant.admin.adoptions.index', ['tenant' => $t->slug]))
-            ->assertSee(route('tenant.admin.trace-codes.index', ['tenant' => $t->slug]));
+            ->assertSee(route('tenant.admin.adoptions.index', []))
+            ->assertSee(route('tenant.admin.trace-codes.index', []));
     }
 }

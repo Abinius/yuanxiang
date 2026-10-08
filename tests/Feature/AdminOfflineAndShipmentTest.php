@@ -11,7 +11,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\GiftBoxService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -28,7 +27,6 @@ class AdminOfflineAndShipmentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -64,7 +62,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adoptions", [
+            ->post("/admin/adoptions", [
                 'phone' => $user->phone,
                 'plot_id' => $plot->id,
                 'season_year' => now()->year,
@@ -87,7 +85,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adoptions", [
+            ->post("/admin/adoptions", [
                 'phone' => $user->phone,
                 'plot_id' => $plot->id,
                 'season_year' => now()->year,
@@ -108,7 +106,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adoptions", [
+            ->post("/admin/adoptions", [
                 'phone' => '13800009999',
                 'plot_id' => $plot->id,
                 'season_year' => now()->year,
@@ -134,7 +132,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         ]);
         // 建一个待发礼盒（草稿）
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三', 'phone' => $user->phone,
                 'province' => '宁夏', 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '光彩村 1 号',
             ])
@@ -144,7 +142,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $giftBox = (new GiftBoxService())->create($adoption, 'spring', (int) now()->format('Y'));
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/shipments")
+            ->get("/admin/shipments")
             ->assertOk()
             ->assertSee('统一发货台')
             ->assertSee('待发配送')
@@ -165,7 +163,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三', 'phone' => $user->phone,
                 'province' => '宁夏', 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '光彩村 1 号',
             ])
@@ -179,7 +177,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/shipments/deliveries/{$delivery->id}/ship", [
+            ->post("/admin/shipments/deliveries/{$delivery->id}/ship", [
                 'tracking_no' => 'SF0001', 'carrier' => '顺丰',
             ])
             ->assertRedirect();
@@ -197,7 +195,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三', 'phone' => $user->phone,
                 'province' => '宁夏', 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '光彩村 1 号',
             ])
@@ -207,7 +205,7 @@ class AdminOfflineAndShipmentTest extends TestCase
         $giftBox = (new GiftBoxService())->create($adoption, 'spring', (int) now()->format('Y'));
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/shipments/gifts/{$giftBox->id}/ship", [
+            ->post("/admin/shipments/gifts/{$giftBox->id}/ship", [
                 'tracking_no' => 'YT0001', 'carrier' => '圆通',
             ])
             ->assertRedirect();

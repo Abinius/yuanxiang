@@ -9,7 +9,6 @@ use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -28,7 +27,6 @@ class EntryPointsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function seedAll(): void
@@ -62,7 +60,7 @@ class EntryPointsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('地块管理')
             ->assertSee('统一发货台')
@@ -75,12 +73,12 @@ class EntryPointsTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions")
+            ->get("/admin/adoptions")
             ->assertOk()
             ->assertSee('手动建单');
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions/create")
+            ->get("/admin/adoptions/create")
             ->assertOk();
     }
 
@@ -94,12 +92,12 @@ class EntryPointsTest extends TestCase
         ]);
 
         $this->actingAs($villager)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('会员等级');
 
         $this->actingAs($villager)
-            ->get("/t/{$t->slug}/my/member")
+            ->get("/my/member")
             ->assertOk();
     }
 
@@ -139,13 +137,13 @@ class EntryPointsTest extends TestCase
         $harvest->save();
 
         $this->actingAs($admin)
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertOk()
             ->assertSee('入口测试动态');
 
         // 三个编辑页确实可达（不再只存在于路由表里）
-        $this->actingAs($admin)->get("/t/{$t->slug}/family/logs/{$log->id}/edit")->assertOk();
-        $this->actingAs($admin)->get("/t/{$t->slug}/family/fertilizer/{$batch->id}/edit")->assertOk();
-        $this->actingAs($admin)->get("/t/{$t->slug}/family/harvest/{$harvest->id}/edit")->assertOk();
+        $this->actingAs($admin)->get("/family/logs/{$log->id}/edit")->assertOk();
+        $this->actingAs($admin)->get("/family/fertilizer/{$batch->id}/edit")->assertOk();
+        $this->actingAs($admin)->get("/family/harvest/{$harvest->id}/edit")->assertOk();
     }
 }

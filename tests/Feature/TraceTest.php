@@ -10,7 +10,6 @@ use App\Models\FertilizerBatch;
 use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\Tenant;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +26,6 @@ class TraceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -73,7 +71,7 @@ class TraceTest extends TestCase
         $this->traceLog($plot, FarmLogType::Weed, '除草', '2026-05-02 08:00:00', false);
 
         // guest 未登录直接可看
-        $this->get("/t/{$t->slug}/trace/{$plot->id}")
+        $this->get("/trace/{$plot->id}")
             ->assertOk()
             ->assertSee('有机肥基施')
             ->assertDontSee('日常巡田')
@@ -96,30 +94,11 @@ class TraceTest extends TestCase
         $this->traceLog($plot, FarmLogType::Fertilize, '基施', '2026-03-12 08:00:00', true, $batch);
         $this->traceLog($plot, FarmLogType::Fertilize, '追肥', '2026-05-08 08:00:00');
 
-        $this->get("/t/{$t->slug}/trace/{$plot->id}")
+        $this->get("/trace/{$plot->id}")
             ->assertOk()
             ->assertSee('NXLB-2026-001')
             ->assertSee('有机质≥45%')
             ->assertSeeInOrder(['基施', '追肥']);
-    }
-
-    public function test_cross_tenant_plot_is_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherPlot = Plot::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $this->farm()->id,
-            'type' => 'plot',
-            'code' => 'X-01',
-            'mu_area' => 0.1,
-            'price_yearly' => 5000,
-        ]);
-
-        $this->get("/t/{$t->slug}/trace/{$otherPlot->id}")
-            ->assertNotFound();
     }
 
     public function test_harvest_merges_farm_log_note_and_shows_detection_report(): void
@@ -151,7 +130,7 @@ class TraceTest extends TestCase
             'result_summary' => ['毒死蜱' => '未检出'],
         ]);
 
-        $this->get("/t/{$t->slug}/trace/{$plot->id}")
+        $this->get("/trace/{$plot->id}")
             ->assertOk()
             ->assertSee('2026 年度采收')
             ->assertSee('一级')
@@ -166,7 +145,7 @@ class TraceTest extends TestCase
         $t = $this->tenant();
         $plot = $this->plot();
 
-        $this->get("/t/{$t->slug}/adopt/{$plot->id}")
+        $this->get("/adopt/{$plot->id}")
             ->assertOk()
             ->assertSee('查看溯源');
     }

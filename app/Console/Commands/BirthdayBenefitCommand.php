@@ -32,7 +32,7 @@ class BirthdayBenefitCommand extends Command
         $sent = 0;
 
         foreach (Tenant::where('status', 'active')->get() as $tenant) {
-            $cfg = $this->settings->member($tenant)['birthday_benefit'] ?? null;
+            $cfg = $this->settings->member()['birthday_benefit'] ?? null;
             if (! $cfg || empty($cfg['promotion_type'])) {
                 continue; // 未配置权益，跳过
             }

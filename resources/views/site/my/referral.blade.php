@@ -6,7 +6,7 @@
   <div class="panel" style="max-width:680px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">我的分销</h1>
-      <a class="back-link" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">我的认养</a>
+      <a class="back-link" href="{{ route('tenant.my.index', []) }}">我的认养</a>
     </div>
 
     @if (session('ok'))
@@ -44,7 +44,7 @@
     </div>
 
     @if ($commission['available'] > 0)
-      <form method="POST" action="{{ route('tenant.my.commission.cash-out', ['tenant' => $tenant->slug]) }}" class="flex gap-2 items-end mb-4">
+      <form method="POST" action="{{ route('tenant.my.commission.cash-out', []) }}" class="flex gap-2 items-end mb-4">
         @csrf
         <div class="field flex-1">
           <label>提现金额(元)</label>

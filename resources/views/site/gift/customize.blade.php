@@ -6,14 +6,14 @@
   <div class="panel" style="max-width:560px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">{{ $giftBox->festival->label() }} 礼盒 · 定制</h1>
-      <a class="back-link" href="{{ route('tenant.my.gift.index', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">我的礼盒 ›</a>
+      <a class="back-link" href="{{ route('tenant.my.gift.index', ['adoption' => $adoption]) }}">我的礼盒 ›</a>
     </div>
 
     @if ($errors->any())
       <div class="alert">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ route('tenant.my.gift.update', ['tenant' => $tenant->slug, 'adoption' => $adoption, 'giftBox' => $giftBox]) }}">
+    <form method="POST" action="{{ route('tenant.my.gift.update', ['adoption' => $adoption, 'giftBox' => $giftBox]) }}">
       @csrf
       <div class="field">
         <label>收礼人</label>

@@ -6,7 +6,6 @@ use App\Models\Camera;
 use App\Models\Farm;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\CameraSeeder;
@@ -25,7 +24,6 @@ class LiveTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -49,8 +47,8 @@ class LiveTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class, CameraSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/live")
-            ->assertRedirect("/t/{$t->slug}/login");
+        $this->get("/live")
+            ->assertRedirect("/login");
     }
 
     public function test_villager_sees_camera_list_with_status_tags(): void
@@ -59,7 +57,7 @@ class LiveTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->villager())
-            ->get("/t/{$t->slug}/live")
+            ->get("/live")
             ->assertOk()
             ->assertSee('FD-01 田块摄像头')
             ->assertSee('FD-02 田块摄像头')
@@ -74,7 +72,7 @@ class LiveTest extends TestCase
         $online = Camera::where('device_no', 'EZ-MOCK-0001')->firstOrFail();
 
         $this->actingAs($this->villager())
-            ->get("/t/{$t->slug}/live/{$online->id}")
+            ->get("/live/{$online->id}")
             ->assertOk()
             ->assertSee('<video id="live-video"', false)
             ->assertSee('test-streams.mux.dev');
@@ -87,55 +85,10 @@ class LiveTest extends TestCase
         $offline = Camera::where('device_no', 'EZ-MOCK-0002')->firstOrFail();
 
         $this->actingAs($this->villager())
-            ->get("/t/{$t->slug}/live/{$offline->id}")
+            ->get("/live/{$offline->id}")
             ->assertOk()
             ->assertSee('摄像头离线')
             ->assertDontSee('live-video');
-    }
-
-    public function test_cross_tenant_camera_is_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '他租户', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherCam = Camera::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $otherFarm->id,
-            'name' => '他摄像头',
-            'device_no' => 'OTH-001',
-            'status' => 'online',
-        ]);
-
-        $this->actingAs($this->villager())
-            ->get("/t/{$t->slug}/live/{$otherCam->id}")
-            ->assertNotFound();
-    }
-
-    public function test_other_tenant_user_cannot_view_cameras(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class, CameraSeeder::class]);
-        $t = $this->tenant();
-        $camera = Camera::where('device_no', 'EZ-MOCK-0001')->firstOrFail();
-
-        // 他租户已登录用户（P0：tenant.member 须为租户成员，仅 auth 不够）
-        $other = Tenant::create(['slug' => 'other', 'name' => '他租户', 'status' => 'active']);
-        $otherUser = User::create([
-            'tenant_id' => $other->id,
-            'phone' => '13800000099',
-            'password' => 'secret123',
-            'nickname' => '他租户用户',
-            'role' => 'villager',
-        ]);
-
-        $this->actingAs($otherUser)
-            ->get("/t/{$t->slug}/live")
-            ->assertForbidden();
-
-        $this->actingAs($otherUser)
-            ->get("/t/{$t->slug}/live/{$camera->id}")
-            ->assertForbidden();
     }
 
     public function test_admin_manages_cameras_villager_is_forbidden(): void
@@ -145,7 +98,7 @@ class LiveTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/cameras", [
+            ->post("/admin/cameras", [
                 'name' => '新增摄像头',
                 'device_no' => 'EZ-NEW-001',
                 'provider' => 'ezviz',
@@ -158,7 +111,7 @@ class LiveTest extends TestCase
 
         // villager（role 错）→ 403
         $this->actingAs($this->villager('13800000002'))
-            ->post("/t/{$t->slug}/admin/cameras", [
+            ->post("/admin/cameras", [
                 'name' => '越权',
                 'device_no' => 'EZ-HACK',
                 'status' => 'offline',

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Harvest;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Models\TraceCode;
 use App\Services\TraceCodeService;
 use Illuminate\Http\Request;
@@ -20,30 +20,30 @@ class TraceCodeController extends Controller
     {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $traceCodes = TraceCode::query()
             ->with(['plot', 'harvest'])
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.trace_codes.index', compact('tenant', 'traceCodes'));
+        return view('admin.trace_codes.index', compact('traceCodes'));
     }
 
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $harvests = Harvest::query()
             ->with('plot')
             ->orderByDesc('harvested_at')
             ->get();
 
-        return view('admin.trace_codes.form', compact('tenant', 'harvests'));
+        return view('admin.trace_codes.form', compact('harvests'));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $data = $request->validate([
-            'harvest_id' => ['required', Rule::exists('harvests', 'id')->where('tenant_id', $tenant->id)],
+            'harvest_id' => ['required', Rule::exists('harvests', 'id')->where('tenant_id', Tenant::current()->id)],
             'count' => ['required', 'integer', 'min:1', 'max:50'],
         ]);
 
@@ -51,12 +51,11 @@ class TraceCodeController extends Controller
         $generated = $this->codes->generate($harvest, (int) $data['count']);
 
         return redirect()->route('tenant.admin.trace-codes.print', [
-            'tenant' => $tenant->slug,
             'ids' => implode(',', array_map(fn ($c) => $c->id, $generated)),
         ]);
     }
 
-    public function print(Tenant $tenant, Request $request)
+    public function print(Request $request)
     {
         $ids = collect(explode(',', (string) $request->query('ids', '')))
             ->map(fn ($v) => (int) $v)
@@ -65,7 +64,7 @@ class TraceCodeController extends Controller
             ->all();
 
         if (! $ids) {
-            return redirect()->route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]);
+            return redirect()->route('tenant.admin.trace-codes.index', []);
         }
 
         $traceCodes = TraceCode::query()
@@ -74,8 +73,7 @@ class TraceCodeController extends Controller
             ->get();
 
         // 双保险：上下文过滤已保证 tenant 一致，仍逐条校验防意外
-        abort_if($traceCodes->contains(fn ($c) => $c->tenant_id !== $tenant->id), 404);
 
-        return view('admin.trace_codes.print', compact('tenant', 'traceCodes'));
+        return view('admin.trace_codes.print', compact('traceCodes'));
     }
 }

@@ -3,14 +3,14 @@
 @section('title', '地块录入')
 
 @section('nav_right')
-  <a href="{{ route('tenant.family.dashboard', ['tenant' => $tenant->slug]) }}">家人首页</a>
+  <a href="{{ route('tenant.family.dashboard', []) }}">家人首页</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
 @section('content')
   <div class="page-header">
     <h1 class="page-title">地块录入</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.family.plots.create', ['tenant' => $tenant->slug]) }}">添加地块</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.family.plots.create', []) }}">添加地块</a>
   </div>
 
   @if (session('ok'))
@@ -29,7 +29,7 @@
           <span class="font-medium serif text-brand">{{ $plot->code }}</span>
           <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : 'tag-off' }}">{{ $plot->status->label() }}</span>
         </div>
-        <a class="btn btn-ghost btn-sm" href="{{ route('tenant.family.plots.edit', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">编辑</a>
+        <a class="btn btn-ghost btn-sm" href="{{ route('tenant.family.plots.edit', ['plot' => $plot]) }}">编辑</a>
       </div>
     @empty
       <p class="note text-xs">本基地还没有地块。</p>

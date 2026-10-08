@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CommissionLedger;
 use App\Models\Payout;
-use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,12 +15,11 @@ use Illuminate\Support\Facades\DB;
  */
 class CommissionController extends Controller
 {
-    public function ledger(Tenant $tenant, Request $request)
+    public function ledger(Request $request)
     {
         $base = CommissionLedger::query();
 
         return view('admin.commissions.index', [
-            'tenant' => $tenant,
             'summary' => [
                 'pending' => (float) (clone $base)->where('status', 'pending')->sum('amount'),
                 'available' => (float) (clone $base)->where('status', 'available')->sum('amount'),
@@ -38,9 +36,9 @@ class CommissionController extends Controller
         ]);
     }
 
-    public function approve(Tenant $tenant, Payout $payout, Request $request)
+    public function approve(Payout $payout, Request $request)
     {
-        abort_if($payout->tenant_id !== $tenant->id || $payout->type !== 'commission', 404);
+        abort_if($payout->type !== 'commission', 404);
         abort_unless($payout->status === 'pending', 422, '该提现已处理');
 
         $payout->update(['status' => 'paid', 'paid_at' => now()]);
@@ -48,9 +46,9 @@ class CommissionController extends Controller
         return back()->with('ok', '提现已发放');
     }
 
-    public function reject(Tenant $tenant, Payout $payout, Request $request)
+    public function reject(Payout $payout, Request $request)
     {
-        abort_if($payout->tenant_id !== $tenant->id || $payout->type !== 'commission', 404);
+        abort_if($payout->type !== 'commission', 404);
         abort_unless($payout->status === 'pending', 422, '该提现已处理');
 
         DB::transaction(function () use ($payout) {

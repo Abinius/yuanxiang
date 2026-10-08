@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\AdoptionStatus;
 use App\Models\Adoption;
-use App\Tenancy\TenantContext;
 
 /**
  * F9：续费到期调度 + auto_renew 消费。
@@ -54,19 +53,13 @@ class RenewalService
                 continue;
             }
 
-            $prev = TenantContext::id();
-            TenantContext::set($adoption->tenant_id);
-            try {
-                $this->templates->send($user, 'renewal_notice', [
-                    'url' => route('tenant.home', ['tenant' => $adoption->tenant->slug]),
-                    'data' => [
-                        'thing1' => ['value' => $adoption->adoptable?->code ?? '你的田'],
-                        'thing2' => ['value' => '认养即将到期，续费继续看它长大（剩 '.$days.' 天）'],
-                    ],
-                ]);
-            } finally {
-                TenantContext::set($prev);
-            }
+            $this->templates->send($user, 'renewal_notice', [
+                'url' => route('tenant.home'),
+                'data' => [
+                    'thing1' => ['value' => $adoption->adoptable?->code ?? '你的田'],
+                    'thing2' => ['value' => '认养即将到期，续费继续看它长大（剩 '.$days.' 天）'],
+                ],
+            ]);
             $sent++;
         }
 
@@ -120,13 +113,7 @@ class RenewalService
                 ->whereHas('promotion', fn ($q) => $q->where('type', 'renewal')->where('status', 'active'))
                 ->first();
 
-            $prev = TenantContext::id();
-            TenantContext::set($adoption->tenant_id);
-            try {
-                $this->promotions->renew($user, $adoption, $coupon);
-            } finally {
-                TenantContext::set($prev);
-            }
+            $this->promotions->renew($user, $adoption, $coupon);
             $created++;
         }
 

@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">配送管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.deliveries.create', ['tenant' => $tenant->slug]) }}">+ 打单(选采收)</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.deliveries.create', []) }}">+ 打单(选采收)</a>
   </div>
 
   @if (session('ok'))
@@ -20,7 +20,7 @@
   </p>
 
   <div class="table-bar">
-    <form method="GET" action="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:260px">
+    <form method="GET" action="{{ route('tenant.admin.deliveries.index', []) }}" style="display:flex;align-items:center;gap:8px;flex:1;max-width:260px">
       <label class="text-sm" style="margin:0">状态</label>
       <select name="status" class="select" style="width:auto" onchange="this.form.submit()">
         <option value="">全部</option>
@@ -64,9 +64,9 @@
               </td>
               <td class="mono text-xs">{{ $d->tracking_no ?? '—' }}</td>
               <td>
-                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.deliveries.print', ['tenant' => $tenant->slug, 'ids' => $d->id]) }}">打单</a>
+                <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.deliveries.print', ['ids' => $d->id]) }}">打单</a>
                 @if ($d->status->value === 'pending')
-                  <form method="POST" action="{{ route('tenant.admin.deliveries.ship', ['tenant' => $tenant->slug, 'delivery' => $d]) }}" class="flex gap-1">
+                  <form method="POST" action="{{ route('tenant.admin.deliveries.ship', ['delivery' => $d]) }}" class="flex gap-1">
                     @csrf
                     <input class="input" name="tracking_no" placeholder="运单号" required style="width:110px;font-size:12px;padding:6px 8px">
                     <input class="input" name="carrier" placeholder="承运商" style="width:72px;font-size:12px;padding:6px 8px">

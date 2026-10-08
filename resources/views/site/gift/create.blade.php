@@ -9,7 +9,7 @@
     @if ($festivals->isEmpty())
       <div class="alert">本年度礼盒额度已用完。</div>
     @else
-      <form method="POST" action="{{ route('tenant.my.gift.store', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+      <form method="POST" action="{{ route('tenant.my.gift.store', ['adoption' => $adoption]) }}">
         @csrf
         <div class="field">
           <label>选择节日(剩余额度)</label>

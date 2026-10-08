@@ -12,7 +12,6 @@ use App\Models\Delivery;
 use App\Models\FarmLog;
 use App\Models\Harvest;
 use App\Models\Plot;
-use App\Models\Tenant;
 use App\Services\AdoptionService;
 use App\Services\DeliveryService;
 use App\Services\PromotionService;
@@ -22,10 +21,7 @@ use Illuminate\Support\Collection;
 /**
  * 我的田（云乡民视角）：铭牌 + 生长日历 + 农事动态流 + 铭牌分享。
  *
- * 路由挂在租户组下 /my，全部 auth + owner-gated。
- * 注意路由-param 位置性：方法签名 Tenant 在前、Adoption 在后，
- * 因 SubstituteBindings 先于 TenantMiddleware，TenantScope 在绑定时未激活，
- * 故保留显式 tenant_id/user_id 守卫。
+ * 路由 /my，全部 auth + owner-gated（user_id 守卫）。
  */
 class MyPlotController extends Controller
 {
@@ -37,21 +33,20 @@ class MyPlotController extends Controller
     }
 
     /** 我的认养列表。 */
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $adoptions = $request->user()->adoptions()->latest()->get();
 
         return view('site.my.index', [
-            'tenant' => $tenant,
             'adoptions' => $adoptions,
             'adoptionService' => $this->adoptions,
         ]);
     }
 
     /** 我的田主页：铭牌 + 12 月生长日历 + 农事动态流。 */
-    public function show(Tenant $tenant, Adoption $adoption, Request $request)
+    public function show(Adoption $adoption, Request $request)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_unless($adoption->status === AdoptionStatus::Active, 403, '认养未生效');
 
         $adoption->load(['adoptable', 'deliveries.address', 'deliveries.harvest']);
@@ -76,7 +71,6 @@ class MyPlotController extends Controller
         $yieldSummary = $this->buildYieldSummary($adoption->adoptable, $adoption->season_year);
 
         return view('site.my.plot', [
-            'tenant' => $tenant,
             'adoption' => $adoption,
             'logs' => $logs,
             'timeline' => $timeline,
@@ -86,24 +80,23 @@ class MyPlotController extends Controller
     }
 
     /** 独立铭牌页（截图分享 / 复制链接用）。 */
-    public function nameplate(Tenant $tenant, Adoption $adoption, Request $request)
+    public function nameplate(Adoption $adoption, Request $request)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_unless($adoption->status === AdoptionStatus::Active, 403, '认养未生效');
 
         $adoption->load('adoptable');
 
         return view('site.my.nameplate', [
-            'tenant' => $tenant,
             'adoption' => $adoption,
         ]);
     }
 
     /** C 端确认收货（owner-gated + 状态守卫，仅已发货可签收）。 */
-    public function receive(Tenant $tenant, Adoption $adoption, Delivery $delivery, Request $request)
+    public function receive(Adoption $adoption, Delivery $delivery, Request $request)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
-        abort_if($delivery->tenant_id !== $tenant->id || $delivery->adoption_id !== $adoption->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
+        abort_if($delivery->adoption_id !== $adoption->id, 404);
         abort_unless($delivery->status === DeliveryStatus::Shipped, 422, '仅已发货可确认收货');
 
         $this->deliveries->markReceived($delivery);
@@ -112,9 +105,9 @@ class MyPlotController extends Controller
     }
 
     /** 续费：建下一季新单（自动用用户可用的 renewal 券抵扣）。F9：Ended 也可续。 */
-    public function renew(Tenant $tenant, Adoption $adoption, Request $request)
+    public function renew(Adoption $adoption, Request $request)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_unless(in_array($adoption->status, [AdoptionStatus::Active, AdoptionStatus::Ended], true), 422, '当前状态不可续费');
 
         $coupon = $request->user()->coupons()
@@ -124,13 +117,13 @@ class MyPlotController extends Controller
 
         $new = $this->promotions->renew($request->user(), $adoption, $coupon);
 
-        return redirect()->route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $new]);
+        return redirect()->route('tenant.adopt.pay', ['adoption' => $new]);
     }
 
     /** 续费意向开关。 */
-    public function autoRenew(Tenant $tenant, Adoption $adoption, Request $request)
+    public function autoRenew(Adoption $adoption, Request $request)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_unless($adoption->status === AdoptionStatus::Active, 422, '仅生效中认养可设置续费意向');
 
         $adoption->update(['auto_renew' => ! $adoption->auto_renew]);

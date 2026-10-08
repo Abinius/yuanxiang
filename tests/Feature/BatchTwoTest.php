@@ -11,7 +11,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,7 +28,6 @@ class BatchTwoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -79,7 +77,7 @@ class BatchTwoTest extends TestCase
         $user = $this->familyUser('farm_log');
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertOk()
             ->assertSee('快速记录')
             ->assertSee('录解说（露脸）')
@@ -99,7 +97,7 @@ class BatchTwoTest extends TestCase
         $stage = config('goji.stages')[(int) now()->format('n')]['label'];
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertOk()
             ->assertSee('今日待办')
             ->assertSee($stage)
@@ -134,7 +132,7 @@ class BatchTwoTest extends TestCase
         ]);
 
         $resp = $this->actingAs($user)
-            ->get("/t/{$t->slug}/family/logs/create")
+            ->get("/family/logs/create")
             ->assertOk();
 
         $content = $resp->getContent();
@@ -156,7 +154,7 @@ class BatchTwoTest extends TestCase
         $video = UploadedFile::fake()->create('explain.mp4', 100, 'video/mp4');
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => Plot::where('tenant_id', $t->id)->where('type', 'plot')->first()->id,
                 'type' => 'explain',
                 'content' => '这是阿叔的解说',
@@ -183,7 +181,7 @@ class BatchTwoTest extends TestCase
         $user = $this->familyUser('farm_log');
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => Plot::where('tenant_id', $t->id)->where('type', 'plot')->first()->id,
                 'type' => 'explain',
                 'title' => '',
@@ -220,7 +218,7 @@ class BatchTwoTest extends TestCase
         ]);
 
         // 未登录访问公开认养页仍可见回放（去 auth 墙）
-        $this->get("/t/{$t->slug}/adopt")
+        $this->get("/adopt")
             ->assertOk()
             ->assertSee('精彩回放')
             ->assertSee('阿叔的秋果解说');
@@ -245,7 +243,7 @@ class BatchTwoTest extends TestCase
             'occurred_at' => now(), 'is_public' => true, 'source' => 'family',
         ]);
 
-        $this->get("/t/{$t->slug}/adopt")
+        $this->get("/adopt")
             ->assertOk()
             ->assertDontSee('私密解说')
             ->assertDontSee('日常无视频');

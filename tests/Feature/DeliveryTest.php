@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\DeliveryService;
 use App\Services\WechatTemplateService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -34,7 +33,6 @@ class DeliveryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -138,7 +136,7 @@ class DeliveryTest extends TestCase
         $harvest = $this->makeHarvest($plot);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/deliveries", ['harvest_id' => $harvest->id])
+            ->post("/admin/deliveries", ['harvest_id' => $harvest->id])
             ->assertRedirect();
 
         $deliveries = Delivery::where('harvest_id', $harvest->id)->get();
@@ -149,7 +147,7 @@ class DeliveryTest extends TestCase
 
         // 重复打单同一采收 → 不重复建
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/deliveries", ['harvest_id' => $harvest->id])
+            ->post("/admin/deliveries", ['harvest_id' => $harvest->id])
             ->assertRedirect();
         $this->assertSame(1, Delivery::where('harvest_id', $harvest->id)->count());
     }
@@ -169,7 +167,7 @@ class DeliveryTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/deliveries/{$delivery->id}/ship", [
+            ->post("/admin/deliveries/{$delivery->id}/ship", [
                 'tracking_no' => 'SF2026090001',
                 'carrier' => '顺丰',
             ])
@@ -180,32 +178,6 @@ class DeliveryTest extends TestCase
         $this->assertSame('SF2026090001', $delivery->tracking_no);
         $this->assertSame('顺丰', $delivery->carrier);
         $this->assertNotNull($delivery->shipped_at);
-    }
-
-    public function test_cross_tenant_delivery_ship_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
-        $t = $this->tenant();
-        $user = $this->makeActiveAdopter();
-        $adoption = $user->adoptions()->first();
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherPlot = Plot::create([
-            'tenant_id' => $other->id, 'farm_id' => $otherFarm->id, 'type' => 'plot',
-            'code' => 'X-01', 'mu_area' => 0.1, 'price_yearly' => 5000,
-        ]);
-        $otherHarvest = $this->makeHarvest($otherPlot);
-        $otherDelivery = Delivery::create([
-            'tenant_id' => $other->id,
-            'adoption_id' => $adoption->id,
-            'harvest_id' => $otherHarvest->id,
-            'status' => 'pending',
-        ]);
-
-        $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/deliveries/{$otherDelivery->id}/ship", ['tracking_no' => 'X'])
-            ->assertNotFound();
     }
 
     public function test_admin_print_shows_picking_list(): void
@@ -224,7 +196,7 @@ class DeliveryTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/deliveries/print?ids={$delivery->id}")
+            ->get("/admin/deliveries/print?ids={$delivery->id}")
             ->assertOk()
             ->assertSee($adoption->adoption_no)
             ->assertSee('张三');
@@ -237,7 +209,7 @@ class DeliveryTest extends TestCase
         $user = $this->makeActiveAdopter(); // villager role
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/deliveries")
+            ->get("/admin/deliveries")
             ->assertForbidden();
     }
 
@@ -257,14 +229,14 @@ class DeliveryTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('配送进度')
             ->assertSee('确认收货')
             ->assertSee('SF2026090001');
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/deliveries/{$delivery->id}/receive")
+            ->post("/my/plot/{$adoption->id}/deliveries/{$delivery->id}/receive")
             ->assertRedirect();
 
         $this->assertSame('delivered', $delivery->fresh()->status->value);
@@ -273,7 +245,7 @@ class DeliveryTest extends TestCase
         // 非 owner → 404
         $other = $this->makeActiveAdopter();
         $this->actingAs($other)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertNotFound();
     }
 
@@ -285,7 +257,7 @@ class DeliveryTest extends TestCase
         Queue::fake();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/harvest", [
+            ->post("/family/harvest", [
                 'plot_id' => $this->plot()->id,
                 'season_year' => now()->year,
                 'harvested_at' => now()->toDateString(),
@@ -308,7 +280,7 @@ class DeliveryTest extends TestCase
         Queue::fake();
 
         $this->actingAs($family)
-            ->post("/t/{$t->slug}/family/harvest", [
+            ->post("/family/harvest", [
                 'plot_id' => $plot->id,
                 'season_year' => now()->year,
                 'harvested_at' => now()->toDateString(),

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,10 +15,10 @@ use Illuminate\Validation\Rule;
  */
 class UserController extends Controller
 {
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $users = User::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('tenant_id', Tenant::current()->id)
             ->where('role', '!=', UserRole::PlatformAdmin->value)
             ->when($request->input('q'), fn ($q, $v) => $q->where(
                 fn ($qq) => $qq->where('nickname', 'like', "%{$v}%")
@@ -29,62 +29,57 @@ class UserController extends Controller
             ->limit(200)
             ->get();
 
-        return view('admin.users.index', compact('tenant', 'users'));
+        return view('admin.users.index', compact('users'));
     }
 
-    public function create(Tenant $tenant)
+    public function create()
     {
         return view('admin.users.form', [
-            'tenant' => $tenant,
             'user' => new User(),
             'roles' => $this->assignableRoles(),
         ]);
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
-        $data = $this->validateData($request, $tenant);
+        $data = $this->validateData($request);
 
         $user = new User();
-        $user->tenant_id = $tenant->id;
+        $user->tenant_id = Tenant::current()->id;
         $user->fill($data); // password 走 hashed cast 自动哈希
         $user->save();
 
-        return redirect()->route('tenant.admin.users.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.users.index', [])
             ->with('ok', "已创建 {$user->nickname}（{$user->role->label()}）");
     }
 
-    public function edit(Tenant $tenant, User $user)
+    public function edit(User $user)
     {
-        abort_if($user->tenant_id !== $tenant->id, 404);
         abort_if($user->role === UserRole::PlatformAdmin, 403, '平台管理员须在平台后台管理');
 
         return view('admin.users.form', [
-            'tenant' => $tenant,
             'user' => $user,
             'roles' => $this->assignableRoles(),
         ]);
     }
 
-    public function update(Tenant $tenant, User $user, Request $request)
+    public function update(User $user, Request $request)
     {
-        abort_if($user->tenant_id !== $tenant->id, 404);
         abort_if($user->role === UserRole::PlatformAdmin, 403);
 
-        $data = $this->validateData($request, $tenant, $user);
+        $data = $this->validateData($request, $user);
         if (empty($data['password'])) {
             unset($data['password']); // 留空不改密
         }
         $user->fill($data)->save();
 
-        return redirect()->route('tenant.admin.users.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.users.index', [])
             ->with('ok', '已更新');
     }
 
     /** 禁用/启用（可恢复，不改 role）。 */
-    public function toggle(Tenant $tenant, User $user)
+    public function toggle(User $user)
     {
-        abort_if($user->tenant_id !== $tenant->id, 404);
         abort_if($user->id === auth()->id(), 422, '不能禁用自己');
         abort_if($user->role === UserRole::PlatformAdmin, 403);
 
@@ -95,9 +90,8 @@ class UserController extends Controller
     }
 
     /** 重置密码（不展示，运营告知用户）。 */
-    public function resetPassword(Tenant $tenant, User $user, Request $request)
+    public function resetPassword(User $user, Request $request)
     {
-        abort_if($user->tenant_id !== $tenant->id, 404);
         abort_if($user->role === UserRole::PlatformAdmin, 403);
 
         $data = $request->validate(['password' => ['required', 'string', 'min:6']]);
@@ -117,7 +111,7 @@ class UserController extends Controller
         ];
     }
 
-    private function validateData(Request $request, Tenant $tenant, ?User $user = null): array
+    private function validateData(Request $request, ?User $user = null): array
     {
         $roles = array_keys($this->assignableRoles());
 

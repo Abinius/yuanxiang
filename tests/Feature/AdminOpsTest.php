@@ -9,7 +9,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -26,7 +25,6 @@ class AdminOpsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -82,14 +80,14 @@ class AdminOpsTest extends TestCase
         $adoption = $this->makeOrder($user);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions")
+            ->get("/admin/adoptions")
             ->assertOk()
             ->assertSee($adoption->adoption_no)
             ->assertSee('云乡民阿林')
             ->assertSee('待支付');
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/adoptions")
+            ->get("/admin/adoptions")
             ->assertForbidden();
     }
 
@@ -111,51 +109,13 @@ class AdminOpsTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/farm-logs")
+            ->get("/admin/farm-logs")
             ->assertOk()
             ->assertSee('今日巡田记录');
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/farm-logs")
+            ->get("/admin/farm-logs")
             ->assertForbidden();
-    }
-
-    public function test_admin_soft_deletes_farm_log_cross_tenant_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
-        $t = $this->tenant();
-        $log = FarmLog::create([
-            'tenant_id' => $t->id,
-            'farm_id' => $this->farm()->id,
-            'plot_id' => $this->plot()->id,
-            'type' => 'daily',
-            'title' => '待删除记录',
-            'occurred_at' => now(),
-            'is_public' => true,
-            'source' => 'family',
-        ]);
-
-        $this->actingAs($this->admin())
-            ->delete("/t/{$t->slug}/admin/farm-logs/{$log->id}")
-            ->assertRedirect();
-        $this->assertSoftDeleted('farm_logs', ['id' => $log->id]);
-
-        // 跨租户 log → 404
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherLog = FarmLog::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $otherFarm->id,
-            'type' => 'daily',
-            'title' => '别家记录',
-            'occurred_at' => now(),
-            'is_public' => true,
-            'source' => 'family',
-        ]);
-
-        $this->actingAs($this->admin())
-            ->delete("/t/{$t->slug}/admin/farm-logs/{$otherLog->id}")
-            ->assertNotFound();
     }
 
     public function test_dashboard_shows_management_links(): void
@@ -165,7 +125,7 @@ class AdminOpsTest extends TestCase
 
         // 侧边栏全菜单 + 管理端→家人端/前台 互链（Part A 导航互通）
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin")
+            ->get("/admin")
             ->assertOk()
             ->assertSee('经营看板')
             ->assertSee('认养订单')
@@ -200,13 +160,13 @@ class AdminOpsTest extends TestCase
         $service->signAgreement($active, '生效的田');
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions?status=active")
+            ->get("/admin/adoptions?status=active")
             ->assertOk()
             ->assertSee($active->adoptable->code)
             ->assertDontSee($pending->adoption_no);
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions?status=pending_payment")
+            ->get("/admin/adoptions?status=pending_payment")
             ->assertOk()
             ->assertSee($pending->adoption_no)
             ->assertDontSee($active->adoptable->code);
@@ -221,14 +181,14 @@ class AdminOpsTest extends TestCase
 
         // pending_payment：无退款按钮
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions")
+            ->get("/admin/adoptions")
             ->assertOk()
             ->assertDontSee('退款');
 
         // 支付后：出现退款按钮
         app(AdoptionService::class)->confirmMockPayment($adoption);
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/adoptions")
+            ->get("/admin/adoptions")
             ->assertOk()
             ->assertSee('退款');
     }

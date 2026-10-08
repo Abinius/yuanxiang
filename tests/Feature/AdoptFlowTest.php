@@ -7,7 +7,6 @@ use App\Models\Adoption;
 use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +19,6 @@ class AdoptFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -56,7 +54,7 @@ class AdoptFlowTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/adopt")
+        $this->get("/adopt")
             ->assertOk()
             ->assertSee('分地档')
             ->assertSee('FD-01')
@@ -71,12 +69,12 @@ class AdoptFlowTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
         $group = Plot::where('type', 'group')->first();
 
-        $this->get("/t/{$t->slug}/adopt/{$plot->id}")
+        $this->get("/adopt/{$plot->id}")
             ->assertOk()
             ->assertSee('FD-01')
             ->assertSee('立即认养');
 
-        $this->get("/t/{$t->slug}/adopt/{$group->id}")
+        $this->get("/adopt/{$group->id}")
             ->assertOk()
             ->assertSee('拼团田');
     }
@@ -87,8 +85,8 @@ class AdoptFlowTest extends TestCase
         $t = $this->tenant();
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
-            ->assertRedirect("/t/{$t->slug}/login");
+        $this->post("/adopt/{$plot->id}/order", $this->orderData())
+            ->assertRedirect("/login");
     }
 
     public function test_order_creates_pending_adoption_and_payment(): void
@@ -99,7 +97,7 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($user);
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
+        $this->post("/adopt/{$plot->id}/order", $this->orderData())
             ->assertRedirect();
 
         $this->assertDatabaseHas('adoptions', [
@@ -120,10 +118,10 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($user);
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData());
+        $this->post("/adopt/{$plot->id}/order", $this->orderData());
         $adoption = Adoption::where('adoptable_id', $plot->id)->firstOrFail();
 
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/pay")
+        $this->post("/adopt/order/{$adoption->id}/pay")
             ->assertRedirect();
 
         $this->assertDatabaseHas('payments', ['payable_id' => $adoption->id, 'status' => 'paid']);
@@ -138,7 +136,7 @@ class AdoptFlowTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
         $plot->update(['status' => 'sold_out']);
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
+        $this->post("/adopt/{$plot->id}/order", $this->orderData())
             ->assertStatus(422);
     }
 
@@ -149,52 +147,8 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($this->villager());
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())->assertRedirect();
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())->assertStatus(422);
-    }
-
-    public function test_cannot_order_other_tenant_plot(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-        $this->actingAs($this->villager());
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherPlot = Plot::create([
-            'tenant_id' => $other->id,
-            'farm_id' => $t->farms()->first()->id, // 软引用其他租户地块
-            'type' => 'plot',
-            'code' => 'X-01',
-            'mu_area' => 0.1,
-            'price_yearly' => 5000,
-        ]);
-
-        $this->post("/t/{$t->slug}/adopt/{$otherPlot->id}/order", $this->orderData())
-            ->assertNotFound();
-    }
-
-    public function test_other_tenant_user_cannot_order_this_tenant_plot(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-        $plot = Plot::where('tenant_id', $t->id)->where('type', 'plot')->orderBy('id')->firstOrFail();
-
-        // 他租户已登录用户（P0：防跨租户认养写入）
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherUser = User::create([
-            'tenant_id' => $other->id,
-            'phone' => '13800000098',
-            'password' => 'secret123',
-            'nickname' => '别村用户',
-            'role' => 'villager',
-        ]);
-
-        $this->actingAs($otherUser)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
-            ->assertForbidden();
-
-        $this->assertSame(0, Adoption::where('user_id', $otherUser->id)->count());
-        $this->assertSame(0, Adoption::where('tenant_id', $other->id)->count());
+        $this->post("/adopt/{$plot->id}/order", $this->orderData())->assertRedirect();
+        $this->post("/adopt/{$plot->id}/order", $this->orderData())->assertStatus(422);
     }
 
     public function test_sign_agreement_activates_and_marks_plot_adopted(): void
@@ -204,11 +158,11 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($this->villager());
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData());
+        $this->post("/adopt/{$plot->id}/order", $this->orderData());
         $adoption = Adoption::where('adoptable_id', $plot->id)->firstOrFail();
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/pay");
+        $this->post("/adopt/order/{$adoption->id}/pay");
 
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/sign", ['named_label' => '阿林的光彩田'])
+        $this->post("/adopt/order/{$adoption->id}/sign", ['named_label' => '阿林的光彩田'])
             ->assertRedirect();
 
         $this->assertDatabaseHas('adoptions', [
@@ -229,11 +183,11 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($this->villager());
         $plot = Plot::where('type', 'plot')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData());
+        $this->post("/adopt/{$plot->id}/order", $this->orderData());
         $adoption = Adoption::where('adoptable_id', $plot->id)->firstOrFail();
         // 仍处 pending_payment，未模拟支付
 
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/sign", ['named_label' => 'X'])
+        $this->post("/adopt/order/{$adoption->id}/sign", ['named_label' => 'X'])
             ->assertStatus(422);
     }
 
@@ -244,7 +198,7 @@ class AdoptFlowTest extends TestCase
         $this->actingAs($this->villager());
         $group = Plot::where('type', 'group')->first();
 
-        $this->post("/t/{$t->slug}/adopt/{$group->id}/order", $this->orderData())
+        $this->post("/adopt/{$group->id}/order", $this->orderData())
             ->assertStatus(422);
     }
 
@@ -258,10 +212,10 @@ class AdoptFlowTest extends TestCase
         $last = $plants->pop();
         $plants->each(fn ($p) => $p->update(['status' => PlotStatus::Adopted->value]));
 
-        $this->post("/t/{$t->slug}/adopt/{$last->id}/order", $this->orderData());
+        $this->post("/adopt/{$last->id}/order", $this->orderData());
         $adoption = Adoption::where('adoptable_id', $last->id)->firstOrFail();
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/pay");
-        $this->post("/t/{$t->slug}/adopt/order/{$adoption->id}/sign", ['named_label' => '末株']);
+        $this->post("/adopt/order/{$adoption->id}/pay");
+        $this->post("/adopt/order/{$adoption->id}/sign", ['named_label' => '末株']);
 
         $this->assertDatabaseHas('plots', ['id' => $group->id, 'status' => 'sold_out']);
         $this->assertDatabaseHas('plots', ['id' => $last->id, 'status' => 'adopted']);

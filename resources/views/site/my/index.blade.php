@@ -6,8 +6,8 @@
   <div class="panel" style="max-width:680px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">我的认养</h1>
-      <a class="back-link" href="{{ route('tenant.my.referral', ['tenant' => $tenant->slug]) }}">我的推荐码 ›</a>
-      <a class="back-link" href="{{ route('tenant.my.member', ['tenant' => $tenant->slug]) }}">会员等级 ›</a>
+      <a class="back-link" href="{{ route('tenant.my.referral', []) }}">我的推荐码 ›</a>
+      <a class="back-link" href="{{ route('tenant.my.member', []) }}">会员等级 ›</a>
     </div>
 
     @if (session('ok'))
@@ -33,7 +33,7 @@
           <div>
             @if ($st === 'active')
               <a class="ad-title"
-                 href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+                 href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">
                 {{ $adoption->named_label ?: '未命名' }} ›
               </a>
             @else
@@ -48,11 +48,11 @@
 
         <div class="ad-actions">
           @if ($st === 'active')
-            <form method="POST" action="{{ route('tenant.my.renew', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+            <form method="POST" action="{{ route('tenant.my.renew', ['adoption' => $adoption]) }}">
               @csrf
               <button class="btn btn-primary btn-sm" type="submit">续费下一季</button>
             </form>
-            <form method="POST" action="{{ route('tenant.my.auto-renew', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+            <form method="POST" action="{{ route('tenant.my.auto-renew', ['adoption' => $adoption]) }}">
               @csrf
               <label class="muted" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
                 <input type="checkbox" name="auto_renew" value="1" @checked($adoption->auto_renew) onchange="this.form.submit()">
@@ -66,20 +66,20 @@
               </span>
             @endif
           @elseif ($st === 'ended')
-            <form method="POST" action="{{ route('tenant.my.renew', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+            <form method="POST" action="{{ route('tenant.my.renew', ['adoption' => $adoption]) }}">
               @csrf
               <button class="btn btn-primary btn-sm" type="submit">续费下一季</button>
             </form>
           @elseif ($st === 'pending_payment')
             @php $resume = $adoptionService->resumePayment($adoption); @endphp
             @if ($resume)
-              <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">继续支付</a>
+              <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.pay', ['adoption' => $adoption]) }}">继续支付</a>
               <span class="note text-xs">订单 {{ $adoptionService->expiresAt($adoption)->format('Y-m-d H:i') }} 前支付有效</span>
             @else
               <span class="note text-xs text-warn">订单已过期，请重新下单</span>
             @endif
           @elseif ($st === 'pending_agreement')
-            <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">去签署协议</a>
+            <a class="btn btn-primary btn-sm" href="{{ route('tenant.adopt.success', ['adoption' => $adoption]) }}">去签署协议</a>
             <span class="note text-xs">已支付，签署命名后正式生效。</span>
           @endif
         </div>
@@ -88,7 +88,7 @@
       <div class="empty">
         <div class="empty-icon">🌱</div>
         <div>还没有认养,去看看田。</div>
-        <a class="btn btn-primary mt-3" href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">去认养一块田</a>
+        <a class="btn btn-primary mt-3" href="{{ route('tenant.adopt.index', []) }}">去认养一块田</a>
       </div>
     @endforelse
   </div>

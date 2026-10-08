@@ -3,9 +3,9 @@
 @section('title', '站点设置')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">后台</a>
-  <a href="{{ route('tenant.admin.short-links.index', ['tenant' => $tenant->slug]) }}">短链接</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.dashboard', []) }}">后台</a>
+  <a href="{{ route('tenant.admin.short-links.index', []) }}">短链接</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -19,7 +19,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ route('tenant.admin.settings.update', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ route('tenant.admin.settings.update', []) }}">
     @csrf
     @method('PUT')
 

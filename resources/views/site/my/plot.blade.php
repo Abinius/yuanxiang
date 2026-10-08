@@ -6,15 +6,15 @@
   <div class="panel" style="max-width:680px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">我的田</h1>
-      <a class="back-link" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">我的认养</a>
+      <a class="back-link" href="{{ route('tenant.my.index', []) }}">我的认养</a>
     </div>
 
     @include('site.partials.nameplate', ['adoption' => $adoption])
 
     <div class="flex justify-end gap-2 mt-3">
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.contract', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">认养合同</a>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.gift.index', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">节日礼盒</a>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.nameplate', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">分享铭牌</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.contract', ['adoption' => $adoption]) }}">认养合同</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.gift.index', ['adoption' => $adoption]) }}">节日礼盒</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.nameplate', ['adoption' => $adoption]) }}">分享铭牌</a>
     </div>
 
     <h2 style="margin:24px 0 8px;font-size:var(--ds-h3)">本季生长日历</h2>
@@ -71,7 +71,7 @@
           @if ($d->address) 收货:{{ $d->address->name }} · {{ $d->address->phone }} {{ $d->address->detail }}@endif
         </div>
         @if ($d->status->value === 'shipped')
-          <form method="POST" action="{{ route('tenant.my.delivery.receive', ['tenant' => $tenant->slug, 'adoption' => $adoption, 'delivery' => $d]) }}" style="margin-top:8px">
+          <form method="POST" action="{{ route('tenant.my.delivery.receive', ['adoption' => $adoption, 'delivery' => $d]) }}" style="margin-top:8px">
             @csrf
             <button class="btn btn-primary btn-sm" type="submit">确认收货</button>
           </form>

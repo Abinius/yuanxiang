@@ -6,7 +6,7 @@ use App\Enums\DeliveryStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery;
 use App\Models\Harvest;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\DeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,7 +22,7 @@ class DeliveryController extends Controller
     {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $deliveries = Delivery::query()
             ->with(['adoption.user', 'harvest.plot', 'address'])
@@ -31,35 +31,34 @@ class DeliveryController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.deliveries.index', compact('tenant', 'deliveries'));
+        return view('admin.deliveries.index', compact('deliveries'));
     }
 
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $harvests = Harvest::query()
             ->with('plot')
             ->orderByDesc('harvested_at')
             ->get();
 
-        return view('admin.deliveries.create', compact('tenant', 'harvests'));
+        return view('admin.deliveries.create', compact('harvests'));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $data = $request->validate([
-            'harvest_id' => ['required', Rule::exists('harvests', 'id')->where('tenant_id', $tenant->id)],
+            'harvest_id' => ['required', Rule::exists('harvests', 'id')->where('tenant_id', Tenant::current()->id)],
         ]);
 
         $harvest = Harvest::findOrFail($data['harvest_id']);
         $created = $this->deliveries->createForHarvest($harvest);
 
-        return redirect()->route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.deliveries.index', [])
             ->with('ok', '已生成 '.count($created).' 单配送');
     }
 
-    public function ship(Tenant $tenant, Delivery $delivery, Request $request)
+    public function ship(Delivery $delivery, Request $request)
     {
-        abort_if($delivery->tenant_id !== $tenant->id, 404);
         abort_unless($delivery->status === DeliveryStatus::Pending, 422, '仅待发货可发运');
 
         $data = $request->validate([
@@ -72,7 +71,7 @@ class DeliveryController extends Controller
         return back()->with('ok', '已发货');
     }
 
-    public function print(Tenant $tenant, Request $request)
+    public function print(Request $request)
     {
         $ids = collect(explode(',', (string) $request->query('ids', '')))
             ->map(fn ($v) => (int) $v)
@@ -81,7 +80,7 @@ class DeliveryController extends Controller
             ->all();
 
         if (! $ids) {
-            return redirect()->route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]);
+            return redirect()->route('tenant.admin.deliveries.index', []);
         }
 
         $deliveries = Delivery::query()
@@ -89,8 +88,6 @@ class DeliveryController extends Controller
             ->with(['adoption.user', 'address', 'harvest.plot'])
             ->get();
 
-        abort_if($deliveries->contains(fn ($d) => $d->tenant_id !== $tenant->id), 404);
-
-        return view('admin.deliveries.print', compact('tenant', 'deliveries'));
+        return view('admin.deliveries.print', compact('deliveries'));
     }
 }

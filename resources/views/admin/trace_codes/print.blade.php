@@ -3,8 +3,8 @@
 @section('title', '溯源码打印')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]) }}">溯源码列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.trace-codes.index', []) }}">溯源码列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 

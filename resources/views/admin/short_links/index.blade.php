@@ -5,7 +5,7 @@
 @section('content')
   <div class="flex items-baseline justify-between mb-4" style="flex-wrap:wrap;gap:12px">
     <h1 class="hero-title" style="font-size:var(--ds-h2)">短链接</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.short-links.create', ['tenant' => $tenant->slug]) }}">+ 生成短链</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.short-links.create', []) }}">+ 生成短链</a>
   </div>
 
   @if (session('ok'))
@@ -28,7 +28,7 @@
           @foreach ($shortLinks as $link)
             <tr>
               <td>
-                <a class="font-medium text-brand mono" href="{{ route('tenant.short-link.redirect', ['tenant' => $tenant->slug, 'code' => $link->code]) }}">
+                <a class="font-medium text-brand mono" href="{{ route('tenant.short-link.redirect', ['code' => $link->code]) }}">
                   /u/{{ $link->code }}
                 </a>
               </td>
@@ -38,7 +38,7 @@
               </td>
               <td>
                 <button class="btn btn-ghost btn-sm" type="button"
-                        onclick="navigator.clipboard.writeText('{{ route('tenant.short-link.redirect', ['tenant' => $tenant->slug, 'code' => $link->code]) }}')">
+                        onclick="navigator.clipboard.writeText('{{ route('tenant.short-link.redirect', ['code' => $link->code]) }}')">
                   复制
                 </button>
               </td>

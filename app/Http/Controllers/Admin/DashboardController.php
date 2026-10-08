@@ -23,7 +23,6 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $tenant = $request->attributes->get('tenant');
         $year = (int) now()->format('Y');
 
         $adoptionCount = Adoption::count();
@@ -44,7 +43,6 @@ class DashboardController extends Controller
         $traceScanned = TraceCode::where('scanned_count', '>', 0)->count();
 
         return view('admin.dashboard', [
-            'tenant' => $tenant,
             'plotCount' => Plot::count(),
             'adoptionCount' => $adoptionCount,
             'activeAdoptions' => Adoption::where('status', 'active')->count(),

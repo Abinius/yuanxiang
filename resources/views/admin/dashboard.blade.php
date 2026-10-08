@@ -9,16 +9,16 @@
       <p class="lede">{{ $tenant->name }} · 经营看板概览</p>
     </div>
     <div class="hero-stats">
-      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', []) }}" style="text-decoration:none;color:inherit">
         <div class="num sm">{{ $stats['conversion'] }}%</div><div class="label">认养转化率</div>
       </a>
-      <a class="hero-stat" href="{{ route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+      <a class="hero-stat" href="{{ route('tenant.admin.farm-logs.index', []) }}" style="text-decoration:none;color:inherit">
         <div class="num sm">{{ $stats['attainment'] === null ? '—' : $stats['attainment'].'%' }}</div><div class="label">产出达标率</div>
       </a>
-      <a class="hero-stat" href="{{ route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]) }}" style="text-decoration:none;color:inherit">
+      <a class="hero-stat" href="{{ route('tenant.admin.trace-codes.index', []) }}" style="text-decoration:none;color:inherit">
         <div class="num sm">{{ $stats['traceRate'] === null ? '—' : $stats['traceRate'].'%' }}</div><div class="label">溯源查看率</div>
       </a>
-      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug, 'status' => 'active']) }}" style="text-decoration:none;color:inherit">
+      <a class="hero-stat" href="{{ route('tenant.admin.adoptions.index', ['status' => 'active']) }}" style="text-decoration:none;color:inherit">
         <div class="num sm">{{ $stats['renewalIntent'] }}</div><div class="label">续费意向</div>
       </a>
     </div>
@@ -27,58 +27,58 @@
   <section class="section">
     <div class="section-title">
       <span>运营数据</span>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">查看全部订单</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', []) }}">查看全部订单</a>
     </div>
     <div class="card-grid grid-6">
-      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', []) }}">
         <div class="num">{{ $adoptionCount }}</div>
         <div class="label">认养订单</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', []) }}">
         <div class="num">{{ $pendingPaymentCount }}</div>
         <div class="label">待支付</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.adoptions.index', []) }}">
         <div class="num">{{ $activeAdoptions }}</div>
         <div class="label">生效中</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.farm-logs.index', []) }}">
         <div class="num">{{ $farmLogCount }}</div>
         <div class="label">农事记录</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.deliveries.index', []) }}">
         <div class="num">{{ $deliveryCount }}</div>
         <div class="label">配送单</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.shipments.index', ['tenant' => $tenant->slug]) }}" style="border-color:var(--color-brand-300)">
+      <a class="card card-link" href="{{ route('tenant.admin.shipments.index', []) }}" style="border-color:var(--color-brand-300)">
         <div class="num sm serif text-brand">🚚</div>
         <div class="label">统一发货台</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.adjustments.index', []) }}">
         <div class="num">{{ $adjustmentCount }}</div>
         <div class="label">待补退</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.gift-boxes.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.gift-boxes.index', []) }}">
         <div class="num">{{ $giftBoxCount }}</div>
         <div class="label">礼盒</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.cameras.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.cameras.index', []) }}">
         <div class="num">{{ $cameraCount }}</div>
         <div class="label">摄像头</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.short-links.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.short-links.index', []) }}">
         <div class="num">{{ $shortLinkCount }}</div>
         <div class="label">短链接</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link" href="{{ route('tenant.admin.trace-codes.index', []) }}">
         <div class="num">—</div>
         <div class="label">溯源码</div>
       </a>
-      <a class="card card-link card-soft" href="{{ route('tenant.admin.settings.edit', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link card-soft" href="{{ route('tenant.admin.settings.edit', []) }}">
         <div class="num sm" style="color:var(--ds-text-soft)">⚙</div>
         <div class="label">站点设置</div>
       </a>
-      <a class="card card-link card-soft" href="{{ route('tenant.admin.promotions.index', ['tenant' => $tenant->slug]) }}">
+      <a class="card card-link card-soft" href="{{ route('tenant.admin.promotions.index', []) }}">
         <div class="num sm" style="color:var(--ds-text-soft)">%</div>
         <div class="label">促销</div>
       </a>

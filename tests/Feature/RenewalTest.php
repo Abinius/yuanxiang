@@ -10,7 +10,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\RenewalService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,13 +27,11 @@ class RenewalTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
         Carbon::setTestNow(null);
     }
 
     protected function tearDown(): void
     {
-        TenantContext::reset();
         Carbon::setTestNow(null);
         parent::tearDown();
     }
@@ -60,7 +57,7 @@ class RenewalTest extends TestCase
     {
         $plot = Plot::where('type', 'plot')->first();
         $this->actingAs($user)
-            ->post("/t/{$this->tenant()->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '张三', 'phone' => '13800000070',
                 'province' => '宁夏', 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '光彩村 1 号',
             ])
@@ -143,7 +140,7 @@ class RenewalTest extends TestCase
         $this->makeActiveAdoption($user, now()->addDays(10));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('距到期')
             ->assertSee('10');
@@ -157,7 +154,7 @@ class RenewalTest extends TestCase
         $adoption = $this->makeActiveAdoption($user, now()->addDays(3));
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/renew")
+            ->post("/my/plot/{$adoption->id}/renew")
             ->assertRedirect();
 
         // 应建下一季待支付单并跳到支付页

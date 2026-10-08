@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
 use App\Services\MemberService;
 use Illuminate\Http\Request;
 
@@ -17,12 +16,11 @@ class MemberController extends Controller
     ) {
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
 
         return view('site.my.member', [
-            'tenant' => $tenant,
             'member' => $this->members->dashboard($user),
         ]);
     }

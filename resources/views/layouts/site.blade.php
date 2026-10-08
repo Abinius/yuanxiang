@@ -28,28 +28,28 @@
 </head>
 <body>
 <nav class="nav">
-  <a class="brand" href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">
+  <a class="brand" href="{{ route('tenant.home', []) }}">
     <span class="brand-dot" aria-hidden="true"></span>
     {{ $tenant->name }}
   </a>
   <div class="nav-links">
-    <a href="{{ route('tenant.adopt.index', ['tenant' => $tenant->slug]) }}">认养田地</a>
-    <a href="{{ route('tenant.live.index', ['tenant' => $tenant->slug]) }}">实时监控</a>
+    <a href="{{ route('tenant.adopt.index', []) }}">认养田地</a>
+    <a href="{{ route('tenant.live.index', []) }}">实时监控</a>
     @auth
-      <a href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">我的田</a>
+      <a href="{{ route('tenant.my.index', []) }}">我的田</a>
       @if (in_array(auth()->user()->role->value, ['family', 'tenant_admin'], true))
-        <a href="{{ route('tenant.family.dashboard', ['tenant' => $tenant->slug]) }}">家人后台</a>
+        <a href="{{ route('tenant.family.dashboard', []) }}">家人后台</a>
       @endif
       @if (auth()->user()->role->value === 'tenant_admin')
-        <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">管理后台</a>
+        <a href="{{ route('tenant.admin.dashboard', []) }}">管理后台</a>
       @endif
       <span class="user">{{ auth()->user()->nickname ?? auth()->user()->phone }}</span>
-      <form method="POST" action="{{ route('tenant.logout', ['tenant' => $tenant->slug]) }}" style="display:inline">
+      <form method="POST" action="{{ route('tenant.logout', []) }}" style="display:inline">
         @csrf
         <button type="submit" class="btn btn-ghost btn-sm">退出</button>
       </form>
     @else
-      <a href="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}">登录</a>
+      <a href="{{ route('tenant.login', []) }}">登录</a>
     @endauth
   </div>
 </nav>

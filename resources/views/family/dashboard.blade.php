@@ -3,11 +3,11 @@
 @section('title', '家人端')
 @section('nav_right')
   @if (auth()->user()->role->value === 'tenant_admin')
-    <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">管理后台</a>
+    <a href="{{ route('tenant.admin.dashboard', []) }}">管理后台</a>
   @endif
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
-  <form method="POST" action="{{ route('tenant.logout', ['tenant' => $tenant->slug]) }}" style="display:inline">
+  <form method="POST" action="{{ route('tenant.logout', []) }}" style="display:inline">
     @csrf
     <button type="submit">退出</button>
   </form>
@@ -35,9 +35,9 @@
 
   @php
     $links = [
-      'farm_log'   => ['发农事动态 / 直播预告', '📝', route('tenant.family.logs.create',     ['tenant' => $tenant->slug])],
-      'fertilizer' => ['录有机肥批次',          '🧪', route('tenant.family.fertilizer.create', ['tenant' => $tenant->slug])],
-      'harvest'    => ['录采收',               '🌾', route('tenant.family.harvest.create',    ['tenant' => $tenant->slug])],
+      'farm_log'   => ['发农事动态 / 直播预告', '📝', route('tenant.family.logs.create',     [])],
+      'fertilizer' => ['录有机肥批次',          '🧪', route('tenant.family.fertilizer.create', [])],
+      'harvest'    => ['录采收',               '🌾', route('tenant.family.harvest.create',    [])],
     ];
   @endphp
 
@@ -62,15 +62,15 @@
   @if (in_array('farm_log', $scopes))
     <div class="section-title"><span>快速记录（拍照即发，标题可留空）</span></div>
     <div class="card-grid grid-3 mb-5">
-      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=daily" style="background:var(--ds-bg-layer-2)">
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=daily" style="background:var(--ds-bg-layer-2)">
         <div class="num sm serif text-brand">📷</div>
         <div class="label font-medium">发动态</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=explain" style="background:var(--ds-bg-layer-2)">
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=explain" style="background:var(--ds-bg-layer-2)">
         <div class="num sm serif text-brand">🎙️</div>
         <div class="label font-medium">录解说（露脸）</div>
       </a>
-      <a class="card card-link" href="{{ route('tenant.family.logs.create', ['tenant' => $tenant->slug]) }}?type=live_broadcast" style="background:var(--ds-bg-layer-2)">
+      <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=live_broadcast" style="background:var(--ds-bg-layer-2)">
         <div class="num sm serif text-brand">🔴</div>
         <div class="label font-medium">直播预告</div>
       </a>
@@ -106,7 +106,7 @@
             <span class="flex items-center gap-2">
               <span class="muted text-xs">{{ $log->occurred_at?->format('Y-m-d') }}</span>
               @if ($isAdmin || $log->author_id === auth()->id())
-                <a class="text-xs" href="{{ route('tenant.family.logs.edit', ['tenant' => $tenant->slug, 'farm_log' => $log]) }}">编辑</a>
+                <a class="text-xs" href="{{ route('tenant.family.logs.edit', ['farm_log' => $log]) }}">编辑</a>
               @endif
             </span>
           </div>
@@ -129,7 +129,7 @@
             <span class="flex items-center gap-2">
               <span class="muted text-xs">{{ $batch->produced_at?->format('Y-m-d') }}</span>
               @if (in_array('fertilizer', $scopes ?? []))
-                <a class="text-xs" href="{{ route('tenant.family.fertilizer.edit', ['tenant' => $tenant->slug, 'batch' => $batch]) }}">编辑</a>
+                <a class="text-xs" href="{{ route('tenant.family.fertilizer.edit', ['batch' => $batch]) }}">编辑</a>
               @endif
             </span>
           </div>
@@ -151,7 +151,7 @@
             <span class="flex items-center gap-2">
               <span class="muted text-xs">{{ $harvest->harvested_at?->format('Y-m-d') }}</span>
               @if ($isAdmin || $harvest->handler_id === auth()->id())
-                <a class="text-xs" href="{{ route('tenant.family.harvest.edit', ['tenant' => $tenant->slug, 'harvest' => $harvest]) }}">编辑</a>
+                <a class="text-xs" href="{{ route('tenant.family.harvest.edit', ['harvest' => $harvest]) }}">编辑</a>
               @endif
             </span>
           </div>

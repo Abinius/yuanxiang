@@ -43,7 +43,7 @@
 
     <div class="flex gap-2 mt-4">
       <a class="btn btn-ghost btn-sm" href="javascript:window.print()">打印 / 另存 PDF</a>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">返回我的田</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">返回我的田</a>
     </div>
   </div>
 @endsection

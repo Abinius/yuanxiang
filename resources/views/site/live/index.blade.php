@@ -10,7 +10,7 @@
 
   @forelse ($cameras as $camera)
     <a class="product-card mb-3" style="margin-bottom:12px"
-       href="{{ route('tenant.live.show', ['tenant' => $tenant->slug, 'camera' => $camera]) }}">
+       href="{{ route('tenant.live.show', ['camera' => $camera]) }}">
       <div class="flex justify-between items-center">
         <div>
           <div class="code">{{ $camera->name }}</div>

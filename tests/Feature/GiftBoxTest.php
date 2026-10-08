@@ -8,7 +8,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -27,7 +26,6 @@ class GiftBoxTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -80,7 +78,7 @@ class GiftBoxTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
+            ->post("/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
             ->assertRedirect();
 
         $giftBox = GiftBox::first();
@@ -89,7 +87,7 @@ class GiftBoxTest extends TestCase
         $this->assertNotNull($giftBox->code);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/gifts/{$giftBox->id}/customize", [
+            ->post("/my/plot/{$adoption->id}/gifts/{$giftBox->id}/customize", [
                 'recipient_name' => '李四',
                 'recipient_phone' => '13900000000',
                 'message' => '中秋快乐',
@@ -112,11 +110,11 @@ class GiftBoxTest extends TestCase
         $adoption = $user->adoptions()->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
+            ->post("/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
             ->assertRedirect();
         // 额度 1 已用完 → 第二次 422
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
+            ->post("/my/plot/{$adoption->id}/gifts", ['festival' => 'spring'])
             ->assertStatus(422);
     }
 
@@ -136,18 +134,18 @@ class GiftBoxTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/gift-boxes/{$giftBox->id}/making")
+            ->post("/admin/gift-boxes/{$giftBox->id}/making")
             ->assertRedirect();
         $this->assertSame('making', $giftBox->fresh()->status->value);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/gift-boxes/{$giftBox->id}/ship", ['tracking_no' => 'SF-GIFT-1', 'carrier' => '顺丰'])
+            ->post("/admin/gift-boxes/{$giftBox->id}/ship", ['tracking_no' => 'SF-GIFT-1', 'carrier' => '顺丰'])
             ->assertRedirect();
         $this->assertSame('shipped', $giftBox->fresh()->status->value);
         $this->assertSame('SF-GIFT-1', $giftBox->fresh()->tracking_no);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/gift-boxes/{$giftBox->id}/delivered")
+            ->post("/admin/gift-boxes/{$giftBox->id}/delivered")
             ->assertRedirect();
         $this->assertSame('delivered', $giftBox->fresh()->status->value);
     }
@@ -170,33 +168,11 @@ class GiftBoxTest extends TestCase
             'status' => 'shipped',
         ]);
 
-        $this->get("/t/{$t->slug}/gift/{$giftBox->code}")
+        $this->get("/gift/{$giftBox->code}")
             ->assertOk()
             ->assertSee('祝福')
             ->assertSee('新年快乐')
             ->assertSee('成为云乡民');
-    }
-
-    public function test_unknown_and_cross_tenant_code_404(): void
-    {
-        $this->seed([BaseSeeder::class, PlotSeeder::class]);
-        $t = $this->tenant();
-
-        $this->get("/t/{$t->slug}/gift/NOTEXIST")->assertNotFound();
-
-        $user = $this->makeActiveAdopter();
-        $adoption = $user->adoptions()->first();
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherBox = GiftBox::create([
-            'tenant_id' => $other->id,
-            'adoption_id' => $adoption->id,
-            'festival' => 'spring',
-            'year' => now()->year,
-            'code' => 'GB-OTHER-001',
-            'status' => 'draft',
-        ]);
-
-        $this->get("/t/{$t->slug}/gift/{$otherBox->code}")->assertNotFound();
     }
 
     public function test_villager_cannot_access_admin_gift_boxes(): void
@@ -206,7 +182,7 @@ class GiftBoxTest extends TestCase
         $user = $this->makeActiveAdopter();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/gift-boxes")
+            ->get("/admin/gift-boxes")
             ->assertForbidden();
     }
 
@@ -219,7 +195,14 @@ class GiftBoxTest extends TestCase
         $adoption = $owner->adoptions()->first();
 
         $this->actingAs($other)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}/gifts")
+            ->get("/my/plot/{$adoption->id}/gifts")
             ->assertNotFound();
+    }
+
+    public function test_unknown_code_404(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+
+        $this->get("/gift/NOTEXIST")->assertNotFound();
     }
 }

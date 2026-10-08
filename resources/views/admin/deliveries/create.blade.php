@@ -3,8 +3,8 @@
 @section('title', '打单 · 生成配送单')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}">配送列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.deliveries.index', []) }}">配送列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -16,7 +16,7 @@
   @endif
 
   <div class="panel">
-    <form method="POST" action="{{ route('tenant.admin.deliveries.store', ['tenant' => $tenant->slug]) }}">
+    <form method="POST" action="{{ route('tenant.admin.deliveries.store', []) }}">
       @csrf
       <div class="field">
         <label>采收</label>

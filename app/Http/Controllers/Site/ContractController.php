@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Adoption;
-use App\Models\Tenant;
 use Illuminate\Http\Request;
 
 /**
@@ -12,13 +11,13 @@ use Illuminate\Http\Request;
  */
 class ContractController extends Controller
 {
-    public function show(Request $request, Tenant $tenant, Adoption $adoption)
+    public function show(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
 
         $contract = $adoption->contract;
         abort_if(! $contract, 404, '合同尚未生成');
 
-        return view('site.contract.show', compact('tenant', 'adoption', 'contract'));
+        return view('site.contract.show', compact('adoption', 'contract'));
     }
 }

@@ -17,7 +17,7 @@
       @include('site.partials.share', ['shareTitle' => '溯源 · '.$plot->code])
     </div>
     <div class="text-center mt-4">
-      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">认养这块田</a>
+      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['plot' => $plot]) }}">认养这块田</a>
     </div>
   </div>
 @endsection

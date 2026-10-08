@@ -3,13 +3,13 @@
 @section('title', '录入采收')
 
 @section('nav_right')
-  <a href="{{ route('tenant.family.dashboard', ['tenant' => $tenant->slug]) }}" style="margin-right:16px">家人端</a>
+  <a href="{{ route('tenant.family.dashboard', []) }}" style="margin-right:16px">家人端</a>
   @if (auth()->user()->role->value === 'tenant_admin')
-    <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}" style="margin-right:16px">管理后台</a>
+    <a href="{{ route('tenant.admin.dashboard', []) }}" style="margin-right:16px">管理后台</a>
   @endif
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}" style="margin-right:16px">前台</a>
+  <a href="{{ route('tenant.home', []) }}" style="margin-right:16px">前台</a>
   <span class="muted">{{ auth()->user()->nickname }}</span>
-  <form method="POST" action="{{ route('tenant.logout', ['tenant' => $tenant->slug]) }}" style="display:inline">
+  <form method="POST" action="{{ route('tenant.logout', []) }}" style="display:inline">
     @csrf
     <button type="submit">退出</button>
   </form>
@@ -20,7 +20,7 @@
   @if ($errors->any())
     <div class="alert">{{ $errors->first() }}</div>
   @endif
-  <form method="POST" action="{{ route('tenant.family.harvest.store', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ route('tenant.family.harvest.store', []) }}">
     @csrf
     <div class="field">
       <label>田块</label>

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Plot;
 use App\Models\Tenant;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +19,6 @@ class SeoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -38,7 +36,7 @@ class SeoTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/adopt/{$this->plot()->id}")
+        $this->get("/adopt/{$this->plot()->id}")
             ->assertOk()
             ->assertSee('og:title', false)
             ->assertSee('og:description', false)
@@ -50,7 +48,7 @@ class SeoTest extends TestCase
         $this->seed([BaseSeeder::class, PlotSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/trace/{$this->plot()->id}")
+        $this->get("/trace/{$this->plot()->id}")
             ->assertOk()
             ->assertSee('og:description', false)
             ->assertSee('溯源时间线');

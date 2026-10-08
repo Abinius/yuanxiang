@@ -8,7 +8,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\WeChatPayService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\PlotSeeder;
 use Database\Seeders\BaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,7 +37,6 @@ class WeChatPayTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     protected function tearDown(): void
@@ -95,7 +93,7 @@ class WeChatPayTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
+            ->post("/adopt/{$plot->id}/order", $this->orderData())
             ->assertRedirect();
 
         return Adoption::where('adoptable_id', $plot->id)->firstOrFail();
@@ -183,7 +181,7 @@ class WeChatPayTest extends TestCase
         $this->mockPay(['out_trade_no' => '', 'transaction_id' => ''], self::JSSDK);
 
         $this->actingAs($user)
-            ->postJson("/t/{$t->slug}/adopt/order/{$adoption->id}/wechat-pay")
+            ->postJson("/adopt/order/{$adoption->id}/wechat-pay")
             ->assertOk()
             ->assertJsonStructure(['appId', 'timeStamp', 'nonceStr', 'package', 'signType', 'paySign'])
             ->assertJson(self::JSSDK);
@@ -199,7 +197,7 @@ class WeChatPayTest extends TestCase
         $this->mockPay(['out_trade_no' => '', 'transaction_id' => '']);
 
         $this->actingAs($user)
-            ->postJson("/t/{$t->slug}/adopt/order/{$adoption->id}/wechat-pay")
+            ->postJson("/adopt/order/{$adoption->id}/wechat-pay")
             ->assertStatus(422);
     }
 
@@ -211,12 +209,12 @@ class WeChatPayTest extends TestCase
         $t = $this->tenant();
 
         // 已模拟支付 → pending_agreement，不可再下单支付
-        $this->actingAs($user)->post("/t/{$t->slug}/adopt/order/{$adoption->id}/pay")->assertRedirect();
+        $this->actingAs($user)->post("/adopt/order/{$adoption->id}/pay")->assertRedirect();
 
         $this->mockPay(['out_trade_no' => '', 'transaction_id' => '']);
 
         $this->actingAs($user)
-            ->postJson("/t/{$t->slug}/adopt/order/{$adoption->id}/wechat-pay")
+            ->postJson("/adopt/order/{$adoption->id}/wechat-pay")
             ->assertStatus(422);
     }
 
@@ -232,7 +230,7 @@ class WeChatPayTest extends TestCase
         $this->postJson('/pay/wechat/notify', [])->assertOk();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adoptions/{$adoption->id}/refund")
+            ->post("/admin/adoptions/{$adoption->id}/refund")
             ->assertRedirect();
 
         $payment = $adoption->payments()->first();
@@ -252,7 +250,7 @@ class WeChatPayTest extends TestCase
         $this->postJson('/pay/wechat/notify', [])->assertOk();
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/adoptions/{$adoption->id}/refund")
+            ->post("/admin/adoptions/{$adoption->id}/refund")
             ->assertRedirect();
 
         $payment = $adoption->payments()->first();
@@ -260,7 +258,7 @@ class WeChatPayTest extends TestCase
 
         // 无已支付单可退 → 静默无副作用
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/adoptions/{$adoption->id}/refund")
+            ->post("/admin/adoptions/{$adoption->id}/refund")
             ->assertRedirect();
 
         $payment->refresh();

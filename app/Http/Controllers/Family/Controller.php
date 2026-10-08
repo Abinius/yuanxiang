@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Family;
 
+use App\Support\Tenant;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller as FrameworkController;
 use App\Models\Farm;
@@ -20,7 +21,6 @@ class Controller extends FrameworkController
     /** 当前 user 在本租户基地的 membership（可能为 null）。 */
     protected function currentFarmMember(Request $request): ?FarmMember
     {
-        $tenant = $request->attributes->get('tenant');
         $user = $request->user();
 
         return FarmMember::query()
@@ -34,14 +34,13 @@ class Controller extends FrameworkController
      */
     protected function assertScope(Request $request, string $scope): FarmMember
     {
-        $tenant = $request->attributes->get('tenant');
         $user = $request->user();
 
         if ($user->role === UserRole::TenantAdmin) {
             $farm = Farm::firstOrFail();
 
             return new FarmMember([
-                'tenant_id' => $tenant->id,
+                'tenant_id' => Tenant::current()->id,
                 'farm_id' => $farm->id,
                 'user_id' => $user->id,
                 'relation' => 'tenant_admin',

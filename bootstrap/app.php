@@ -20,7 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'tenant' => \App\Http\Middleware\TenantMiddleware::class,
             'tenant.member' => \App\Http\Middleware\TenantMemberMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
@@ -31,13 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // 微信支付回调由微信侧验签，跳过 CSRF
         $middleware->validateCsrfTokens(except: ['pay/wechat/notify']);
 
-        // 未登录访问受保护路由：/t/{slug}/* 跳该租户登录，其余（platform/*）跳平台登录
+        // 未登录访问受保护路由：platform/* 跳平台登录，其余跳单租户登录
         $middleware->redirectGuestsTo(function (Request $request) {
-            if (preg_match('#^t/([^/]+)#', $request->path(), $m)) {
-                return route('tenant.login', ['tenant' => $m[1]]);
+            if (str_starts_with($request->path(), 'platform/')) {
+                return route('platform.login');
             }
 
-            return route('platform.login');
+            return route('tenant.login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

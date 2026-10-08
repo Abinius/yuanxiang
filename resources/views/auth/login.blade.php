@@ -30,7 +30,7 @@
     </div>
 
     <div class="login-panel active" id="pwd">
-      <form method="POST" action="{{ route('tenant.login.post', ['tenant' => $tenant->slug]) }}">
+      <form method="POST" action="{{ route('tenant.login.post', []) }}">
         @csrf
         <div class="field">
           <label>手机号 / 用户名 / 邮箱</label>
@@ -46,7 +46,7 @@
     </div>
 
     <div class="login-panel" id="wechat">
-      <a class="btn btn-wechat btn-block btn-lg" href="{{ route('tenant.login.wechat', ['tenant' => $tenant->slug]) }}">
+      <a class="btn btn-wechat btn-block btn-lg" href="{{ route('tenant.login.wechat', []) }}">
         微信一键登录
       </a>
       <p class="login-hint">微信授权后自动注册为云乡民</p>

@@ -11,7 +11,6 @@ use App\Models\Harvest;
 use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -32,7 +31,6 @@ class FamilyEntryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -95,12 +93,12 @@ class FamilyEntryTest extends TestCase
         $image = UploadedFile::fake()->image('photo.jpg');
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family/logs/create")
+            ->get("/family/logs/create")
             ->assertOk()
             ->assertSee('直播'); // 直播预告并入类型下拉
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'fertilize',
                 'title' => '今日施肥',
@@ -132,7 +130,7 @@ class FamilyEntryTest extends TestCase
         $user = $this->familyUser(['fertilizer']); // 无 farm_log scope
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family/logs/create")
+            ->get("/family/logs/create")
             ->assertForbidden();
     }
 
@@ -149,7 +147,7 @@ class FamilyEntryTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'fertilize',
                 'title' => '基施',
@@ -172,7 +170,7 @@ class FamilyEntryTest extends TestCase
         $user = $this->familyUser(['farm_log']);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'daily',
                 'title' => '巡田',
@@ -194,7 +192,7 @@ class FamilyEntryTest extends TestCase
         $user = $this->familyUser(['fertilizer']);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/fertilizer", [
+            ->post("/family/fertilizer", [
                 'batch_no' => 'NXLB-2026-001',
                 'produced_at' => '2026-08-01',
                 'nxlb_ref' => 'NXLB-REF-01',
@@ -217,7 +215,7 @@ class FamilyEntryTest extends TestCase
         $user = $this->familyUser(['harvest']);
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/harvest", [
+            ->post("/family/harvest", [
                 'plot_id' => $this->plot()->id,
                 'season_year' => 2026,
                 'harvested_at' => '2026-09-10',
@@ -248,12 +246,12 @@ class FamilyEntryTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertOk()
             ->assertSee('暂无');
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'daily',
                 'title' => '越权',
@@ -268,7 +266,7 @@ class FamilyEntryTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->villager())
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertForbidden();
     }
 
@@ -279,7 +277,7 @@ class FamilyEntryTest extends TestCase
         $admin = User::where('username', 'admin')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/family/logs", [
+            ->post("/family/logs", [
                 'plot_id' => $this->plot()->id,
                 'type' => 'daily',
                 'title' => '管理员代录',
@@ -297,8 +295,8 @@ class FamilyEntryTest extends TestCase
         $this->seed([BaseSeeder::class]);
         $t = $this->tenant();
 
-        $this->get("/t/{$t->slug}/family")
-            ->assertRedirect("/t/{$t->slug}/login");
+        $this->get("/family")
+            ->assertRedirect("/login");
     }
 
     public function test_family_dashboard_shows_chinese_scope_and_recent_entries(): void
@@ -319,7 +317,7 @@ class FamilyEntryTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/family")
+            ->get("/family")
             ->assertOk()
             ->assertSee('农事动态 / 直播预告') // 中文权限标签
             ->assertSee('最近录入')

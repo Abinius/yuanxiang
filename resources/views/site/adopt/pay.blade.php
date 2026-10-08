@@ -26,28 +26,28 @@
         @if (! config('wechat.mock') && filled($request->user()->openid))
           <button class="btn btn-primary btn-block btn-lg" id="wx-pay" type="button">微信支付 ¥{{ number_format($adoption->annual_fee) }}</button>
         @else
-          <form method="POST" action="{{ route('tenant.adopt.confirm-pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">
+          <form method="POST" action="{{ route('tenant.adopt.confirm-pay', ['adoption' => $adoption]) }}">
             @csrf
             <button class="btn btn-soft btn-block btn-lg" type="submit">模拟支付成功</button>
           </form>
         @endif
       @else
         <p class="text-sm" style="color:var(--ds-text-warn);margin-bottom:16px">订单已过期(超过 72h 未支付)。</p>
-        <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">返回我的认养</a>
+        <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.my.index', []) }}">返回我的认养</a>
       @endif
     @elseif ($adoption->status->value === 'pending_agreement')
       <div class="ok mb-4">订单已支付成功</div>
       <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px">下一步签署认养协议即可生效。</p>
-      <a class="btn btn-primary btn-block btn-lg" href="{{ route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">去签署协议</a>
+      <a class="btn btn-primary btn-block btn-lg" href="{{ route('tenant.adopt.success', ['adoption' => $adoption]) }}">去签署协议</a>
 
     @elseif ($adoption->status->value === 'active')
       <div class="ok mb-4">认养已生效</div>
       <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px">欢迎进入你的田。</p>
-      <a class="btn btn-primary btn-block btn-lg" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">进入我的田</a>
+      <a class="btn btn-primary btn-block btn-lg" href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">进入我的田</a>
 
     @else
       <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px">该订单已取消或结束。</p>
-      <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">返回我的认养</a>
+      <a class="btn btn-ghost btn-block btn-lg" href="{{ route('tenant.my.index', []) }}">返回我的认养</a>
     @endif
   </div>
 

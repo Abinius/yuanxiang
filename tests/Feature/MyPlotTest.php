@@ -10,7 +10,6 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +26,6 @@ class MyPlotTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -65,7 +63,7 @@ class MyPlotTest extends TestCase
         $plot = Plot::where('type', 'plot')->first();
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", $this->orderData())
+            ->post("/adopt/{$plot->id}/order", $this->orderData())
             ->assertRedirect();
 
         return Adoption::where('adoptable_id', $plot->id)->firstOrFail();
@@ -114,8 +112,8 @@ class MyPlotTest extends TestCase
         $service->confirmMockPayment($adoption);
         $service->signAgreement($adoption, '阿林的光彩田');
 
-        $this->get("/t/{$t->slug}/my/plot/{$adoption->id}")
-            ->assertRedirect("/t/{$t->slug}/login");
+        $this->get("/my/plot/{$adoption->id}")
+            ->assertRedirect("/login");
     }
 
     public function test_owner_sees_nameplate_label_and_plot_code(): void
@@ -126,7 +124,7 @@ class MyPlotTest extends TestCase
         $adoption = $this->makeActiveAdoption($user);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee($adoption->named_label)
             ->assertSee($adoption->adoptable->code);
@@ -141,7 +139,7 @@ class MyPlotTest extends TestCase
         $adoption = $this->makeActiveAdoption($owner);
 
         $this->actingAs($other)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertNotFound();
     }
 
@@ -154,7 +152,7 @@ class MyPlotTest extends TestCase
         app(AdoptionService::class)->confirmMockPayment($adoption); // → pending_agreement
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertForbidden();
     }
 
@@ -172,7 +170,7 @@ class MyPlotTest extends TestCase
         $this->makeLog($adoption, FarmLogType::Fertilize, '近期施肥', true, now()->subDays(1));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSeeInOrder(['近期施肥', '旧记录'])
             ->assertSee('近期施肥')
@@ -203,7 +201,7 @@ class MyPlotTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertDontSee('别家的采收');
     }
@@ -220,7 +218,7 @@ class MyPlotTest extends TestCase
         // 无任何公开家人日志
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('系统物候')
             ->assertSee('节气物候')
@@ -240,7 +238,7 @@ class MyPlotTest extends TestCase
         // 2 条公开 < 3 → 注入系统节点
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSeeInOrder(['后施', '先采', '系统物候']);
     }
@@ -258,7 +256,7 @@ class MyPlotTest extends TestCase
         $this->makeLog($adoption, FarmLogType::Harvest, 'c', true, now()->subDays(3));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertDontSee('系统物候')
             ->assertDontSee('system-node');
@@ -277,7 +275,7 @@ class MyPlotTest extends TestCase
         $this->makeLog($adoption, FarmLogType::Daily, 'd3', true, now()->subDays(15));
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('系统物候');
     }
@@ -294,7 +292,7 @@ class MyPlotTest extends TestCase
         $currentStage = config('goji.stages')[(int) now()->format('n')]['label'];
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}")
+            ->get("/my/plot/{$adoption->id}")
             ->assertOk()
             ->assertSee('今天')
             ->assertSee($currentStage);
@@ -310,7 +308,7 @@ class MyPlotTest extends TestCase
         $adoption = $this->makeActiveAdoption($user);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/plot/{$adoption->id}/nameplate")
+            ->get("/my/plot/{$adoption->id}/nameplate")
             ->assertOk()
             ->assertSee($adoption->named_label)
             ->assertSee($adoption->adoptable->code);
@@ -324,7 +322,7 @@ class MyPlotTest extends TestCase
         $adoption = $this->makeActiveAdoption($user);
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee($adoption->named_label);
     }
@@ -338,7 +336,7 @@ class MyPlotTest extends TestCase
 
         // 断单续接：非生效单不再死链 403，而是「继续支付」CTA（F2 R2.1）
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('继续支付');
     }
@@ -352,7 +350,7 @@ class MyPlotTest extends TestCase
         app(AdoptionService::class)->confirmMockPayment($adoption); // → pending_agreement
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my")
+            ->get("/my")
             ->assertOk()
             ->assertSee('去签署协议');
     }
@@ -366,7 +364,7 @@ class MyPlotTest extends TestCase
         app(AdoptionService::class)->confirmMockPayment($adoption); // → pending_agreement
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/adopt/order/{$adoption->id}/pay")
+            ->get("/adopt/order/{$adoption->id}/pay")
             ->assertOk()
             ->assertSee('去签署协议');
     }

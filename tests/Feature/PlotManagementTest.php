@@ -11,7 +11,6 @@ use App\Models\Plan;
 use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,7 +25,6 @@ class PlotManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
         $this->seed(BaseSeeder::class);
     }
 
@@ -91,8 +89,8 @@ class PlotManagementTest extends TestCase
         $admin = $this->admin($t);
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/plots", $this->plotData($farm, $plan))
-            ->assertRedirect(route('tenant.admin.plots.index', ['tenant' => $t->slug]));
+            ->post("/admin/plots", $this->plotData($farm, $plan))
+            ->assertRedirect(route('tenant.admin.plots.index', []));
 
         $this->assertDatabaseHas('plots', [
             'tenant_id' => $t->id,
@@ -111,8 +109,8 @@ class PlotManagementTest extends TestCase
         $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-UP-01'), ['tenant_id' => $t->id]));
 
         $this->actingAs($admin)
-            ->put("/t/{$t->slug}/admin/plots/{$plot->id}", array_merge($this->plotData($farm, $plan, 'FD-UP-01'), ['story' => '改后的故事']))
-            ->assertRedirect(route('tenant.admin.plots.index', ['tenant' => $t->slug]));
+            ->put("/admin/plots/{$plot->id}", array_merge($this->plotData($farm, $plan, 'FD-UP-01'), ['story' => '改后的故事']))
+            ->assertRedirect(route('tenant.admin.plots.index', []));
 
         $this->assertSame('改后的故事', $plot->fresh()->story);
     }
@@ -127,8 +125,8 @@ class PlotManagementTest extends TestCase
         $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-DEL-01'), ['tenant_id' => $t->id]));
 
         $this->actingAs($admin)
-            ->delete("/t/{$t->slug}/admin/plots/{$plot->id}")
-            ->assertRedirect(route('tenant.admin.plots.index', ['tenant' => $t->slug]));
+            ->delete("/admin/plots/{$plot->id}")
+            ->assertRedirect(route('tenant.admin.plots.index', []));
 
         $this->assertSoftDeleted('plots', ['id' => $plot->id]);
     }
@@ -160,8 +158,8 @@ class PlotManagementTest extends TestCase
         $this->assertTrue($plot->fresh()->hasInFlightAdoptions());
 
         $this->actingAs($admin)
-            ->delete("/t/{$t->slug}/admin/plots/{$plot->id}")
-            ->assertRedirect(route('tenant.admin.plots.index', ['tenant' => $t->slug]));
+            ->delete("/admin/plots/{$plot->id}")
+            ->assertRedirect(route('tenant.admin.plots.index', []));
 
         $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
     }
@@ -189,7 +187,7 @@ class PlotManagementTest extends TestCase
         $this->assertFalse($plot->fresh()->hasInFlightAdoptions());
 
         $this->actingAs($admin)
-            ->delete("/t/{$t->slug}/admin/plots/{$plot->id}")
+            ->delete("/admin/plots/{$plot->id}")
             ->assertRedirect();
 
         $this->assertSoftDeleted('plots', ['id' => $plot->id]);
@@ -206,8 +204,8 @@ class PlotManagementTest extends TestCase
         unset($data['farm_id']); // 家人表单不带 farm_id（控制器锁定）
 
         $this->actingAs($user)
-            ->post("/t/{$t->slug}/family/plots", $data)
-            ->assertRedirect(route('tenant.family.plots.index', ['tenant' => $t->slug]));
+            ->post("/family/plots", $data)
+            ->assertRedirect(route('tenant.family.plots.index', []));
 
         $this->assertDatabaseHas('plots', [
             'tenant_id' => $t->id, 'code' => 'FD-FAM-01', 'farm_id' => $farm->id,
@@ -230,25 +228,8 @@ class PlotManagementTest extends TestCase
         unset($data['farm_id']);
 
         $this->actingAs($user)
-            ->put("/t/{$t->slug}/family/plots/{$otherPlot->id}", $data)
+            ->put("/family/plots/{$otherPlot->id}", $data)
             ->assertForbidden();
-    }
-
-    public function test_cross_tenant_admin_edit_returns_404(): void
-    {
-        $t = $this->tenant();
-        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
-        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
-        $admin = $this->admin($t);
-
-        $other = Tenant::create(['slug' => 'other', 'name' => '他租户', 'status' => 'active']);
-        $otherFarm = Farm::create(['tenant_id' => $other->id, 'name' => '他基地']);
-        $otherPlan = Plan::create(['tenant_id' => $other->id, 'name' => '他方案', 'price_yearly' => 5000]);
-        $otherPlot = Plot::create(array_merge($this->plotData($otherFarm, $otherPlan, 'FD-X-01'), ['tenant_id' => $other->id]));
-
-        $this->actingAs($admin)
-            ->put("/t/{$t->slug}/admin/plots/{$otherPlot->id}", $this->plotData($farm, $plan, 'FD-X-01'))
-            ->assertNotFound();
     }
 
     public function test_plot_code_unique_per_tenant(): void
@@ -261,7 +242,7 @@ class PlotManagementTest extends TestCase
         Plot::create(array_merge($this->plotData($farm, $plan, 'FD-DUP-01'), ['tenant_id' => $t->id]));
 
         $this->actingAs($admin)
-            ->post("/t/{$t->slug}/admin/plots", $this->plotData($farm, $plan, 'FD-DUP-01'))
+            ->post("/admin/plots", $this->plotData($farm, $plan, 'FD-DUP-01'))
             ->assertSessionHasErrors('code');
     }
 }

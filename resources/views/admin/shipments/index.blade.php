@@ -18,7 +18,7 @@
   <div class="section">
     <div class="section-title">
       <span>待发配送（{{ $pendingDeliveries->count() }}）</span>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}">配送管理 ›</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.deliveries.index', []) }}">配送管理 ›</a>
     </div>
 
     @forelse ($pendingDeliveries as $d)
@@ -31,7 +31,7 @@
           {{ $d->adoption?->adoption_no }} · {{ $d->harvest?->season_year }} 年度
           · 收货:{{ $d->address ? $d->address->name.' · '.$d->address->phone : '—' }}
         </div>
-        <form method="POST" action="{{ route('tenant.admin.shipments.delivery.ship', ['tenant' => $tenant->slug, 'delivery' => $d]) }}" class="flex gap-1 mt-2">
+        <form method="POST" action="{{ route('tenant.admin.shipments.delivery.ship', ['delivery' => $d]) }}" class="flex gap-1 mt-2">
           @csrf
           <input class="input" name="tracking_no" required maxlength="80" placeholder="运单号">
           <input class="input" name="carrier" maxlength="40" placeholder="承运(顺丰等)" style="max-width:140px">
@@ -46,7 +46,7 @@
   <div class="section" style="margin-top:28px">
     <div class="section-title">
       <span>待发礼盒（{{ $pendingGifts->count() }}）</span>
-      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.gift-boxes.index', ['tenant' => $tenant->slug]) }}">礼盒管理 ›</a>
+      <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.gift-boxes.index', []) }}">礼盒管理 ›</a>
     </div>
 
     @forelse ($pendingGifts as $g)
@@ -60,12 +60,12 @@
         </div>
         <div class="flex gap-1 mt-2" style="flex-wrap:wrap">
           @if ($g->status->value === 'draft')
-            <form method="POST" action="{{ route('tenant.admin.shipments.gift.making', ['tenant' => $tenant->slug, 'giftBox' => $g]) }}">
+            <form method="POST" action="{{ route('tenant.admin.shipments.gift.making', ['giftBox' => $g]) }}">
               @csrf
               <button class="btn btn-ghost btn-sm" type="submit">开始制作</button>
             </form>
           @endif
-          <form method="POST" action="{{ route('tenant.admin.shipments.gift.ship', ['tenant' => $tenant->slug, 'giftBox' => $g]) }}" class="flex gap-1">
+          <form method="POST" action="{{ route('tenant.admin.shipments.gift.ship', ['giftBox' => $g]) }}" class="flex gap-1">
             @csrf
             <input class="input" name="tracking_no" required maxlength="80" placeholder="运单号">
             <input class="input" name="carrier" maxlength="40" placeholder="承运" style="max-width:120px">

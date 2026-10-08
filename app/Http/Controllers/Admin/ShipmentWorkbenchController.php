@@ -7,7 +7,6 @@ use App\Enums\GiftBoxStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery;
 use App\Models\GiftBox;
-use App\Models\Tenant;
 use App\Services\DeliveryService;
 use App\Services\GiftBoxService;
 use Illuminate\Http\Request;
@@ -25,7 +24,7 @@ class ShipmentWorkbenchController extends Controller
     }
 
     /** 统一出库队列：待发配送（按采收倒序）+ 待发礼盒（草稿/制作中）。 */
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $pendingDeliveries = Delivery::query()
             ->where('status', DeliveryStatus::Pending->value)
@@ -39,13 +38,12 @@ class ShipmentWorkbenchController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.shipments.index', compact('tenant', 'pendingDeliveries', 'pendingGifts'));
+        return view('admin.shipments.index', compact('pendingDeliveries', 'pendingGifts'));
     }
 
     /** 统一发货：配送单录运单发货。 */
-    public function shipDelivery(Tenant $tenant, Delivery $delivery, Request $request)
+    public function shipDelivery(Delivery $delivery, Request $request)
     {
-        abort_if($delivery->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
             'tracking_no' => ['required', 'string', 'max:80'],
@@ -58,9 +56,8 @@ class ShipmentWorkbenchController extends Controller
     }
 
     /** 统一发货：礼盒录运单发货（draft/making 均可直接发）。 */
-    public function shipGift(Tenant $tenant, GiftBox $giftBox, Request $request)
+    public function shipGift(GiftBox $giftBox, Request $request)
     {
-        abort_if($giftBox->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
             'tracking_no' => ['required', 'string', 'max:80'],
@@ -73,9 +70,8 @@ class ShipmentWorkbenchController extends Controller
     }
 
     /** 礼盒标记开始制作（draft → making）。 */
-    public function makeGift(Tenant $tenant, GiftBox $giftBox)
+    public function makeGift(GiftBox $giftBox)
     {
-        abort_if($giftBox->tenant_id !== $tenant->id, 404);
         $this->gifts->markMaking($giftBox);
 
         return back()->with('ok', '已开始制作');

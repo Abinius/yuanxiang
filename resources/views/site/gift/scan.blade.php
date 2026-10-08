@@ -36,7 +36,7 @@
 
     <div class="mt-4">
       @php
-        $ctaUrl = route('tenant.login', ['tenant' => $tenant->slug]);
+        $ctaUrl = route('tenant.login', []);
         if ($referralCode) {
           $ctaUrl = rtrim($ctaUrl, '/') . '?ref=' . urlencode($referralCode);
         }

@@ -6,7 +6,7 @@
   <div class="menu-group">
     <div class="menu-group-label">概览</div>
     <a class="menu-link {{ $current === 'tenant.admin.dashboard' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.dashboard', []) }}"
        data-label="经营看板">
       <span class="menu-icon"><x-lucide-layout-dashboard /></span><span class="menu-text">经营看板</span>
     </a>
@@ -15,37 +15,37 @@
   <div class="menu-group">
     <div class="menu-group-label">业务</div>
     <a class="menu-link {{ $current === 'tenant.admin.adoptions.index' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.adoptions.index', []) }}"
        data-label="认养订单">
       <span class="menu-icon"><x-lucide-sprout /></span><span class="menu-text">认养订单</span>
     </a>
     <a class="menu-link {{ $current === 'tenant.admin.farm-logs.index' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.farm-logs.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.farm-logs.index', []) }}"
        data-label="农事内容">
       <span class="menu-icon"><x-lucide-notebook-pen /></span><span class="menu-text">农事内容</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.cameras') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.cameras.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.cameras.index', []) }}"
        data-label="摄像头">
       <span class="menu-icon"><x-lucide-video /></span><span class="menu-text">摄像头</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.trace-codes') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.trace-codes.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.trace-codes.index', []) }}"
        data-label="溯源码">
       <span class="menu-icon"><x-lucide-qr-code /></span><span class="menu-text">溯源码</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.deliveries') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.deliveries.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.deliveries.index', []) }}"
        data-label="配送管理">
       <span class="menu-icon"><x-lucide-truck /></span><span class="menu-text">配送管理</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.shipments') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.shipments.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.shipments.index', []) }}"
        data-label="统一发货台">
       <span class="menu-icon"><x-lucide-package /></span><span class="menu-text">统一发货台</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.plots') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.plots.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.plots.index', []) }}"
        data-label="地块管理">
       <span class="menu-icon"><x-lucide-map-pin /></span><span class="menu-text">地块管理</span>
     </a>
@@ -54,22 +54,22 @@
   <div class="menu-group">
     <div class="menu-group-label">保障</div>
     <a class="menu-link {{ $current === 'tenant.admin.adjustments.index' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.adjustments.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.adjustments.index', []) }}"
        data-label="补退管理">
       <span class="menu-icon"><x-lucide-scale /></span><span class="menu-text">补退管理</span>
     </a>
     <a class="menu-link {{ $current === 'tenant.admin.gift-boxes.index' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.gift-boxes.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.gift-boxes.index', []) }}"
        data-label="礼盒">
       <span class="menu-icon"><x-lucide-gift /></span><span class="menu-text">礼盒</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.promotions') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.promotions.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.promotions.index', []) }}"
        data-label="促销">
       <span class="menu-icon"><x-lucide-megaphone /></span><span class="menu-text">促销</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.commissions') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.commissions.ledger', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.commissions.ledger', []) }}"
        data-label="佣金审核">
       <span class="menu-icon"><x-lucide-wallet /></span><span class="menu-text">佣金审核</span>
     </a>
@@ -78,17 +78,17 @@
   <div class="menu-group">
     <div class="menu-group-label">设置</div>
     <a class="menu-link {{ $current === 'tenant.admin.settings.edit' ? 'active' : '' }}"
-       href="{{ route('tenant.admin.settings.edit', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.settings.edit', []) }}"
        data-label="站点设置">
       <span class="menu-icon"><x-lucide-settings /></span><span class="menu-text">站点设置</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.short-links') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.short-links.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.short-links.index', []) }}"
        data-label="短链接">
       <span class="menu-icon"><x-lucide-link /></span><span class="menu-text">短链接</span>
     </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.users') ? 'active' : '' }}"
-       href="{{ route('tenant.admin.users.index', ['tenant' => $tenant->slug]) }}"
+       href="{{ route('tenant.admin.users.index', []) }}"
        data-label="账号管理">
       <span class="menu-icon"><x-lucide-user-cog /></span><span class="menu-text">账号管理</span>
     </a>
@@ -96,11 +96,11 @@
 
   <div class="menu-group menu-group-soft">
     <div class="menu-group-label">切换</div>
-    <a class="menu-link" href="{{ route('tenant.family.dashboard', ['tenant' => $tenant->slug]) }}"
+    <a class="menu-link" href="{{ route('tenant.family.dashboard', []) }}"
        data-label="家人端">
       <span class="menu-icon"><x-lucide-users /></span><span class="menu-text">家人端</span>
     </a>
-    <a class="menu-link" href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}"
+    <a class="menu-link" href="{{ route('tenant.home', []) }}"
        data-label="前台">
       <span class="menu-icon"><x-lucide-home /></span><span class="menu-text">前台</span>
     </a>

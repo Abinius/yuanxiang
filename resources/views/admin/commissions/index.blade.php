@@ -3,8 +3,8 @@
 @section('title', '佣金与提现')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">看板</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.dashboard', []) }}">看板</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -38,11 +38,11 @@
           <div class="text-xs muted mt-1">{{ $p->created_at->format('Y-m-d H:i') }}</div>
         </div>
         <div class="flex gap-2">
-          <form method="POST" action="{{ route('tenant.admin.commissions.approve', ['tenant' => $tenant->slug, 'payout' => $p]) }}">
+          <form method="POST" action="{{ route('tenant.admin.commissions.approve', ['payout' => $p]) }}">
             @csrf
             <button class="btn btn-primary btn-sm" type="submit">发放</button>
           </form>
-          <form method="POST" action="{{ route('tenant.admin.commissions.reject', ['tenant' => $tenant->slug, 'payout' => $p]) }}" onsubmit="return confirm('驳回该提现？')">
+          <form method="POST" action="{{ route('tenant.admin.commissions.reject', ['payout' => $p]) }}" onsubmit="return confirm('驳回该提现？')">
             @csrf
             <button class="btn btn-ghost btn-sm" type="submit">驳回</button>
           </form>

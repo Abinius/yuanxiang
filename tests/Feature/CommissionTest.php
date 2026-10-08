@@ -13,7 +13,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\CommissionService;
-use App\Tenancy\TenantContext;
 use Carbon\Carbon;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
@@ -32,7 +31,6 @@ class CommissionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -247,13 +245,13 @@ class CommissionTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($referrer)
-            ->get("/t/{$t->slug}/my/referral")
+            ->get("/my/referral")
             ->assertOk()
             ->assertSee('佣金账户')
             ->assertSee('推荐业绩');
 
         $this->actingAs($this->admin())
-            ->get("/t/{$t->slug}/admin/commissions")
+            ->get("/admin/commissions")
             ->assertOk()
             ->assertSee('佣金与提现');
     }
@@ -273,7 +271,7 @@ class CommissionTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/commissions/payouts/{$payout->id}/approve")
+            ->post("/admin/commissions/payouts/{$payout->id}/approve")
             ->assertRedirect()
             ->assertSessionHas('ok');
 
@@ -294,7 +292,7 @@ class CommissionTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/commissions/payouts/{$payout->id}/reject")
+            ->post("/admin/commissions/payouts/{$payout->id}/reject")
             ->assertRedirect()
             ->assertSessionHas('ok');
 
@@ -351,7 +349,7 @@ class CommissionTest extends TestCase
 
         // 下单带推荐码 → 签约 → 佣金记账
         $this->actingAs($buyer)
-            ->post("/t/{$t->slug}/adopt/{$plot->id}/order", [
+            ->post("/adopt/{$plot->id}/order", [
                 'name' => '李四', 'phone' => '13800000002', 'province' => '宁夏',
                 'city' => '吴忠', 'district' => '红寺堡', 'detail' => '3 号',
                 'referral_code' => 'REF-E2E-01',
@@ -377,7 +375,7 @@ class CommissionTest extends TestCase
         $user = $this->makeUser();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/commissions")
+            ->get("/admin/commissions")
             ->assertForbidden();
     }
 }

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +20,6 @@ class NavMenuTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -47,7 +45,7 @@ class NavMenuTest extends TestCase
         $u = $this->user('13800000001', UserRole::Villager);
 
         $this->actingAs($u)
-            ->get("/t/{$t->slug}/")
+            ->get("/")
             ->assertOk()
             ->assertSee('我的田')
             ->assertSee('实时监控')
@@ -62,7 +60,7 @@ class NavMenuTest extends TestCase
         $u = $this->user('13900000001', UserRole::Family);
 
         $this->actingAs($u)
-            ->get("/t/{$t->slug}/")
+            ->get("/")
             ->assertOk()
             ->assertSee('家人后台')
             ->assertDontSee('管理后台');
@@ -75,7 +73,7 @@ class NavMenuTest extends TestCase
         $u = $this->user('13800000099', UserRole::TenantAdmin);
 
         $this->actingAs($u)
-            ->get("/t/{$t->slug}/")
+            ->get("/")
             ->assertOk()
             ->assertSee('家人后台')
             ->assertSee('管理后台');

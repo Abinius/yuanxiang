@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +15,6 @@ class AuthTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function makeTenant(string $slug = 'guangcai'): Tenant
@@ -27,7 +25,7 @@ class AuthTest extends TestCase
     public function test_login_page_renders_both_tabs(): void
     {
         $t = $this->makeTenant();
-        $this->get("/t/{$t->slug}/login")
+        $this->get("/login")
             ->assertOk()
             ->assertSee('账号登录')
             ->assertSee('微信一键登录');
@@ -44,8 +42,8 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/t/{$t->slug}/login", ['account' => '13800000001', 'password' => 'secret123'])
-            ->assertRedirect("/t/{$t->slug}");
+        $this->post("/login", ['account' => '13800000001', 'password' => 'secret123'])
+            ->assertRedirect("/");
         $this->assertAuthenticated();
     }
 
@@ -59,25 +57,9 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/t/{$t->slug}/login", ['account' => '13800000001', 'password' => 'wrong'])
+        $this->post("/login", ['account' => '13800000001', 'password' => 'wrong'])
             ->assertSessionHasErrors('account');
         $this->assertGuest();
-    }
-
-    public function test_login_is_scoped_to_tenant(): void
-    {
-        $t1 = $this->makeTenant();
-        $t2 = $this->makeTenant('other');
-        User::create([
-            'tenant_id' => $t1->id,
-            'phone' => '13800000001',
-            'password' => 'secret123',
-            'role' => UserRole::Villager->value,
-        ]);
-
-        // 手机号属于 t1，在 t2 登录必须失败
-        $this->post("/t/{$t2->slug}/login", ['account' => '13800000001', 'password' => 'secret123'])
-            ->assertSessionHasErrors('account');
     }
 
     public function test_username_login_works(): void
@@ -90,8 +72,8 @@ class AuthTest extends TestCase
             'role' => UserRole::Villager->value,
         ]);
 
-        $this->post("/t/{$t->slug}/login", ['account' => 'abin', 'password' => 'secret123'])
-            ->assertRedirect("/t/{$t->slug}");
+        $this->post("/login", ['account' => 'abin', 'password' => 'secret123'])
+            ->assertRedirect("/");
         $this->assertAuthenticated();
     }
 
@@ -99,8 +81,8 @@ class AuthTest extends TestCase
     {
         $t = $this->makeTenant();
 
-        $this->get("/t/{$t->slug}/login/wechat")
-            ->assertRedirect("/t/{$t->slug}");
+        $this->get("/login/wechat")
+            ->assertRedirect("/");
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['tenant_id' => $t->id, 'role' => 'villager']);
     }
@@ -108,19 +90,19 @@ class AuthTest extends TestCase
     public function test_logout_returns_guest(): void
     {
         $t = $this->makeTenant();
-        $this->get("/t/{$t->slug}/login/wechat");
+        $this->get("/login/wechat");
 
-        $this->post("/t/{$t->slug}/logout")
-            ->assertRedirect("/t/{$t->slug}");
+        $this->post("/logout")
+            ->assertRedirect("/");
         $this->assertGuest();
     }
 
     public function test_bind_phone_for_wechat_user(): void
     {
         $t = $this->makeTenant();
-        $this->get("/t/{$t->slug}/login/wechat");
+        $this->get("/login/wechat");
 
-        $this->post("/t/{$t->slug}/login/bind-phone", ['phone' => '13900000000'])
+        $this->post("/login/bind-phone", ['phone' => '13900000000'])
             ->assertSessionHas('status');
         $this->assertDatabaseHas('users', ['phone' => '13900000000']);
     }
@@ -134,9 +116,9 @@ class AuthTest extends TestCase
             'password' => 'secret123',
             'role' => UserRole::Villager->value,
         ]);
-        $this->get("/t/{$t->slug}/login/wechat");
+        $this->get("/login/wechat");
 
-        $this->post("/t/{$t->slug}/login/bind-phone", ['phone' => '13900000000'])
+        $this->post("/login/bind-phone", ['phone' => '13900000000'])
             ->assertStatus(422);
     }
 }

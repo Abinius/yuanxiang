@@ -15,7 +15,6 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $tenant = $request->attributes->get('tenant');
         $user = $request->user();
 
         if ($user->role === UserRole::TenantAdmin) {
@@ -54,6 +53,6 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        return view('family.dashboard', compact('tenant', 'user', 'scopes', 'recentLogs', 'recentBatches', 'recentHarvests', 'todos'));
+        return view('family.dashboard', compact('user', 'scopes', 'recentLogs', 'recentBatches', 'recentHarvests', 'todos'));
     }
 }

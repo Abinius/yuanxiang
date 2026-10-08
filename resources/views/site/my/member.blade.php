@@ -6,7 +6,7 @@
   <div class="panel" style="max-width:680px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">我的会员</h1>
-      <a class="back-link" href="{{ route('tenant.my.index', ['tenant' => $tenant->slug]) }}">我的认养</a>
+      <a class="back-link" href="{{ route('tenant.my.index', []) }}">我的认养</a>
     </div>
 
     <div class="sub-card" style="padding:20px;margin-bottom:18px;text-align:center">

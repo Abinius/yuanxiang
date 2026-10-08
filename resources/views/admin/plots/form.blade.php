@@ -3,8 +3,8 @@
 @section('title', $plot->exists ? '编辑地块' : '添加地块')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.plots.index', ['tenant' => $tenant->slug]) }}">地块列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.plots.index', []) }}">地块列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -15,7 +15,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ $plot->exists ? route('tenant.admin.plots.update', ['tenant' => $tenant->slug, 'plot' => $plot]) : route('tenant.admin.plots.store', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ $plot->exists ? route('tenant.admin.plots.update', ['plot' => $plot]) : route('tenant.admin.plots.store', []) }}">
     @csrf
     @if ($plot->exists)
       @method('PUT')
@@ -107,7 +107,7 @@
   @if ($plot->exists && $plot->hasInFlightAdoptions())
     <div class="alert mt-4">该地块有在约认养，无法删除——可改用「下架」。</div>
   @elseif ($plot->exists)
-    <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['tenant' => $tenant->slug, 'plot' => $plot]) }}" onsubmit="return confirm('确认删除地块 {{ $plot->code }}？')" class="mt-4">
+    <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除地块 {{ $plot->code }}？')" class="mt-4">
       @csrf
       @method('DELETE')
       <button class="btn btn-ghost btn-block" type="submit">删除地块</button>

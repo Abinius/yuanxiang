@@ -26,7 +26,7 @@
       <div class="sub-card mb-3" style="background:var(--ds-bg-layer-2);box-shadow:none;padding:10px 14px">
         <div class="flex justify-between items-center">
           <span class="tag" style="background:var(--color-brand-50);color:var(--color-brand-500)">你的箱 · {{ $traceCode->adoption->named_label }}</span>
-          <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $traceCode->adoption]) }}">查看我的田 ›</a>
+          <a class="btn btn-ghost btn-sm" href="{{ route('tenant.my.plot', ['adoption' => $traceCode->adoption]) }}">查看我的田 ›</a>
         </div>
       </div>
     @elseif ($traceCode->adoption)
@@ -42,10 +42,10 @@
     </div>
 
     <div class="text-center mt-4">
-      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">认养这块田</a>
+      <a class="btn btn-primary btn-lg" href="{{ route('tenant.adopt.show', ['plot' => $plot]) }}">认养这块田</a>
     </div>
     <div class="text-center mt-3">
-      <a href="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}" class="btn btn-ghost btn-sm">成为云乡民,认养你的田 ›</a>
+      <a href="{{ route('tenant.login', []) }}" class="btn btn-ghost btn-sm">成为云乡民,认养你的田 ›</a>
     </div>
     <p class="note text-xs text-center" style="margin-top:10px">
       本箱枸杞以有机肥(NXLB)投入品种植,检测合格。

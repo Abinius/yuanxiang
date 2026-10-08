@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Family;
 use App\Enums\PlotType;
 use App\Models\Plan;
 use App\Models\Plot;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Support\PlotRules;
 use Illuminate\Http\Request;
 
@@ -19,64 +19,61 @@ use Illuminate\Http\Request;
  */
 class PlotController extends Controller
 {
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $member = $this->assertScope($request, 'plot');
 
-        return view('family.plot.form', $this->formData($tenant, new Plot(), $member));
+        return view('family.plot.form', $this->formData(Tenant::current(), new Plot(), $member));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $member = $this->assertScope($request, 'plot');
-        $data = $request->validate(PlotRules::rules($tenant, $request, null, $member->farm_id));
+        $data = $request->validate(PlotRules::rules(Tenant::current(), $request, null, $member->farm_id));
         $data['farm_id'] = $member->farm_id;
 
         $plot = new Plot($data);
-        $plot->tenant_id = $tenant->id;
+        $plot->tenant_id = Tenant::current()->id;
         $plot->save();
 
-        return redirect()->route('tenant.family.plots.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.plots.index', [])
             ->with('ok', '地块已添加');
     }
 
-    public function index(Tenant $tenant, Request $request)
+    public function index(Request $request)
     {
         $member = $this->assertScope($request, 'plot');
         $plots = Plot::where('farm_id', $member->farm_id)
             ->orderBy('code')
             ->get();
 
-        return view('family.plot.index', compact('tenant', 'plots'));
+        return view('family.plot.index', compact('plots'));
     }
 
-    public function edit(Tenant $tenant, Plot $plot, Request $request)
+    public function edit(Plot $plot, Request $request)
     {
         $member = $this->assertScope($request, 'plot');
-        abort_if($plot->tenant_id !== $tenant->id, 404);
         abort_if($plot->farm_id !== $member->farm_id, 403);
 
-        return view('family.plot.form', $this->formData($tenant, $plot, $member));
+        return view('family.plot.form', $this->formData(Tenant::current(), $plot, $member));
     }
 
-    public function update(Tenant $tenant, Plot $plot, Request $request)
+    public function update(Plot $plot, Request $request)
     {
         $member = $this->assertScope($request, 'plot');
-        abort_if($plot->tenant_id !== $tenant->id, 404);
         abort_if($plot->farm_id !== $member->farm_id, 403);
 
         // 家人不可改 farm_id（PlotRules 在传 farmId 时本就不收该字段）
-        $plot->fill($request->validate(PlotRules::rules($tenant, $request, $plot, $member->farm_id)))->save();
+        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot, $member->farm_id)))->save();
 
-        return redirect()->route('tenant.family.plots.index', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.plots.index', [])
             ->with('ok', '地块已更新');
     }
 
     /** 新增/编辑共用的表单数据。 */
-    private function formData(Tenant $tenant, Plot $plot, $member): array
+    private function formData(Plot $plot, $member): array
     {
         return [
-            'tenant' => $tenant,
             'plot' => $plot,
             'member' => $member,
             'plans' => Plan::orderBy('name')->get(),

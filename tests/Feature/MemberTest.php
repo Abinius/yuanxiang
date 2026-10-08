@@ -11,7 +11,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\MemberService;
-use App\Tenancy\TenantContext;
 use Carbon\Carbon;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -28,7 +27,6 @@ class MemberTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private int $phoneCounter = 0;
@@ -198,7 +196,7 @@ class MemberTest extends TestCase
         $t = $this->tenant();
 
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/my/member")
+            ->get("/my/member")
             ->assertOk()
             ->assertSee('我的会员')
             ->assertSee('达人')

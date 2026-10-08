@@ -3,8 +3,8 @@
 @section('title', '生成短链')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.short-links.index', ['tenant' => $tenant->slug]) }}">短链列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.short-links.index', []) }}">短链列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -16,7 +16,7 @@
   @endif
 
   <div class="panel">
-    <form method="POST" action="{{ route('tenant.admin.short-links.store', ['tenant' => $tenant->slug]) }}">
+    <form method="POST" action="{{ route('tenant.admin.short-links.store', []) }}">
       @csrf
       <div class="field">
         <label>目标地址(完整 URL,可粘贴溯源/扫码/认养/落地页链接)</label>

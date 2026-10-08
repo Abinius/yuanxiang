@@ -3,8 +3,8 @@
 @section('title', '新建促销')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.promotions.index', ['tenant' => $tenant->slug]) }}">促销列表</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.promotions.index', []) }}">促销列表</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
@@ -16,7 +16,7 @@
   @endif
 
   <div class="panel">
-    <form method="POST" action="{{ route('tenant.admin.promotions.store', ['tenant' => $tenant->slug]) }}">
+    <form method="POST" action="{{ route('tenant.admin.promotions.store', []) }}">
       @csrf
       <div class="field">
         <label>名称</label>

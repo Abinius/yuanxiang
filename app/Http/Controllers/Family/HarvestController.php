@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Family;
 use App\Jobs\SendHarvestNoticeJob;
 use App\Models\Harvest;
 use App\Models\Plot;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\DeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,7 +20,7 @@ class HarvestController extends Controller
         private readonly DeliveryService $deliveries,
     ) {}
 
-    public function create(Tenant $tenant, Request $request)
+    public function create(Request $request)
     {
         $this->assertScope($request, 'harvest');
 
@@ -40,15 +40,15 @@ class HarvestController extends Controller
             ->sortBy(fn ($p) => $recentOrder->get($p->id, PHP_INT_MAX))
             ->values();
 
-        return view('family.harvest.create', compact('tenant', 'plots'));
+        return view('family.harvest.create', compact('plots'));
     }
 
-    public function store(Tenant $tenant, Request $request)
+    public function store(Request $request)
     {
         $member = $this->assertScope($request, 'harvest');
 
         $data = $request->validate([
-            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', $tenant->id)],
+            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', Tenant::current()->id)],
             'season_year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
             'harvested_at' => ['required', 'date'],
             'dry_weight_kg' => ['required', 'numeric', 'min:0'],
@@ -57,7 +57,7 @@ class HarvestController extends Controller
         ]);
 
         $harvest = new Harvest();
-        $harvest->tenant_id = $tenant->id;
+        $harvest->tenant_id = Tenant::current()->id;
         $harvest->farm_id = $member->farm_id;
         $harvest->plot_id = $data['plot_id'];
         $harvest->season_year = $data['season_year'] ?? now()->year;
@@ -74,30 +74,28 @@ class HarvestController extends Controller
         // G5/A4：采收完成一键联动生码+配送草稿（每箱一码），admin 发货台见草稿
         $this->deliveries->createForHarvest($harvest);
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', '采收已记录，配送草稿与溯源码已生成');
     }
 
     /** G8：编辑（复用 create 视图）。仅 handler 本人或 tenant_admin 可改。 */
-    public function edit(Tenant $tenant, Harvest $harvest, Request $request)
+    public function edit(Harvest $harvest, Request $request)
     {
         $this->assertScope($request, 'harvest');
-        abort_if($harvest->tenant_id !== $tenant->id, 404);
         abort_if($harvest->handler_id !== $request->user()->id && $request->user()->role->value !== 'tenant_admin', 404);
 
         $plots = Plot::where('type', 'plot')->orderBy('code')->get();
 
-        return view('family.harvest.create', compact('tenant', 'plots', 'harvest'));
+        return view('family.harvest.create', compact('plots', 'harvest'));
     }
 
-    public function update(Tenant $tenant, Harvest $harvest, Request $request)
+    public function update(Harvest $harvest, Request $request)
     {
         $member = $this->assertScope($request, 'harvest');
-        abort_if($harvest->tenant_id !== $tenant->id, 404);
         abort_if($harvest->handler_id !== $request->user()->id && $request->user()->role->value !== 'tenant_admin', 404);
 
         $data = $request->validate([
-            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', $tenant->id)],
+            'plot_id' => ['required', Rule::exists('plots', 'id')->where('tenant_id', Tenant::current()->id)],
             'season_year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
             'harvested_at' => ['required', 'date'],
             'dry_weight_kg' => ['required', 'numeric', 'min:0'],
@@ -114,7 +112,7 @@ class HarvestController extends Controller
             'notes' => $data['notes'],
         ]);
 
-        return redirect()->route('tenant.family.dashboard', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.family.dashboard', [])
             ->with('ok', '已更新');
     }
 }

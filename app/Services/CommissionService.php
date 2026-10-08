@@ -45,7 +45,7 @@ class CommissionService
     /** 指定 tier 佣金率(%)（读 settings.commission.rates）。 */
     public function rateForTier(Tenant $tenant, string $tier): float
     {
-        $rates = $this->settings->commission($tenant)['rates'] ?? [];
+        $rates = $this->settings->commission()['rates'] ?? [];
 
         return (float) ($rates[$tier] ?? 0);
     }
@@ -59,7 +59,7 @@ class CommissionService
     /** 冷却期(天)。 */
     public function cooldownDays(Tenant $tenant): int
     {
-        return (int) ($this->settings->commission($tenant)['cooldown_days'] ?? 7);
+        return (int) ($this->settings->commission()['cooldown_days'] ?? 7);
     }
 
     /**
@@ -82,7 +82,7 @@ class CommissionService
             }
 
             $referrer = User::where('id', $referredById)->first();
-            abort_if(! $referrer || $referrer->tenant_id !== $adoption->tenant_id, 422, '推荐人不存在或跨租户');
+            abort_if(! $referrer, 422, '推荐人不存在');
 
             $tier = $this->tierOf($referrer);
             $rate = $this->rateForTier($adoption->tenant, $tier);

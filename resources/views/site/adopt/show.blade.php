@@ -50,7 +50,7 @@
     <div class="mb-4">
       <span class="serif text-brand font-medium">溯源</span>
       <a style="font-size:var(--ds-body-s);color:var(--color-brand-500);font-weight:600"
-         href="{{ route('tenant.trace.show', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">
+         href="{{ route('tenant.trace.show', ['plot' => $plot]) }}">
         查看溯源时间线 ›
       </a>
     </div>
@@ -59,7 +59,7 @@
       <details class="details">
         <summary>立即认养(¥{{ number_format($plot->price_yearly) }}/年)</summary>
         @auth
-          <form method="POST" action="{{ route('tenant.adopt.order', ['tenant' => $tenant->slug, 'plot' => $plot]) }}" style="margin-top:14px">
+          <form method="POST" action="{{ route('tenant.adopt.order', ['plot' => $plot]) }}" style="margin-top:14px">
             @csrf
             @if ($errors->any())
               <div class="alert">{{ $errors->first() }}</div>
@@ -96,7 +96,7 @@
           </form>
         @else
           <p class="alert mt-3" style="margin:14px 0 0">
-            请先<a href="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}">登录</a>后再认养
+            请先<a href="{{ route('tenant.login', []) }}">登录</a>后再认养
           </p>
         @endauth
       </details>

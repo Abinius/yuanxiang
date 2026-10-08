@@ -6,7 +6,7 @@
   <div class="panel" style="max-width:680px;margin:0 auto">
     <div class="page-header">
       <h1 class="page-title">节日礼盒 · {{ $adoption->named_label }}</h1>
-      <a class="back-link" href="{{ route('tenant.my.plot', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">返回我的田</a>
+      <a class="back-link" href="{{ route('tenant.my.plot', ['adoption' => $adoption]) }}">返回我的田</a>
     </div>
 
     @if (session('ok'))
@@ -30,7 +30,7 @@
         </div>
         @if ($g->status->value === 'draft')
           <div class="mt-2">
-            <a class="btn btn-primary btn-sm" href="{{ route('tenant.my.gift.customize', ['tenant' => $tenant->slug, 'adoption' => $adoption, 'giftBox' => $g]) }}">去定制</a>
+            <a class="btn btn-primary btn-sm" href="{{ route('tenant.my.gift.customize', ['adoption' => $adoption, 'giftBox' => $g]) }}">去定制</a>
           </div>
         @endif
       </div>
@@ -42,7 +42,7 @@
     @endforelse
 
     <div class="text-center mt-4">
-      <a class="btn btn-primary btn-lg" href="{{ route('tenant.my.gift.create', ['tenant' => $tenant->slug, 'adoption' => $adoption]) }}">+ 定制礼盒</a>
+      <a class="btn btn-primary btn-lg" href="{{ route('tenant.my.gift.create', ['adoption' => $adoption]) }}">+ 定制礼盒</a>
     </div>
   </div>
 @endsection

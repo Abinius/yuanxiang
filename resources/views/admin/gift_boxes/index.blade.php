@@ -49,15 +49,15 @@
               <td class="mono text-xs">{{ $g->tracking_no ?? '—' }}</td>
               <td>
                 <div class="flex gap-1" style="flex-wrap:wrap">
-                  <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.gift-boxes.print', ['tenant' => $tenant->slug, 'ids' => $g->id]) }}">贺卡</a>
+                  <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.gift-boxes.print', ['ids' => $g->id]) }}">贺卡</a>
                   @if ($g->status->value === 'draft')
-                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.making', ['tenant' => $tenant->slug, 'giftBox' => $g]) }}">
+                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.making', ['giftBox' => $g]) }}">
                       @csrf
                       <button class="btn btn-primary btn-sm" type="submit">制作</button>
                     </form>
                   @endif
                   @if (in_array($g->status->value, ['draft', 'making']))
-                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.ship', ['tenant' => $tenant->slug, 'giftBox' => $g]) }}" class="flex gap-1">
+                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.ship', ['giftBox' => $g]) }}" class="flex gap-1">
                       @csrf
                       <input class="input" name="tracking_no" placeholder="运单号" required style="width:100px;font-size:11px;padding:5px 7px">
                       <input class="input" name="carrier" placeholder="承运商" style="width:62px;font-size:11px;padding:5px 7px">
@@ -65,7 +65,7 @@
                     </form>
                   @endif
                   @if ($g->status->value === 'shipped')
-                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.delivered', ['tenant' => $tenant->slug, 'giftBox' => $g]) }}">
+                    <form method="POST" action="{{ route('tenant.admin.gift-boxes.delivered', ['giftBox' => $g]) }}">
                       @csrf
                       <button class="btn btn-soft btn-sm" type="submit">送达</button>
                     </form>

@@ -3,15 +3,15 @@
 @section('title', '地块管理')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">看板</a>
-  <a href="{{ route('tenant.home', ['tenant' => $tenant->slug]) }}">前台</a>
+  <a href="{{ route('tenant.admin.dashboard', []) }}">看板</a>
+  <a href="{{ route('tenant.home', []) }}">前台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
 @endsection
 
 @section('content')
   <div class="page-header">
     <h1 class="page-title">地块管理</h1>
-    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.plots.create', ['tenant' => $tenant->slug]) }}">添加地块</a>
+    <a class="btn btn-primary btn-sm" href="{{ route('tenant.admin.plots.create', []) }}">添加地块</a>
   </div>
 
   @if (session('ok'))
@@ -34,18 +34,18 @@
           <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : 'tag-off' }}">{{ $plot->status->label() }}</span>
         </div>
         <div class="flex gap-2 mb-3">
-          <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.plots.edit', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">编辑</a>
+          <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.plots.edit', ['plot' => $plot]) }}">编辑</a>
           @if ($plot->hasInFlightAdoptions())
             <span class="tag tag-off" title="有在约认养，无法删除">在约·不可删</span>
           @else
-            <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['tenant' => $tenant->slug, 'plot' => $plot]) }}" onsubmit="return confirm('确认删除 {{ $plot->code }}？')">
+            <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除 {{ $plot->code }}？')">
               @csrf
               @method('DELETE')
               <button class="btn btn-ghost btn-sm" type="submit">删除</button>
             </form>
           @endif
         </div>
-        <form method="POST" action="{{ route('tenant.admin.plots.story', ['tenant' => $tenant->slug, 'plot' => $plot]) }}">
+        <form method="POST" action="{{ route('tenant.admin.plots.story', ['plot' => $plot]) }}">
           @csrf
           <textarea class="textarea" name="story" rows="3" maxlength="1000" placeholder="例:这块田挨着涝坝,晨露重,夏果格外甜。">{{ $plot->story }}</textarea>
           <button class="btn btn-primary btn-sm mt-2" type="submit">保存故事</button>

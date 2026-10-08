@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Support\Tenant;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 
@@ -19,19 +19,18 @@ class SettingsController extends Controller
     {
     }
 
-    public function edit(Tenant $tenant, Request $request)
+    public function edit(Request $request)
     {
         return view('admin.settings.form', [
-            'tenant' => $tenant,
-            'pricing' => $this->settings->pricing($tenant),
-            'promotion' => $this->settings->promotion($tenant),
-            'commission' => $this->settings->commission($tenant),
-            'member' => $this->settings->member($tenant),
-            'contract' => $this->settings->contract($tenant),
+            'pricing' => $this->settings->pricing(),
+            'promotion' => $this->settings->promotion(),
+            'commission' => $this->settings->commission(),
+            'member' => $this->settings->member(),
+            'contract' => $this->settings->contract(),
         ]);
     }
 
-    public function update(Tenant $tenant, Request $request)
+    public function update(Request $request)
     {
         $data = $request->validate([
             // 品牌 / SEO / 页脚（原有）
@@ -79,7 +78,7 @@ class SettingsController extends Controller
             'contract_template_version',
         ], null), $data);
 
-        $settings = $tenant->settings ?? [];
+        $settings = Tenant::current()->settings ?? [];
 
         // 品牌 / SEO / 页脚
         $settings['brand'] = [
@@ -148,9 +147,9 @@ class SettingsController extends Controller
             'template_version' => $this->filled($data['contract_template_version'], $prevCon['template_version'] ?? 'v1', 'str'),
         ];
 
-        $tenant->update(['settings' => $settings]);
+        Tenant::current()->update(['settings' => $settings]);
 
-        return redirect()->route('tenant.admin.settings.edit', ['tenant' => $tenant->slug])
+        return redirect()->route('tenant.admin.settings.edit', [])
             ->with('ok', '设置已保存');
     }
 

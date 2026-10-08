@@ -2,46 +2,45 @@
 
 namespace App\Services;
 
-use App\Models\Tenant;
+use App\Support\Tenant;
 
 /**
  * 租户设置两层 token 解析器：`tenants.settings[key]` 覆盖 `config/site.defaults.key`。
  *
- * 统一读取定价/营销/分销/会员/合同等租户可配项；M2 起 PlotController 等消费方
- * 经此读取，避免散落 `config(...)` 硬编码。
+ * 统一读取定价/营销/分销/会员/合同等租户可配项；单租户下内部取 `Tenant::current()`，
+ * 调用方不传租户参数。
  */
 class SettingsService
 {
-    /** 取一个顶层键的整块配置（数组）。 */
-    public function get(Tenant $tenant, string $key, mixed $default = null): mixed
+    public function get(string $key, mixed $default = null): mixed
     {
-        $settings = $tenant->settings ?? [];
+        $settings = Tenant::current()->settings ?? [];
 
         return $settings[$key] ?? config("site.defaults.{$key}", $default);
     }
 
-    public function pricing(Tenant $tenant): array
+    public function pricing(): array
     {
-        return $this->get($tenant, 'pricing', []);
+        return $this->get('pricing', []);
     }
 
-    public function promotion(Tenant $tenant): array
+    public function promotion(): array
     {
-        return $this->get($tenant, 'promotion', []);
+        return $this->get('promotion', []);
     }
 
-    public function commission(Tenant $tenant): array
+    public function commission(): array
     {
-        return $this->get($tenant, 'commission', []);
+        return $this->get('commission', []);
     }
 
-    public function member(Tenant $tenant): array
+    public function member(): array
     {
-        return $this->get($tenant, 'member', []);
+        return $this->get('member', []);
     }
 
-    public function contract(Tenant $tenant): array
+    public function contract(): array
     {
-        return $this->get($tenant, 'contract', []);
+        return $this->get('contract', []);
     }
 }

@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\AdoptionService;
 use App\Services\AdjustmentService;
 use App\Services\WeChatPayService;
-use App\Tenancy\TenantContext;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
@@ -30,7 +29,6 @@ class AdjustmentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     protected function tearDown(): void
@@ -101,7 +99,7 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($plot, 12); // 保底 15 → 差 3kg × ¥150 = ¥450
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $adjustment = AdoptionAdjustment::first();
@@ -121,7 +119,7 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($plot, 5); // < 10 严重欠收 → 差 10kg × 150 = ¥1500
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $adjustment = AdoptionAdjustment::first();
@@ -138,7 +136,7 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($user->adoptions()->first()->adoptable, 15); // ≥ 保底
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $this->assertSame(0, AdoptionAdjustment::count());
@@ -152,10 +150,10 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($user->adoptions()->first()->adoptable, 10);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $this->assertSame(1, AdoptionAdjustment::count());
@@ -170,12 +168,12 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($adoption->adoptable, 12);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $adjustment = AdoptionAdjustment::first();
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/{$adjustment->id}/apply")
+            ->post("/admin/adjustments/{$adjustment->id}/apply")
             ->assertRedirect();
 
         $this->assertSame('applied', $adjustment->fresh()->status);
@@ -189,7 +187,7 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($user->adoptions()->first()->adoptable, 12); // 差 3kg × ¥150 = ¥450
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
 
         $adjustment = AdoptionAdjustment::first();
@@ -220,46 +218,28 @@ class AdjustmentTest extends TestCase
         $this->makeHarvest($user->adoptions()->first()->adoptable, 12);
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/settle", ['season_year' => now()->year])
+            ->post("/admin/adjustments/settle", ['season_year' => now()->year])
             ->assertRedirect();
         $adjustment = AdoptionAdjustment::first();
 
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/{$adjustment->id}/apply")
+            ->post("/admin/adjustments/{$adjustment->id}/apply")
             ->assertRedirect();
         $this->assertSame('applied', $adjustment->fresh()->status);
 
         // P3：已应用再应用 → 422（幂等守卫，不会二次退费）
         $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/{$adjustment->id}/apply")
+            ->post("/admin/adjustments/{$adjustment->id}/apply")
             ->assertStatus(422);
     }
 
-    public function test_villager_forbidden_and_cross_tenant_404(): void
+    public function test_villager_forbidden(): void
     {
         $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
-        $t = $this->tenant();
         $user = $this->makeActiveAdopter();
-        $adoption = $user->adoptions()->first();
 
-        // villager → 403
         $this->actingAs($user)
-            ->get("/t/{$t->slug}/admin/adjustments")
+            ->get("/admin/adjustments")
             ->assertForbidden();
-
-        // 跨租户 adjustment → apply 404
-        $other = Tenant::create(['slug' => 'other', 'name' => '别的村', 'status' => 'active']);
-        $otherAdjustment = AdoptionAdjustment::create([
-            'tenant_id' => $other->id,
-            'adoption_id' => $adoption->id,
-            'season_year' => now()->year,
-            'type' => 'refund_prorated',
-            'amount' => 100,
-            'status' => 'pending',
-        ]);
-
-        $this->actingAs($this->admin())
-            ->post("/t/{$t->slug}/admin/adjustments/{$otherAdjustment->id}/apply")
-            ->assertNotFound();
     }
 }

@@ -3,9 +3,9 @@
 @section('title', '离线开单')
 
 @section('nav_right')
-  <a href="{{ route('tenant.admin.dashboard', ['tenant' => $tenant->slug]) }}">管理后台</a>
+  <a href="{{ route('tenant.admin.dashboard', []) }}">管理后台</a>
   <span class="user">{{ auth()->user()->nickname }}</span>
-  <form method="POST" action="{{ route('tenant.logout', ['tenant' => $tenant->slug]) }}" style="display:inline">
+  <form method="POST" action="{{ route('tenant.logout', []) }}" style="display:inline">
     @csrf
     <button type="submit">退出</button>
   </form>
@@ -14,14 +14,14 @@
 @section('content')
   <div class="page-header">
     <h1 class="page-title">离线开单</h1>
-    <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', ['tenant' => $tenant->slug]) }}">返回订单列表</a>
+    <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.adoptions.index', []) }}">返回订单列表</a>
   </div>
 
   @if ($errors->any())
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ route('tenant.admin.adoptions.store', ['tenant' => $tenant->slug]) }}">
+  <form method="POST" action="{{ route('tenant.admin.adoptions.store', []) }}">
     @csrf
     <div class="field">
       <label>云乡民手机号（须已注册）</label>

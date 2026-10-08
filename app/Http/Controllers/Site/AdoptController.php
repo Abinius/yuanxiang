@@ -7,7 +7,6 @@ use App\Enums\PlotType;
 use App\Http\Controllers\Controller;
 use App\Models\Adoption;
 use App\Models\Plot;
-use App\Models\Tenant;
 use App\Services\AdoptionService;
 use App\Services\PromotionService;
 use App\Services\WeChatPayService;
@@ -22,7 +21,7 @@ class AdoptController extends Controller
     ) {
     }
 
-    public function index(Request $request, Tenant $tenant)
+    public function index(Request $request)
     {
         // F5：转化前回放 —— 公开的直播/解说内容（video_url 非空）在认养页可见，信任卖点
         $replays = \App\Models\FarmLog::query()
@@ -35,38 +34,33 @@ class AdoptController extends Controller
             ->get();
 
         return view('site.adopt.index', [
-            'tenant' => $tenant,
             'plots' => Plot::where('type', 'plot')->orderBy('order_index')->get(),
             'groups' => Plot::where('type', 'group')->withCount('children')->orderBy('order_index')->get(),
             'replays' => $replays,
         ]);
     }
 
-    public function show(Request $request, Tenant $tenant, Plot $plot)
+    public function show(Request $request, Plot $plot)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
         if ($plot->type === PlotType::Group) {
             $plants = Plot::where('parent_plot_id', $plot->id)->orderBy('order_index')->get();
 
             return view('site.adopt.group', [
-                'tenant' => $tenant,
                 'plot' => $plot,
                 'plants' => $plants,
             ]);
         }
 
         return view('site.adopt.show', [
-            'tenant' => $tenant,
             'plot' => $plot,
             'plan' => $plot->plan,
             'seo' => ['description' => $plot->code.' · 认养 '.number_format($plot->price_yearly).' 元/年 · 宁夏红寺堡枸杞认养，生态种植全程可溯源'],
         ]);
     }
 
-    public function order(Request $request, Tenant $tenant, Plot $plot)
+    public function order(Request $request, Plot $plot)
     {
-        abort_if($plot->tenant_id !== $tenant->id, 404);
 
         $data = $request->validate([
             'name' => ['required', 'string'],
@@ -88,31 +82,31 @@ class AdoptController extends Controller
             }
         }
 
-        return redirect()->route('tenant.adopt.pay', ['tenant' => $tenant->slug, 'adoption' => $adoption]);
+        return redirect()->route('tenant.adopt.pay', ['adoption' => $adoption]);
     }
 
-    public function pay(Request $request, Tenant $tenant, Adoption $adoption)
+    public function pay(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
 
-        return view('site.adopt.pay', compact('tenant', 'adoption'));
+        return view('site.adopt.pay', compact('adoption'));
     }
 
-    public function confirmPay(Request $request, Tenant $tenant, Adoption $adoption)
+    public function confirmPay(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
 
         $this->adoptions->confirmMockPayment($adoption);
 
-        return redirect()->route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]);
+        return redirect()->route('tenant.adopt.success', ['adoption' => $adoption]);
     }
 
     /**
      * 微信 JSAPI 下单：返回 WeixinJSBridge.invoke('getBrandWCPayRequest', ...) 所需参数。
      */
-    public function wechatPay(Request $request, Tenant $tenant, Adoption $adoption)
+    public function wechatPay(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
         abort_unless($adoption->status === AdoptionStatus::PendingPayment, 422, '当前状态不支持支付');
 
         $openid = $request->user()->openid;
@@ -121,16 +115,16 @@ class AdoptController extends Controller
         return response()->json($this->pay->jsapi($adoption, $openid));
     }
 
-    public function success(Request $request, Tenant $tenant, Adoption $adoption)
+    public function success(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
 
-        return view('site.adopt.success', compact('tenant', 'adoption'));
+        return view('site.adopt.success', compact('adoption'));
     }
 
-    public function signAgreement(Request $request, Tenant $tenant, Adoption $adoption)
+    public function signAgreement(Request $request, Adoption $adoption)
     {
-        abort_if($adoption->tenant_id !== $tenant->id || $adoption->user_id !== $request->user()->id, 404);
+        abort_if($adoption->user_id !== $request->user()->id, 404);
 
         $data = $request->validate([
             'named_label' => ['required', 'string', 'max:30'],
@@ -138,6 +132,6 @@ class AdoptController extends Controller
 
         $this->adoptions->signAgreement($adoption, $data['named_label'], $request->ip());
 
-        return redirect()->route('tenant.adopt.success', ['tenant' => $tenant->slug, 'adoption' => $adoption]);
+        return redirect()->route('tenant.adopt.success', ['adoption' => $adoption]);
     }
 }

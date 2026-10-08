@@ -9,7 +9,6 @@ use App\Models\FarmMember;
 use App\Models\PushMessage;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Tenancy\TenantContext;
 use Database\Seeders\BaseSeeder;
 use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,7 +25,6 @@ class RemindFamilyToPostTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TenantContext::reset();
     }
 
     private function tenant(): Tenant
@@ -61,16 +59,12 @@ class RemindFamilyToPostTest extends TestCase
         ]);
     }
 
-    /** 跑命令，重置 TenantContext（防止命令污染后续用例）。 */
+    /** 跑命令。 */
     private int $lastExit = 0;
 
     private function runCommand(): void
     {
-        try {
-            $this->lastExit = (int) Artisan::call('family:remind-post');
-        } finally {
-            TenantContext::reset();
-        }
+        $this->lastExit = (int) Artisan::call('family:remind-post');
     }
 
     /** 静默农场（无 FarmLog）的家人收到提醒。 */
