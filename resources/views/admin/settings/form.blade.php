@@ -27,11 +27,11 @@
       <div class="section-title"><span>品牌</span></div>
       <div class="card-grid grid-2">
         <div class="field">
-          <label>品牌主色(如 #B33A26)</label>
+          <label>品牌主色(如 #3F6B4F)</label>
           <input class="input" name="brand_primary" maxlength="20" value="{{ old('brand_primary', $tenant->settings['brand']['primary'] ?? config('site.defaults.brand.primary')) }}">
         </div>
         <div class="field">
-          <label>品牌辅色(如 #C9A227)</label>
+          <label>品牌辅色(如 #A8791E)</label>
           <input class="input" name="brand_accent" maxlength="20" value="{{ old('brand_accent', $tenant->settings['brand']['accent'] ?? config('site.defaults.brand.accent')) }}">
         </div>
       </div>

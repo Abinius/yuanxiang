@@ -1,5 +1,4 @@
 @php
-  $brand = $tenant->settings['brand'] ?? config('site.defaults.brand');
   $routeName = request()->route()?->getName() ?? '';
   $isAdmin = str_starts_with($routeName, 'tenant.admin.');
 @endphp

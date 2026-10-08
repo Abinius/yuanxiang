@@ -27,7 +27,7 @@
         @endif
         @if ($g->signature_image)
           <img src="{{ \Illuminate\Support\Facades\Storage::url($g->signature_image) }}" alt="亲笔签"
-               style="max-height:90px;border:1px solid var(--ds-border-1);border-radius:6px;padding:6px;background:#fff;margin:8px 0;display:block">
+               style="max-height:90px;border:1px solid var(--ds-border-1);border-radius:var(--ds-r-sm);padding:6px;background:#fff;margin:8px 0;display:block">
         @endif
         <div class="mono text-xs muted">{{ $g->code }}</div>
         <div class="muted text-xs mt-2">— {{ $g->adoption?->user?->nickname ?? '云乡民' }} · 宁夏红寺堡枸杞田</div>

@@ -60,7 +60,7 @@
         var input = document.getElementById('signature-input');
         var ctx = canvas.getContext('2d');
         var drawing = false;
-        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#2B2620';
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1C1B17';
         function pos(e) {
           var r = canvas.getBoundingClientRect();
           return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };

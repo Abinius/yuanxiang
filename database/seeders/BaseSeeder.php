@@ -33,7 +33,7 @@ class BaseSeeder extends Seeder
             'name' => '光彩云村庄',
             'operator_org_id' => $hua->id,
             'status' => 'active',
-            'settings' => ['brand' => ['primary' => '#B33A26', 'accent' => '#C9A227']],
+            'settings' => ['brand' => ['primary' => '#3F6B4F', 'accent' => '#A8791E']],
         ]);
 
         $farm = Farm::create([

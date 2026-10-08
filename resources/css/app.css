@@ -1,13 +1,13 @@
-/* 光彩云村庄 · 设计令牌 + 组件系统
+/* 陌上原乡 · 设计令牌 + 组件系统
  * ============================================
- * 视觉语言:暖调枸杞品牌 × dsh(borderless/deepseek-harness)版式语法
- *  - 保留枸杞砖红 / 金 / 米底品牌色
- *  - 套用 dsh 的分层卡片(bg-layer-1/2/3)、borderless sticky 导航、
- *    圆角阶梯、按钮多态、hover 微填色、border-l 细边框阶梯、
- *    状态胶囊、空态、骨架屏、响应式网格
+ * 视觉语言：编辑风农业版 —— 纸白 paper / 墨 ink / 苔绿 moss / 直角 / hairline
+ *  - 衬线管标题、黑体管正文，层级靠字体不靠颜色
+ *  - 苔绿 moss 只作徽章/CTA/hover/图钉，全页占比 < 5%
+ *  - 直角（2/4/6/8px）+ hairline 细线分层；阴影只给浮层
+ *  - 枸杞砖红保留为 legacy 色，仅用于 logo／节庆／枸杞产品本色
  *
- * 使用:Blade 页面直接套 @apply 生成的组件 class,不再写内联 <style>。
- * token 命名 --ds-* ,避免与第三方(如 dsh 的 --dsw-*)冲突。
+ * 使用：Blade 页面直接套 @apply 生成的组件 class，不再写内联 <style>。
+ * token 命名 --ds-*（版式），避免与第三方冲突；品牌色走 --color-* 供 Tailwind 工具类引用。
  */
 
 @import 'tailwindcss';
@@ -32,23 +32,33 @@
   --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas,
     'Liberation Mono', Menlo, Courier, 'Microsoft YaHei', monospace;
 
-  /* 品牌色(Tailwind 前缀 --color- ,可被 color/ bg 工具类引用) */
-  --color-brand-50:  rgb(254, 240, 232);
-  --color-brand-100: rgb(250, 222, 207);
-  --color-brand-200: rgb(238, 182, 162);
-  --color-brand-300: rgb(224, 132, 108);
-  --color-brand-400: rgb(212, 92, 68);
-  --color-brand-500: rgb(179, 58, 38);   /* 主色 枸杞砖红 #B33A26 */
-  --color-brand-600: rgb(142, 46, 30);
-  --color-brand-700: rgb(112, 36, 24);
-  --color-brand-800: rgb(88, 28, 19);
-  --color-brand-900: rgb(60, 19, 13);
+  /* 品牌 · 苔绿 moss（主色 #3F6B4F） */
+  --color-brand-50:  rgb(241, 245, 240);
+  --color-brand-100: rgb(224, 232, 224);
+  --color-brand-200: rgb(198, 214, 199);
+  --color-brand-300: rgb(160, 185, 165);
+  --color-brand-400: rgb(116, 151, 126);
+  --color-brand-500: rgb(63, 107, 79);    /* 主色 苔绿 #3F6B4F */
+  --color-brand-600: rgb(51, 88, 65);
+  --color-brand-700: rgb(40, 70, 52);
+  --color-brand-800: rgb(30, 54, 40);
+  --color-brand-900: rgb(20, 37, 27);
 
-  --color-accent-300: rgb(230, 205, 120);
-  --color-accent-400: rgb(217, 180, 68);
-  --color-accent-500: rgb(201, 162, 39);  /* 辅色 金 #C9A227 */
+  /* 辅色 · 稻黄 straw（#A8791E） */
+  --color-accent-300: rgb(233, 219, 180);
+  --color-accent-400: rgb(214, 188, 122);
+  --color-accent-500: rgb(168, 121, 30);  /* 稻黄 #A8791E */
 
-  /* 语义色(dsh: green/amber/red/ok/danger/sold) */
+  /* 纸墨系 */
+  --color-paper:    rgb(250, 249, 244);   /* 暖米白页底 #FAF9F4 */
+  --color-ink:      rgb(28, 27, 23);      /* 主字 #1C1B17 */
+  --color-ink-soft: rgb(74, 74, 69);      /* 次级文字 */
+  --color-muted:    rgb(138, 138, 130);   /* 弱化说明 */
+
+  /* legacy 枸杞砖红：仅 logo／节庆／枸杞产品本色用 */
+  --color-legacy-500: rgb(179, 58, 38);
+
+  /* 语义色（状态，不随品牌换肤） */
   --color-available-500: rgb(29, 122, 63);
   --color-available:    rgb(34, 197, 94);
   --color-ok:           rgb(34, 197, 94);
@@ -65,35 +75,35 @@
   --color-sold-bg:      rgb(241, 237, 229);
 }
 
-/* ---------- dsh 版式令牌(bg 分层 / 边框阶梯 / 阴影 / 圆角 / 过渡)---------- */
+/* ---------- 版式令牌（bg 分层 / 边框 / 阴影 / 圆角 / 过渡 / 字号）---------- */
 :root {
-  /* 暖调 bg-layer 阶梯(dsh 的 bg-layer-1/2/3) */
-  --ds-bg-base:      #FAF6F0;
+  /* bg 阶梯（纸墨系） */
+  --ds-bg-base:      #FAF9F4;
   --ds-bg-layer-1:   #FFFFFF;
-  --ds-bg-layer-2:   #F4ECE0;
-  --ds-bg-layer-3:   #EBE0D0;
+  --ds-bg-layer-2:   #F2F0E8;
+  --ds-bg-layer-3:   #E9E5D8;
 
   /* 正文/次级/辅助文字 */
-  --ds-text:      #2B2620;
-  --ds-text-mute: #6B6558;
-  --ds-text-soft: #4A443C;
+  --ds-text:      #1C1B17;
+  --ds-text-mute: #8A8A82;
+  --ds-text-soft: #4A4A45;
 
-  /* border-l 细边框阶梯(dsh 的 4%/10%/12%/16%) */
-  --ds-border-1: rgba(43, 38, 32, 0.05);
-  --ds-border-2: rgba(43, 38, 32, 0.10);
-  --ds-border-3: rgba(43, 38, 32, 0.16);
-  --ds-border-4: rgba(43, 38, 32, 0.22);
+  /* hairline 发丝线阶梯 */
+  --ds-border-1: rgba(28, 27, 23, 0.06);
+  --ds-border-2: rgba(28, 27, 23, 0.10);
+  --ds-border-3: rgba(28, 27, 23, 0.18);
+  --ds-border-4: rgba(28, 27, 23, 0.28);
 
-  /* 阴影:卡片轻浮 / 提升 / 浮层 */
-  --ds-shadow-card: 0 4px 16px rgba(43, 38, 32, 0.06);
-  --ds-shadow-elev: 0 10px 30px rgba(43, 38, 32, 0.10);
-  --ds-shadow-pop:  0 20px 50px rgba(43, 38, 32, 0.18);
+  /* 阴影：编辑风几乎无影，只给浮层 */
+  --ds-shadow-card: 0 2px 16px rgba(28, 27, 23, 0.06);
+  --ds-shadow-elev: 0 6px 24px rgba(28, 27, 23, 0.08);
+  --ds-shadow-pop:  0 16px 40px rgba(28, 27, 23, 0.14);
 
-  /* 圆角阶梯 */
-  --ds-r-sm: 8px;
-  --ds-r-md: 12px;
-  --ds-r-lg: 16px;
-  --ds-r-xl: 22px;
+  /* 圆角阶梯：直角化（编辑风关键） */
+  --ds-r-sm: 2px;
+  --ds-r-md: 4px;
+  --ds-r-lg: 6px;
+  --ds-r-xl: 8px;
 
   /* 过渡 */
   --ds-ease:        cubic-bezier(0.4, 0, 0.2, 1);
@@ -166,7 +176,7 @@
   cursor: pointer;
   font-size: var(--ds-body-s);
   color: var(--ds-text-mute);
-  border-radius: 6px;
+  border-radius: var(--ds-r-sm);
   font-weight: 500;
   transition: background var(--ds-duration) var(--ds-ease),
               color var(--ds-duration) var(--ds-ease);
@@ -584,7 +594,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
-.btn-sm { padding: 6px 12px; font-size: var(--ds-body-xs); border-radius: 6px; }
+.btn-sm { padding: 6px 12px; font-size: var(--ds-body-xs); border-radius: var(--ds-r-sm); }
 .btn-lg { padding: 12px 24px; font-size: var(--ds-body); }
 .btn-block { width: 100%; }
 .btn-icon { padding: 8px; }
@@ -899,7 +909,7 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
 .sidebar.collapsed .menu-link .menu-text { display: none; }
 .sidebar.collapsed .menu-link.active {
   box-shadow: inset 3px 0 0 var(--color-brand-500);
-  border-radius: 4px 0 0 4px;
+  border-radius: var(--ds-r-sm) 0 0 var(--ds-r-sm);
 }
 .sidebar.collapsed .menu-link[title]:hover {
   position: relative;
@@ -1418,11 +1428,11 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
 /* ====================== 生长日历月色辅助 ====================== */
 .m-plant  { background: #e8f3ea !important; }
 .m-fertilize { background: var(--color-ok-bg) !important; }
-.m-inspect  { background: #f5f3ef !important; }
+.m-inspect  { background: var(--ds-bg-layer-2) !important; }
 .m-harvest  { background: var(--color-brand-50) !important; }
 .m-detection{ background: var(--color-renew-bg) !important; }
 
-/* 滚动条:细条暖调(对齐 dsh scrollbar.css 风格) */
+/* 滚动条：细条 */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -1432,6 +1442,23 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover { background-color: var(--ds-border-3); }
+
+/* ====================== 编辑风原子类 ====================== */
+/* 标签/眉题：中文安全（无 uppercase，中文忌大 letter-spacing） */
+.label-caption {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-mute);
+  font-weight: 500;
+}
+.hairline-b { border-bottom: 1px solid var(--ds-border-2); }
+.hairline-t { border-top: 1px solid var(--ds-border-2); }
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+::selection { background: var(--color-brand-500); color: #FAF9F4; }
+
 
 /* 打印:还原极简 */
 @media print {

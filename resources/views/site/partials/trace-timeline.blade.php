@@ -1,9 +1,10 @@
 @php
+  // harvest = 枸杞产品本色，用 legacy 红；其余走语义/中性 token
   $kindColors = [
     'fertilize'    => '#5F7A54',
-    'harvest'      => '#B33A26',
-    'harvest_note' => '#B33A26',
-    'inspect'      => '#8a8378',
+    'harvest'      => 'var(--color-legacy-500)',
+    'harvest_note' => 'var(--color-legacy-500)',
+    'inspect'      => 'var(--color-muted)',
     'detection'    => '#2E6F95',
   ];
 @endphp
