@@ -89,7 +89,11 @@ class AdoptController extends Controller
     {
         abort_if($adoption->user_id !== $request->user()->id, 404);
 
-        return view('site.adopt.pay', compact('adoption'));
+        // 视图不注入 $request：真支付模式下(WECHAT_MOCK=false)取 $request->user()->openid 会 500，条件必须在此判定一次。
+        return view('site.adopt.pay', [
+            'adoption' => $adoption,
+            'canWxPay' => ! config('wechat.mock') && filled($request->user()->openid),
+        ]);
     }
 
     public function confirmPay(Request $request, Adoption $adoption)

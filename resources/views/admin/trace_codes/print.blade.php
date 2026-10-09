@@ -20,7 +20,7 @@
   <div class="label-grid">
     @foreach ($traceCodes as $tc)
       <div class="label card" style="text-align:center;border:1px dashed var(--ds-border-2);page-break-inside:avoid">
-        <div class="qr" data-url="{{ url('/t/'.$tenant->slug.'/s/'.$tc->code) }}"></div>
+        <div class="qr" data-url="{{ route('tenant.scan.show', $tc->code) }}"></div>
         <div class="mono font-bold text-brand" style="font-size:14px;word-break:break-all">{{ $tc->code }}</div>
         <div class="muted text-xs" style="margin-top:6px">
           {{ $tc->plot?->code ?? '—' }} · 有机肥(NXLB)投入品 · 检测合格

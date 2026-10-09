@@ -16,14 +16,14 @@
       @php $resume = app(\App\Services\AdoptionService::class)->resumePayment($adoption); @endphp
       @if ($resume)
         <p class="text-sm" style="color:var(--ds-text-mute);margin-bottom:16px;line-height:1.7">
-          @if (! config('wechat.mock') && filled($request->user()->openid))
+          @if ($canWxPay)
             微信支付(商户主体:花乌巷食品)
           @else
             <span class="text-warn font-medium">⚠️ 开发期模拟支付</span>
             真接需微信客户端登录 + 商户凭证(P1)。
           @endif
         </p>
-        @if (! config('wechat.mock') && filled($request->user()->openid))
+        @if ($canWxPay)
           <button class="btn btn-primary btn-block btn-lg" id="wx-pay" type="button">微信支付 ¥{{ number_format($adoption->annual_fee) }}</button>
         @else
           <form method="POST" action="{{ route('tenant.adopt.confirm-pay', ['adoption' => $adoption]) }}">
@@ -51,7 +51,7 @@
     @endif
   </div>
 
-  @if (! config('wechat.mock') && filled($request->user()->openid) && $adoption->status->value === 'pending_payment')
+  @if ($canWxPay && $adoption->status->value === 'pending_payment')
     <script>
     (function () {
       var btn = document.getElementById('wx-pay');
@@ -59,7 +59,7 @@
       btn.addEventListener('click', function () {
         if (!window.WeixinJSBridge) { alert('请在微信客户端内打开'); return; }
         btn.disabled = true;
-        fetch('/t/{{ $tenant->slug }}/adopt/order/{{ $adoption->id }}/wechat-pay', {
+        fetch('{{ route("tenant.adopt.wechat-pay", ["adoption" => $adoption]) }}', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
           body: '{}'
@@ -68,7 +68,7 @@
         .then(function (params) {
           WeixinJSBridge.invoke('getBrandWCPayRequest', params, function (res) {
             if (res.err_msg === 'getBrandWCPayRequest:ok') {
-              location.href = '/t/{{ $tenant->slug }}/adopt/order/{{ $adoption->id }}/success';
+              location.href = '{{ route("tenant.adopt.success", ["adoption" => $adoption]) }}';
             } else { alert('支付未完成'); btn.disabled = false; }
           });
         })

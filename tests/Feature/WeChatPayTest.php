@@ -111,6 +111,25 @@ class WeChatPayTest extends TestCase
         $this->app->instance(WeChatPayService::class, $mock);
     }
 
+    // ── 支付页：拉起参数 fetch 目标必须是存活路由 ─────────────
+
+    public function test_pay_page_wxpay_fetch_targets_live_route(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $this->app['config']->set('wechat.mock', false);
+        $user = $this->villager('mock_openid_1');
+        $adoption = $this->makeOrder($user);
+
+        $this->actingAs($user)
+            ->get("/adopt/order/{$adoption->id}/pay")
+            ->assertOk()
+            ->assertSee('id="wx-pay"', false)
+            // 单租户化后 /t/{slug} 前缀已不存在，写死旧前缀会让 fetch 直接 404
+            ->assertSee('/adopt/order/'.$adoption->id.'/wechat-pay', false)
+            ->assertSee('/adopt/order/'.$adoption->id.'/success', false)
+            ->assertDontSee('/t/'.$this->tenant()->slug.'/', false);
+    }
+
     // ── 回调：支付 → 订单生效 ─────────────────────────────────
 
     public function test_notify_pays_order_and_advances_to_pending_agreement(): void

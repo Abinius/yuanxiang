@@ -165,6 +165,9 @@ class ScanTest extends TestCase
             ->get("/admin/trace-codes/print?ids={$code->id}")
             ->assertOk()
             ->assertSee('qrcode.min.js', false)
-            ->assertSee('TC20260801-PRINT01');
+            ->assertSee('TC20260801-PRINT01')
+            // 打印出的二维码必须是能打开的扫码页（单租户化后 /t/{slug} 前缀已不存在）
+            ->assertSee('/s/TC20260801-PRINT01', false)
+            ->assertDontSee("/t/{$t->slug}/", false);
     }
 }
