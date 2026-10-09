@@ -3,6 +3,8 @@
 @php
   $agreement = $agreements['items'][$key];
   $others = array_diff_key($agreements['items'] ?? [], [$key => null]);
+  // 【】为格式条款显著提示词，渲染为加粗（民法典 §496 提示义务）
+  $emphasize = fn(string $para) => str_replace(['【', '】'], ['<strong>【', '】</strong>'], e($para));
 @endphp
 
 @section('title', $agreement['title'])
@@ -11,7 +13,8 @@
 <div class="panel" style="max-width:760px;margin:0 auto">
   <h1 style="font-size:var(--ds-h2);margin:0 0 6px">{{ $agreement['title'] }}</h1>
   <p class="text-xs muted" style="margin:0">
-    版本 {{ $agreements['version'] ?? '—' }} · 生效日期 {{ $agreements['effective'] ?? '—' }}
+    版本 {{ $agreement['version'] ?? $agreements['version'] ?? '—' }}
+    · 生效日期 {{ $agreement['effective'] ?? $agreements['effective'] ?? '—' }}
     · 运营主体：{{ config('site.defaults.footer_copyright') }}
   </p>
 
@@ -19,7 +22,7 @@
   @foreach ($agreement['sections'] as $section)
     <h2 style="font-size:var(--ds-h3);margin:22px 0 8px">{{ $section['title'] }}</h2>
     @foreach ($section['body'] as $para)
-      <p style="margin-bottom:8px;line-height:1.9;color:var(--ds-text)">{{ $para }}</p>
+      <p style="margin-bottom:8px;line-height:1.9;color:var(--ds-text)">{!! $emphasize($para) !!}</p>
     @endforeach
   @endforeach
 

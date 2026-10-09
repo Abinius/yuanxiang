@@ -101,7 +101,7 @@ Route::get('/', function () {
 
     // 公开页（登录前也要能看）：公示协议（认养服务协议 / 隐私政策）
     Route::get('/agreement/{key}', [AgreementController::class, 'show'])
-        ->where('key', 'service|privacy')
+        ->where('key', 'service|privacy|children|contract|balance')
         ->name('tenant.agreement.show');
 
     // 我的田（云乡民：铭牌 + 生长日历 + 农事动态 + 分享）

@@ -27,7 +27,10 @@ class AgreementTest extends TestCase
             ->assertSee('陌上原乡认养服务协议')
             ->assertSee(config('site.defaults.agreements.version'))
             ->assertSee('丰欠共担')
+            ->assertSee('附件一《丰欠共担规则》')
+            ->assertSee('七日冷静期退款')
             ->assertSee('宁夏花乌巷食品有限公司')
+            ->assertSee('<strong>【', escape: false)
             ->assertSee('相关协议')
             ->assertSee('/agreement/privacy');
     }
@@ -40,7 +43,32 @@ class AgreementTest extends TestCase
             ->assertOk()
             ->assertSee('陌上原乡隐私政策')
             ->assertSee('个人信息')
-            ->assertSee('肖像');
+            ->assertSee('肖像')
+            ->assertSee('v2.0')
+            ->assertSee('敏感个人信息');
+    }
+
+    public function test_attachment_agreements_render_publicly(): void
+    {
+        $this->makeTenant();
+
+        $this->get('/agreement/children')
+            ->assertOk()
+            ->assertSee('儿童个人信息处理规则')
+            ->assertSee('监护人')
+            ->assertSee('十四周岁');
+
+        $this->get('/agreement/contract')
+            ->assertOk()
+            ->assertSee('认养合同模板')
+            ->assertSee('保底产量')
+            ->assertSee('宁夏花乌巷食品有限公司');
+
+        $this->get('/agreement/balance')
+            ->assertOk()
+            ->assertSee('丰欠共担规则')
+            ->assertSee('减产幅度')
+            ->assertSee('丰欠共担池');
     }
 
     public function test_unknown_agreement_key_is_404(): void

@@ -17,9 +17,9 @@ use Illuminate\Support\Facades\DB;
 class ContractService
 {
     /** 当前合同条款版本（读 settings.contract，回落 v1）。 */
-    public function templateVersion(Tenant $tenant): string
+    public function templateVersion(): string
     {
-        return app(SettingsService::class)->contract($tenant)['template_version'] ?? 'v1';
+        return app(SettingsService::class)->contract()['template_version'] ?? 'v1';
     }
 
     /** 生成下一个合同编号（租户内年度递增）。 */
@@ -95,7 +95,7 @@ class ContractService
                 'tenant_id' => $tenant->id,
                 'adoption_id' => $adoption->id,
                 'contract_no' => $this->nextContractNo($tenant),
-                'template_version' => $this->templateVersion($tenant),
+                'template_version' => $this->templateVersion(),
                 'clauses' => $this->buildClauses($adoption),
                 'signed_at' => $adoption->agreement_signed_at ?? now(),
                 'signed_ip' => $signedIp,
