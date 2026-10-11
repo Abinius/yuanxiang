@@ -238,4 +238,69 @@ class RenewalPromotionTest extends TestCase
         // create() 传 compact() 空参在 PHP 8.2 是 ArgumentCountError，页面永远 500
         $this->actingAs($this->admin())->get('/admin/promotions/create')->assertOk();
     }
+
+    /**
+     * 推荐码核销失败（码无效/非首单）时不得留下孤儿订单。
+     * 此前 createOrder 先落库、redeemReferral 后 abort(422)，孤儿待支付单计入本季占用检查，
+     * 把地块锁死 72h——用户重下反被 422「该田块本季已被认养」。
+     */
+    public function test_invalid_referral_code_leaves_no_orphan_order(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $user = $this->makeUser();
+        $plot = Plot::where('tenant_id', $this->tenant()->id)->where('type', 'plot')
+            ->where('status', 'available')->orderBy('id')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post("/adopt/{$plot->id}/order", [
+                'name' => '李四', 'phone' => '13800000002', 'province' => '宁夏',
+                'city' => '吴忠', 'district' => '红寺堡', 'detail' => '3 号',
+                'referral_code' => 'NOT-EXIST-CODE',
+            ])
+            ->assertStatus(422);
+
+        $this->assertSame(0, Adoption::where('adoptable_id', $plot->id)->count(), '无效推荐码不应留下孤儿订单');
+    }
+
+    /** 非首单用户填有效推荐码（奖励仅限首单）同样不得留下孤儿订单。 */
+    public function test_second_order_with_referral_code_leaves_no_orphan_order(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $user = $this->makeUser();
+
+        // 历史订单：该用户已非首单
+        Adoption::create([
+            'tenant_id' => $t->id, 'adoption_no' => 'AD-HISTORY-1', 'user_id' => $user->id,
+            'adoptable_type' => Plot::class, 'adoptable_id' => $this->availablePlotId(),
+            'season_year' => 2025, 'annual_fee' => 5000,
+            'start_date' => now()->subYear()->toDateString(), 'status' => 'active',
+        ]);
+
+        $referralPromo = $this->makePromotion('referral', []);
+        $this->makePromotion('new_customer', ['amount' => 300]);
+        $this->makePromotion('renewal', ['amount' => 300]);
+        Coupon::create([
+            'tenant_id' => $t->id, 'user_id' => $this->makeUser()->id,
+            'promotion_id' => $referralPromo->id, 'code' => 'REF-VALID-1', 'status' => 'unused',
+        ]);
+
+        $target = Plot::where('tenant_id', $t->id)->where('type', 'plot')
+            ->where('status', 'available')->orderByDesc('id')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post("/adopt/{$target->id}/order", [
+                'name' => '李四', 'phone' => '13800000002', 'province' => '宁夏',
+                'city' => '吴忠', 'district' => '红寺堡', 'detail' => '3 号',
+                'referral_code' => 'REF-VALID-1',
+            ]);
+
+        $this->assertSame(0, Adoption::where('adoptable_id', $target->id)->count(), '非首单被拒后不应留下孤儿订单');
+    }
+
+    private function availablePlotId(): int
+    {
+        return Plot::where('tenant_id', $this->tenant()->id)->where('type', 'plot')
+            ->orderBy('id')->value('id');
+    }
 }

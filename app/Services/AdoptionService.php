@@ -235,7 +235,13 @@ class AdoptionService
 
         $count = 0;
         foreach ($expired as $adoption) {
-            $adoption->transitionTo(AdoptionStatus::Cancelled);
+            try {
+                $adoption->transitionTo(AdoptionStatus::Cancelled);
+            } catch (\Throwable) {
+                // 扫到与转移之间被支付/取消等并发变更（CAS 落空），跳过该单，勿中断整批
+                // （与 adoption:expire-active 同口径：日调度不能因一单竞态而半途而废）
+                continue;
+            }
             $this->releasePlot($adoption);
 
             $count++;

@@ -13,6 +13,7 @@ use Database\Seeders\PlotSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -272,5 +273,44 @@ class AdoptionExpiryTest extends TestCase
             ->assertSee('认养协议已签署')
             ->assertSee('阿林的光彩田')
             ->assertDontSee('给这块田起个名字');
+    }
+
+    /**
+     * 批量回收中一单被并发改走（CAS 落空）时，只跳过该单，不中断整批。
+     * 此前 expirePendingOrders 无 try/catch：一单撞 409 会让整条日调度抛异常半途而废。
+     */
+    public function test_expiry_sweep_skips_conflicted_order_without_aborting_batch(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $plots = Plot::where('type', 'plot')->orderBy('id')->limit(2)->get();
+
+        $makeOrderOnPlot = function (User $user, Plot $plot) {
+            $this->actingAs($user)->post("/adopt/{$plot->id}/order", [
+                'name' => '张三', 'phone' => $user->phone, 'province' => '宁夏',
+                'city' => '吴忠', 'district' => '红寺堡', 'detail' => '光彩村 1 号',
+            ])->assertRedirect();
+
+            return Adoption::where('adoptable_id', $plot->id)->latest()->firstOrFail();
+        };
+
+        $first = $makeOrderOnPlot($this->villager('13800000031'), $plots[0]);
+        $second = $makeOrderOnPlot($this->villager('13800000032'), $plots[1]);
+
+        Carbon::setTestNow(now()->addHours(74));
+
+        // 模拟竞态：读到 first 后、状态写回前，first 已被别的路径（如支付回调）改走。
+        $fired = false;
+        Adoption::retrieved(function (Adoption $m) use ($first, &$fired) {
+            if (! $fired && $m->id === $first->id) {
+                $fired = true;
+                DB::table('adoptions')->where('id', $first->id)->update(['status' => 'pending_agreement']);
+            }
+        });
+
+        $count = app(AdoptionService::class)->expirePendingOrders();
+
+        $this->assertSame(1, $count, '一单竞态不应中断整批回收');
+        $this->assertSame('pending_agreement', $first->fresh()->status->value, '被并发改走的单保持原状态');
+        $this->assertSame('cancelled', $second->fresh()->status->value, '其余超期单照常回收');
     }
 }

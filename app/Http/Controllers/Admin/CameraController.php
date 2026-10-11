@@ -38,7 +38,7 @@ class CameraController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validateData($request, Tenant::current());
+        $data = $this->validateData($request);
         $farm = Farm::firstOrFail();
 
         $camera = new Camera($data);
@@ -59,7 +59,7 @@ class CameraController extends Controller
 
     public function update(Camera $camera, Request $request)
     {
-        $data = $this->validateData($request, Tenant::current());
+        $data = $this->validateData($request);
         $camera->fill($data)->save();
 
         return redirect()->route('tenant.admin.cameras.index', [])

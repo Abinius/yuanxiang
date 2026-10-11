@@ -11,6 +11,7 @@ use App\Services\AdoptionService;
 use App\Services\PromotionService;
 use App\Services\WeChatPayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdoptController extends Controller
 {
@@ -72,15 +73,22 @@ class AdoptController extends Controller
             'referral_code' => ['nullable', 'string', 'max:40'],
         ]);
 
-        $adoption = $this->adoptions->createOrder($request->user(), $plot, $data);
+        // 下单与推荐码核销同事务：推荐码无效/非首单时 redeemReferral 会 abort(422)，
+        // 若不在同一事务内回滚，会留下「孤儿待支付单」——它计入 createOrder 的本季占用检查，
+        // 把该地块锁死 72 小时，用户重新下单反被 422「该田块本季已被认养」。
+        $adoption = DB::transaction(function () use ($request, $plot, $data) {
+            $adoption = $this->adoptions->createOrder($request->user(), $plot, $data);
 
-        // 3.4 + M4：下单填推荐码 → 新客/推荐人各得券 + 记录推荐关系（佣金据此结算）
-        if (! empty($data['referral_code'])) {
-            $referrer = $this->promotions->redeemReferral($data['referral_code'], $request->user(), $adoption);
-            if ($referrer) {
-                $adoption->update(['referred_by_user_id' => $referrer->id]);
+            // 3.4 + M4：下单填推荐码 → 新客/推荐人各得券 + 记录推荐关系（佣金据此结算）
+            if (! empty($data['referral_code'])) {
+                $referrer = $this->promotions->redeemReferral($data['referral_code'], $request->user(), $adoption);
+                if ($referrer) {
+                    $adoption->update(['referred_by_user_id' => $referrer->id]);
+                }
             }
-        }
+
+            return $adoption;
+        });
 
         return redirect()->route('tenant.adopt.pay', ['adoption' => $adoption]);
     }
