@@ -24,7 +24,7 @@ class PromotionController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.promotions.form', compact());
+        return view('admin.promotions.form');
     }
 
     public function store(Request $request)

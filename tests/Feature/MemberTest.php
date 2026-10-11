@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\AdoptionStatus;
+use App\Enums\UserRole;
 use App\Models\Adoption;
 use App\Models\Coupon;
 use App\Models\Plot;
@@ -256,5 +257,21 @@ class MemberTest extends TestCase
 
         $this->artisan('member:birthday-benefit')->assertSuccessful();
         $this->assertSame(0, Coupon::where('user_id', $user->id)->count());
+    }
+
+    public function test_member_page_renders_for_user_without_tenant(): void
+    {
+        $this->seed(BaseSeeder::class);
+        // 平台管理员没有 tenant_id，等级页读租户配置（阈值/权益）会拿到 null
+        $user = User::create([
+            'tenant_id' => null,
+            'phone' => '13820000099',
+            'username' => 'platform-test',
+            'password' => 'secret123',
+            'nickname' => '平台管理员',
+            'role' => UserRole::PlatformAdmin->value,
+        ]);
+
+        $this->actingAs($user)->get('/my/member')->assertOk();
     }
 }

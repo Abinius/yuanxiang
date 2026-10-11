@@ -245,4 +245,32 @@ class PlotManagementTest extends TestCase
             ->post("/admin/plots", $this->plotData($farm, $plan, 'FD-DUP-01'))
             ->assertSessionHasErrors('code');
     }
+    public function test_admin_plot_form_pages_render(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-FORM-01'), ['tenant_id' => $t->id]));
+
+        // 新建页与编辑页此前因 formData() 传参错位永远 500，后台无法新增/编辑地块
+        $this->actingAs($admin)->get('/admin/plots/create')->assertOk();
+        $this->actingAs($admin)->get("/admin/plots/{$plot->id}/edit")->assertOk();
+    }
+
+    public function test_admin_can_clear_plot_story(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-STORY-01'), ['tenant_id' => $t->id, 'story' => '原来的故事']));
+
+        // 提交空故事（nullable 字段会被 validate 从结果里移除）此前 500
+        $this->actingAs($admin)
+            ->post("/admin/plots/{$plot->id}/story", ['story' => ''])
+            ->assertRedirect();
+
+        $this->assertNull($plot->fresh()->story);
+    }
 }

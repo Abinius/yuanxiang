@@ -148,9 +148,11 @@ class MemberService
     /** 等级页看板数据。 */
     public function dashboard(User $user): array
     {
+        // 平台管理员等无租户账号：等级存在，但阈值与权益读不到租户配置，按「无」处理
+        $tenant = $user->tenant;
         $level = $this->computeLevel($user);
         $spend = $this->rollingSpend($user);
-        $next = $this->nextThreshold($user->tenant, $level);
+        $next = $tenant ? $this->nextThreshold($tenant, $level) : null;
         $persisted = (int) $user->member_level;
 
         return [
@@ -161,7 +163,7 @@ class MemberService
             'spend' => $spend,
             'next_threshold' => $next,
             'progress' => $next > 0 ? min(1.0, $spend / $next) : 1.0,
-            'benefits' => $this->benefits($user->tenant, $level),
+            'benefits' => $tenant ? $this->benefits($tenant, $level) : '',
             'member_since' => $user->member_since,
         ];
     }

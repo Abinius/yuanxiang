@@ -38,7 +38,7 @@ class PlotController extends Controller
 
     public function create()
     {
-        return view('admin.plots.form', $this->formData(Tenant::current(), new Plot()));
+        return view('admin.plots.form', $this->formData(new Plot()));
     }
 
     public function store(Request $request)
@@ -54,7 +54,7 @@ class PlotController extends Controller
     public function edit(Plot $plot)
     {
 
-        return view('admin.plots.form', $this->formData(Tenant::current(), $plot));
+        return view('admin.plots.form', $this->formData($plot));
     }
 
     public function update(Plot $plot, Request $request)
@@ -89,7 +89,7 @@ class PlotController extends Controller
             'story' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $plot->update(['story' => $data['story']]);
+        $plot->update(['story' => $data['story'] ?? null]);   // nullable 字段空提交时会被 validate 移除
 
         return back()->with('ok', '地块故事已更新');
     }

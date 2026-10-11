@@ -85,4 +85,10 @@ class ShortLinkTest extends TestCase
             ])
             ->assertStatus(422);
     }
+    public function test_admin_short_link_create_page_renders(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        // create() 传 compact() 空参在 PHP 8.2 是 ArgumentCountError，页面永远 500
+        $this->actingAs($this->admin())->get('/admin/short-links/create')->assertOk();
+    }
 }

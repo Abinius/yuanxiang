@@ -26,7 +26,7 @@ class ShortLinkController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.short_links.create', compact());
+        return view('admin.short_links.create');
     }
 
     public function store(Request $request)

@@ -232,4 +232,10 @@ class RenewalPromotionTest extends TestCase
             ->assertSee('佣金账户')
             ->assertSee('推荐业绩');
     }
+    public function test_admin_promotion_create_page_renders(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        // create() 传 compact() 空参在 PHP 8.2 是 ArgumentCountError，页面永远 500
+        $this->actingAs($this->admin())->get('/admin/promotions/create')->assertOk();
+    }
 }

@@ -53,7 +53,7 @@ class CommissionService
     /** 某用户当前 tier 对应佣金率(%)。 */
     public function rateOf(User $user): float
     {
-        return $this->rateForTier($user->tenant, $this->tierOf($user));
+        return $user->tenant ? $this->rateForTier($user->tenant, $this->tierOf($user)) : 0.0;
     }
 
     /** 冷却期(天)。 */
