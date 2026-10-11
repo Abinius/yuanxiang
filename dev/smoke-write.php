@@ -104,18 +104,26 @@ $only = $argv[2] ?? '';
 foreach (roles() as $label => $role) {
     if ($only !== '' && ! str_contains($label, $only)) continue;
 
-    // 冒烟会把后台账号禁用状态点来点去，登录前先复位，否则后面身份登不上
+    // 冒烟会把后台账号禁用状态点来点去，登录前先复位，否则后面身份登不上。
+    // 这条复位打在本地库（smokeApp() 用的 .env），目标站点是别的库时不生效——
+    // 那种情况下会被下面的「登录未生效」检查如实报出来。
     DB::table('users')->where('is_disabled', 1)->update(['is_disabled' => 0]);
 
     $jar = tempnam(sys_get_temp_dir(), 'ws') . '.txt';
     file_put_contents($jar, '');
-    $loginCode = smokeLogin($base, $jar, $role['login'], $role['account'], 'test1234');
-    if ($loginCode !== 302) {
-        echo "⚠️  {$label} 登录失败：HTTP $loginCode" . ($loginCode === 429 ? '（/login 限流 5 次/分钟，等一个周期再跑）' : '') . "\n";
+    [$loginCode, $loginTo] = smokeLogin($base, $jar, $role['login'], $role['account'], 'test1234');
+    if ($loginCode === 429) {
+        echo "⚠️  {$label} 登录被限流（429），等一个周期再跑\n";
         @unlink($jar);
         continue;
     }
-    echo "    {$label} 登录 302；jar 里 "
+    // 账号被停用 / 密码错也是 302，只是跳回登录表单——只看状态码会把失败当成功
+    if ($loginCode !== 302 || preg_match('#/login\b#', $loginTo)) {
+        echo "⚠️  {$label} 登录未生效：HTTP $loginCode 跳向 " . ($loginTo ?: '?') . "\n";
+        @unlink($jar);
+        continue;
+    }
+    echo "    {$label} 登录成功 → {$loginTo}；jar 里 "
         . (preg_match_all('/\t([A-Za-z0-9_-]+)\t/', file_get_contents($jar), $names) > 0 ? 'cookie=' . implode(',', array_unique($names[1])) : '没有 cookie') . "\n";
 
     $pages = $rendered = $expected = 0;
@@ -144,8 +152,10 @@ foreach (roles() as $label => $role) {
         foreach (parseForms($body) as $f) {
             $target = $f['action'] !== '' ? $f['action'] : $u;
 
-            // 退出登录表单：一提交整个会话就没了，后面全是游客（退出本身由 AuthTest 覆盖）
-            if (preg_match('#/logout\b#', $target)) continue;
+            // 退出登录表单：一提交整个会话就没了，后面全是游客
+            // 登录表单：每个页面都在渲染它，提交一次就烧掉 throttle:5,1 桶，后面身份登不上
+            // （登录/退出本身由 AuthTest 覆盖）
+            if (preg_match('#/(logout|login)\b#', $target)) continue;
 
             $forms++;
             $url = $f['action'] === ''

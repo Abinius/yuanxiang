@@ -76,11 +76,13 @@ Route::get('/', function (SettingsService $settings) {
 })->name('tenant.home');
 
     // 双登录
+    // throttle 的第三个参数是桶前缀，必须给：不加的话桶键只按 domain|ip 计，
+    // 全站的限速路由会共用一个计数器——访客点开 5 个短链（/u/）后就被挡在登录门外。
     Route::get('/login', [LoginController::class, 'show'])->name('tenant.login');
-    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1')->name('tenant.login.post');
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1,login')->name('tenant.login.post');
     Route::get('/login/wechat', [LoginController::class, 'wechat'])->name('tenant.login.wechat');
     Route::get('/login/wechat/callback', [LoginController::class, 'wechatCallback'])->name('tenant.wechat.callback');
-    Route::post('/login/bind-phone', [LoginController::class, 'bindPhone'])->middleware(['auth', 'throttle:3,1'])->name('tenant.bind-phone');
+    Route::post('/login/bind-phone', [LoginController::class, 'bindPhone'])->middleware(['auth', 'throttle:3,1,bind-phone'])->name('tenant.bind-phone');
     Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('tenant.logout');
 
     // 认养
@@ -97,13 +99,13 @@ Route::get('/', function (SettingsService $settings) {
     Route::get('/trace/{plot}', [TraceController::class, 'show'])->name('tenant.trace.show');
 
     // 溯源码扫码页（公开；码在租户内过滤，跨租户码自动 404）
-    Route::get('/s/{code}', [ScanController::class, 'show'])->middleware('throttle:30,1')->name('tenant.scan.show');
+    Route::get('/s/{code}', [ScanController::class, 'show'])->middleware('throttle:30,1,scan')->name('tenant.scan.show');
 
     // 礼盒收礼人落地页（公开，拉新）
-    Route::get('/gift/{code}', [GiftScanController::class, 'show'])->middleware('throttle:30,1')->name('tenant.gift.scan');
+    Route::get('/gift/{code}', [GiftScanController::class, 'show'])->middleware('throttle:30,1,gift-scan')->name('tenant.gift.scan');
 
     // 短链接跳转（公开）+ 公开铭牌落地页（外链可打开）
-    Route::get('/u/{code}', [ShortLinkController::class, 'redirect'])->middleware('throttle:60,1')->name('tenant.short-link.redirect');
+    Route::get('/u/{code}', [ShortLinkController::class, 'redirect'])->middleware('throttle:60,1,short-link')->name('tenant.short-link.redirect');
     Route::get('/nameplate/{adoption}', [ShareController::class, 'nameplate'])->name('tenant.share.nameplate');
 
     // 公开页（登录前也要能看）：公示协议（认养服务协议 / 隐私政策）

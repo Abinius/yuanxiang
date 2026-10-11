@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Route;
 // 平台后台（SaaS 管理）
 Route::prefix('platform')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('platform.login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('platform.login.post');
+    // 桶前缀不可省：throttle 按 domain|ip 计键，/platform/login 与 /login 不加前缀会共用同一个 5 次/分钟桶
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1,platform-login')->name('platform.login.post');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('platform.logout');
 
     Route::middleware(['auth', 'role:platform_admin'])->group(function () {

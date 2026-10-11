@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
@@ -74,6 +77,60 @@ class SecurityTest extends TestCase
         );
     }
 
+    /** throttle 的桶键只含 domain|ip、不含路由，第三个参数（桶前缀）必须给。
+     *  缺前缀时全站限速路由共用一个计数器：实测访客点开 5 个 /u/ 短链后 POST /login 直接 429。 */
+    public function test_every_throttled_route_has_its_own_bucket(): void
+    {
+        Artisan::call('route:clear');
+
+        $unprefixed = [];
+        foreach (Route::getRoutes() as $route) {
+            foreach ($route->middleware() as $m) {
+                // throttle:5,1 是两参写法（无桶前缀）；throttle:5,1,login 是带前缀的三参写法
+                if (preg_match('/^throttle:[^,]+,[^,]+$/', $m)) {
+                    $unprefixed[] = $route->getName();
+                }
+            }
+        }
+
+        $this->assertEmpty(
+            $unprefixed,
+            '这些路由的 throttle 缺桶前缀，会与其他限速路由共用计数器：' . implode(', ', $unprefixed)
+        );
+    }
+
+    /** 开放路由的流量不能把登录挡在门外；同时确认登录自身的限速没被这次改动弄丢。 */
+    public function test_open_route_traffic_cannot_lock_out_login(): void
+    {
+        $tenant = Tenant::create(['slug' => 'guangcai', 'name' => '光彩云村庄', 'status' => 'active']);
+        User::create([
+            'tenant_id' => $tenant->id,
+            'phone' => '13900000005',
+            'password' => 'secret123',
+            'nickname' => '限流测试',
+            'role' => 'villager',
+        ]);
+
+        // 刷满短链（限 60/分钟）之后，登录桶不应被污染
+        foreach (range(1, 10) as $i) {
+            $this->get('/u/link'.$i)->assertStatus(404);
+        }
+
+        $this->post('/login', ['account' => '13900000005', 'password' => 'secret123', 'agreed' => '1'])
+            ->assertRedirect();
+        $this->assertAuthenticated();
+
+        // 登录自身的 5 次/分钟仍然生效
+        Cache::flush();
+        Auth::logout();
+        foreach (range(1, 5) as $i) {
+            $this->post('/login', ['account' => '13900000005', 'password' => 'wrong', 'agreed' => '1']);
+        }
+        $this->post('/login', ['account' => '13900000005', 'password' => 'wrong', 'agreed' => '1'])
+            ->assertStatus(429);
+        $this->assertGuest();
+    }
+
     /** WECHAT_MOCK env 回落默认值须为 false,防生产静默 mock。
      *  测试环境显式设 WECHAT_MOCK=true 走 mock 通道,故验证定义层回落默认。 */
     public function test_wechat_mock_defaults_to_false(): void
@@ -102,8 +159,8 @@ class SecurityTest extends TestCase
 
         // 2) 功能层：SQLite 存储保持小数精度
         $this->seed([\Database\Seeders\BaseSeeder::class, \Database\Seeders\PlotSeeder::class]);
-        $tenant = \App\Models\Tenant::where('slug', 'guangcai')->firstOrFail();
-        $user = \App\Models\User::create([
+        $tenant = Tenant::where('slug', 'guangcai')->firstOrFail();
+        $user = User::create([
             'tenant_id' => $tenant->id,
             'phone' => '13800000091',
             'password' => 'secret123',

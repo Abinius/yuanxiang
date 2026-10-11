@@ -93,20 +93,26 @@ function smokeHttp(string $url, string $jar, ?array $fields = null, int $timeout
     return [$code, substr($resp, $hsize), $loc[1] ?? ''];
 }
 
-/** 从登录页取 CSRF token 后提交账号密码。throttle:5,1，一次跑别重复登录。 */
-function smokeLogin(string $base, string $jar, string $loginPath, string $account, string $password): int
+/**
+ * 从登录页取 CSRF token 后提交账号密码。throttle:5,1，一次跑别重复登录。
+ * 返回 [状态码, 跳转目标]。登录失败也是 302（带校验错误跳回表单），
+ * 所以判断成败要看跳转目标，不能只看状态码。
+ *
+ * @return array{0:int,1:string}
+ */
+function smokeLogin(string $base, string $jar, string $loginPath, string $account, string $password): array
 {
     [$code, $body] = smokeHttp($base . $loginPath, $jar);
-    if ($code !== 200 || ! preg_match('/name="_token"\s+value="([^"]+)"/', $body, $m)) return -1;
+    if ($code !== 200 || ! preg_match('/name="_token"\s+value="([^"]+)"/', $body, $m)) return [-1, ''];
 
-    [$code] = smokeHttp($base . $loginPath, $jar, [
+    [$code, , $loc] = smokeHttp($base . $loginPath, $jar, [
         '_token' => $m[1],
         'account' => $account,
         'password' => $password,
         'agreed' => '1',
     ]);
 
-    return $code;
+    return [$code, $loc];
 }
 
 /**
