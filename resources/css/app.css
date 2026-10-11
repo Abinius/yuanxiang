@@ -208,6 +208,88 @@
 .btn-wechat { background: #07C160; color: #fff; }
 .btn-wechat:hover { background: #06AD53; }
 
+/* 登录同意确认弹窗(R1):未勾选协议时的软拦截——服务端 'agreed' 校验仍是真正闸门。
+ * 用页面内模态而非跳页:跳转会丢掉用户刚输入的账号密码。 */
+.consent-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(28, 27, 23, 0.42);
+  animation: consent-fade var(--ds-duration) var(--ds-ease);
+}
+.consent-modal[hidden] { display: none; }
+.consent-modal .dialog {
+  width: 100%;
+  max-width: 460px;
+  max-height: min(86vh, 660px);
+  overflow-y: auto;
+  background: var(--ds-bg-layer-1);
+  border: 1px solid var(--ds-border-1);
+  border-radius: var(--ds-r-lg);
+  box-shadow: var(--ds-shadow-pop);
+  padding: 26px 24px 22px;
+  animation: consent-pop var(--ds-duration-l) var(--ds-ease);
+}
+.consent-modal h2 {
+  font-family: var(--font-serif);
+  font-size: var(--ds-h3);
+  line-height: 1.4;
+  color: var(--ds-text);
+  margin: 0 0 12px;
+}
+.consent-terms {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  list-style: none;
+  background: var(--ds-bg-layer-2);
+  border: 1px solid var(--ds-border-1);
+  border-radius: var(--ds-r-sm);
+}
+.consent-terms li {
+  position: relative;
+  padding-left: 15px;
+  font-size: var(--ds-body-xs);
+  color: var(--ds-text);
+  line-height: 1.65;
+}
+.consent-terms li + li { margin-top: 7px; }
+.consent-terms li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.66em;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-brand-500);
+}
+.consent-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  margin-bottom: 18px;
+  font-size: var(--ds-body-xs);
+  color: var(--ds-text-mute);
+}
+.consent-links a { color: var(--color-brand-500); text-decoration: none; }
+.consent-links a:hover { text-decoration: underline; }
+.consent-actions { display: flex; gap: 10px; }
+.consent-actions .btn { flex: 1; }
+body.consent-open { overflow: hidden; }
+
+@keyframes consent-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes consent-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consent-modal, .consent-modal .dialog { animation: none; }
+}
+
 /* 通用页头(我的田 / 溯源 / 直播 等) */
 .page-header {
   display: flex;
