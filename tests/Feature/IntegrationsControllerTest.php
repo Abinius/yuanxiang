@@ -130,6 +130,28 @@ class IntegrationsControllerTest extends TestCase
         }
     }
 
+    public function test_untouched_form_saves_without_editing_notify_url(): void
+    {
+        // env 的回调地址在本地就是 http（APP_URL=http://...）。表单留空即沿用 env，
+        // 不能因为"没动过的字段"把整页保存打回。
+        $this->actingAs($this->admin())
+            ->put('/admin/integrations', $this->payload(null, ['notify_url' => '']))
+            ->assertRedirect('/admin/integrations')
+            ->assertSessionHas('ok');
+
+        $this->assertSame('', $this->tenant()->settings['integrations']['pay']['notify_url']);
+    }
+
+    public function test_effective_value_shows_as_placeholder(): void
+    {
+        config()->set('pay.wechat.default.notify_url', 'http://'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost').'/pay/wechat/notify');
+
+        $this->actingAs($this->admin())
+            ->get('/admin/integrations')
+            ->assertOk()
+            ->assertSee('placeholder="http://', false);
+    }
+
     public function test_mock_field_is_optional_and_defaults_off(): void
     {
         // 复选框未勾选、或生产环境只读控件不提交时都会缺这个字段，服务端不能因此 422

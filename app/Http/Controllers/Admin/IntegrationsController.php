@@ -34,7 +34,15 @@ class IntegrationsController extends Controller
 
     public function edit(): View
     {
-        return view('admin.integrations.edit', ['integration' => $this->effective()]);
+        $stored = Tenant::current()->settings['integrations'] ?? [];
+
+        return view('admin.integrations.edit', [
+            // 表单值只放后台显式填过的：留空 = 沿用 env，也避免"原样保存"被自己的校验拦住
+            // （env 的 notify_url 在本地是 http://，照抄进表单会被 https 校验打回）
+            'integration' => $this->stored($stored),
+            // 当前真正生效的值（env 兜底后），只用于 placeholder 与密钥状态表
+            'effective' => $this->effective(),
+        ]);
     }
 
     public function update(Request $request): RedirectResponse
@@ -80,6 +88,27 @@ class IntegrationsController extends Controller
 
         return redirect()->route('tenant.admin.integrations.edit', [])
             ->with('ok', '集成配置已保存，下一次请求即生效');
+    }
+
+    /** 表单回显值：只取后台显式填过的，空即"沿用 env"。 */
+    private function stored(array $stored): array
+    {
+        $templates = [];
+        foreach (self::TEMPLATES as $key) {
+            $templates[$key] = (string) data_get($stored, "wechat.templates.{$key}", '');
+        }
+
+        return [
+            // 开关没有"空"状态，按当前生效值回显
+            'mock' => (bool) config('wechat.mock'),
+            'app_id' => (string) data_get($stored, 'wechat.app_id', ''),
+            // 下拉同样没有空值，回落当前生效值
+            'scope' => (string) data_get($stored, 'wechat.scope') ?: (string) config('wechat.scope', 'snsapi_userinfo'),
+            'templates' => $templates,
+            'mch_id' => (string) data_get($stored, 'pay.mch_id', ''),
+            'mode' => (string) data_get($stored, 'pay.mode') ?: 'normal',
+            'notify_url' => (string) data_get($stored, 'pay.notify_url', ''),
+        ];
     }
 
     /** 当前生效值（后台填的值优先，未填回落 env）。 */

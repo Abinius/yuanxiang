@@ -19,6 +19,8 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
+  {{-- 输入框只回显后台填过的值，灰色 placeholder 显示当前生效值（env 兜底后）。
+       留空即沿用 env——所以"什么都不改直接保存"不会因为 env 的 http 回调地址被校验打回。 --}}
   <form id="integrations-form" method="POST" action="{{ route('tenant.admin.integrations.update', []) }}">
     @csrf
     @method('PUT')
@@ -33,7 +35,7 @@
         </label>
         <div class="field-hint">
           {{ \App\Support\IntegrationConfig::mockEditable()
-              ? '上线前必须取消勾选，并把 app_id、secret、模板 ID 配齐。'
+              ? '上线前必须取消勾选，并把 appid、secret、模板 ID 配齐。'
               : '生产环境只读：由 env WECHAT_MOCK 决定，后台改不动——漏配时默认 false（不 mock），避免勾错一次就静默关掉真实支付。' }}
         </div>
       </div>
@@ -41,7 +43,8 @@
         <div class="field">
           <label>公众号 appid</label>
           <input class="input" type="text" name="wechat[app_id]" maxlength="64"
-                 value="{{ old('wechat.app_id', $integration['app_id']) }}" placeholder="wx…（留空沿用 env WECHAT_APP_ID）">
+                 value="{{ old('wechat.app_id', $integration['app_id']) }}"
+                 placeholder="{{ $effective['app_id'] ?: '留空沿用 env WECHAT_APP_ID' }}">
         </div>
         <div class="field">
           <label>授权范围</label>
@@ -56,26 +59,19 @@
     <div class="section" style="margin-bottom:24px">
       <div class="section-title"><span>模板消息（服务号认证后填模板 ID 即真发）</span></div>
       <div class="card-grid grid-2">
-        <div class="field">
-          <label>开播提醒 live_notice</label>
-          <input class="input" type="text" name="wechat[templates][live_notice]" maxlength="64"
-                 value="{{ old('wechat.templates.live_notice', $integration['templates']['live_notice']) }}" placeholder="留空则 mock 落库不真发">
-        </div>
-        <div class="field">
-          <label>内容动态 content</label>
-          <input class="input" type="text" name="wechat[templates][content]" maxlength="64"
-                 value="{{ old('wechat.templates.content', $integration['templates']['content']) }}" placeholder="留空则 mock 落库不真发">
-        </div>
-        <div class="field">
-          <label>采收通知 harvest_notice</label>
-          <input class="input" type="text" name="wechat[templates][harvest_notice]" maxlength="64"
-                 value="{{ old('wechat.templates.harvest_notice', $integration['templates']['harvest_notice']) }}" placeholder="留空则 mock 落库不真发">
-        </div>
-        <div class="field">
-          <label>续费提醒 renewal_notice</label>
-          <input class="input" type="text" name="wechat[templates][renewal_notice]" maxlength="64"
-                 value="{{ old('wechat.templates.renewal_notice', $integration['templates']['renewal_notice']) }}" placeholder="留空则 mock 落库不真发">
-        </div>
+        @foreach ([
+          'live_notice' => '开播提醒 live_notice',
+          'content' => '内容动态 content',
+          'harvest_notice' => '采收通知 harvest_notice',
+          'renewal_notice' => '续费提醒 renewal_notice',
+        ] as $key => $label)
+          <div class="field">
+            <label>{{ $label }}</label>
+            <input class="input" type="text" name="wechat[templates][{{ $key }}]" maxlength="64"
+                   value="{{ old("wechat.templates.{$key}", $integration['templates'][$key]) }}"
+                   placeholder="{{ $effective['templates'][$key] ?: '留空则 mock 落库不真发' }}">
+          </div>
+        @endforeach
       </div>
     </div>
 
@@ -86,7 +82,8 @@
           <label>商户号 mch_id</label>
           <div style="display:flex;gap:8px;align-items:center">
             <input id="mch-id" class="input" type="password" name="pay[mch_id]" maxlength="32" autocomplete="off"
-                   value="{{ old('pay.mch_id', $integration['mch_id']) }}" placeholder="留空沿用 env WECHAT_MCH_ID">
+                   value="{{ old('pay.mch_id', $integration['mch_id']) }}"
+                   placeholder="{{ $effective['mch_id'] ?: '留空沿用 env WECHAT_MCH_ID' }}">
             <label class="inline-label" style="white-space:nowrap;cursor:pointer">
               <input type="checkbox" id="mch-show"> 显示
             </label>
@@ -103,8 +100,12 @@
       <div class="field" style="max-width:640px">
         <label>支付回调地址</label>
         <input class="input" type="url" name="pay[notify_url]" maxlength="500"
-               value="{{ old('pay.notify_url', $integration['notify_url']) }}" placeholder="https://…/pay/wechat/notify">
-        <div class="field-hint">须为 https，且域名与 APP_URL 一致（当前主机：{{ (parse_url(config('app.url'), PHP_URL_HOST) ?: '未配置') }}）。</div>
+               value="{{ old('pay.notify_url', $integration['notify_url']) }}"
+               placeholder="{{ $effective['notify_url'] ?: 'https://…/pay/wechat/notify' }}">
+        <div class="field-hint">
+          留空即用 env（`APP_URL` + `/pay/wechat/notify`）；手填则必须为 https，且域名与 APP_URL 一致
+          （当前主机：{{ (parse_url(config('app.url'), PHP_URL_HOST) ?: '未配置') }}）。
+        </div>
       </div>
     </div>
 
