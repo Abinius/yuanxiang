@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Console\Scheduling\Schedule;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -43,7 +44,18 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // 登录表单停留过久后提交：会话过期或表单 token 失效，用户看到的是英文 419 页。
+        // 异常走到回调前已被 prepareException() 转成通用 HttpException(419)，所以按状态码判断，
+        // 不能按 TokenMismatchException 之类具体类型接。请求根本没进控制器，CSRF 判定不受影响。
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            $route = $request->route()?->getName();
+
+            if ($e->getStatusCode() === 419 && in_array($route, ['tenant.login.post', 'platform.login.post'], true)) {
+                return redirect()
+                    ->route($route === 'platform.login.post' ? 'platform.login' : 'tenant.login', [])
+                    ->withErrors(['account' => '页面停留太久，登录表单已失效，请重新填写登录信息。']);
+            }
+        });
     })
     ->withSchedule(function (Schedule $schedule): void {
         // F2 R2.1：每日 07:00 回收超期弃付单并释放田块

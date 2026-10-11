@@ -127,9 +127,12 @@ return [
     |
     */
 
+    // APP_NAME 是中文时 Str::slug 得空串，cookie 名会退化成 `-session`——不是合法 token，
+    // 严格客户端（curl、部分浏览器/代理）直接不存 → 会话丢失 → 所有 POST 一律 419。
+    // 中文站名兜底成固定 ASCII 前缀；要自定义用 .env 的 SESSION_COOKIE。
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+        (Str::slug((string) env('APP_NAME', 'mstrx')) ?: 'mstrx').'-session'
     ),
 
     /*
