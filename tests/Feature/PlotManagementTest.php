@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Enums\AdoptionStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Adoption;
 use App\Models\Farm;
 use App\Models\FarmMember;
+use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Plot;
 use App\Models\Tenant;
@@ -64,6 +66,33 @@ class PlotManagementTest extends TestCase
         ]);
 
         return [$user, $member];
+    }
+
+    /** 给地块挂一张认养单；$paymentStatus 为 null 表示从未付款。 */
+    private function adoptionOn(Plot $plot, User $owner, AdoptionStatus $status, ?PaymentStatus $paymentStatus = null): Adoption
+    {
+        $t = $this->tenant();
+
+        $adoption = Adoption::create([
+            'tenant_id' => $t->id, 'user_id' => $owner->id,
+            'adoption_no' => 'TEST-DEL-'.uniqid(),
+            'adoptable_type' => Plot::class, 'adoptable_id' => $plot->id,
+            'plan_id' => Plan::where('tenant_id', $t->id)->firstOrFail()->id,
+            'farm_id' => $plot->farm_id,
+            'season_year' => 2026, 'annual_fee' => 5000,
+            'start_date' => now(), 'end_date' => now()->addYear(),
+            'status' => $status->value,
+        ]);
+
+        if ($paymentStatus === null) return $adoption;
+
+        Payment::create([
+            'tenant_id' => $t->id, 'payable_type' => Adoption::class, 'payable_id' => $adoption->id,
+            'amount' => 5000, 'method' => 'manual', 'status' => $paymentStatus->value,
+            'paid_at' => $paymentStatus === PaymentStatus::Pending ? null : now(),
+        ]);
+
+        return $adoption;
     }
 
     private function plotData(Farm $farm, Plan $plan, string $code = 'FD-NEW-01'): array
@@ -144,53 +173,90 @@ class PlotManagementTest extends TestCase
 
         $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-LOCK-01'), ['tenant_id' => $t->id]));
 
-        // 在约认养（生效中，未到期）
-        Adoption::create([
-            'tenant_id' => $t->id, 'user_id' => $villager->id,
-            'adoption_no' => 'TEST-LOCK-1',
-            'adoptable_type' => Plot::class, 'adoptable_id' => $plot->id,
-            'plan_id' => $plan->id, 'farm_id' => $farm->id,
-            'season_year' => 2026, 'annual_fee' => 5000,
-            'start_date' => now(), 'end_date' => now()->addYear(),
-            'status' => AdoptionStatus::Active->value,
-        ]);
+        // 在约认养（生效中，未付款）
+        $this->adoptionOn($plot, $villager, AdoptionStatus::Active);
 
         $this->assertTrue($plot->fresh()->hasInFlightAdoptions());
 
         $this->actingAs($admin)
             ->delete("/admin/plots/{$plot->id}")
-            ->assertRedirect(route('tenant.admin.plots.index', []));
+            ->assertStatus(409);
 
         $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
     }
 
-    public function test_admin_can_delete_plot_after_adoption_ended(): void
+    public function test_admin_can_delete_ended_unpaid_plot(): void
     {
         $t = $this->tenant();
+        $admin = $this->admin($t);
         $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
         $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
-        $admin = $this->admin($t);
-
         $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-EXP-01'), ['tenant_id' => $t->id]));
 
-        // 已到期认养 → 不阻止删除
-        Adoption::create([
-            'tenant_id' => $t->id, 'user_id' => $admin->id,
-            'adoption_no' => 'TEST-EXP-1',
-            'adoptable_type' => Plot::class, 'adoptable_id' => $plot->id,
-            'plan_id' => $plan->id, 'farm_id' => $farm->id,
-            'season_year' => 2025, 'annual_fee' => 5000,
-            'start_date' => now()->subYear(), 'end_date' => now()->subDay(),
-            'status' => AdoptionStatus::Ended->value,
-        ]);
-
-        $this->assertFalse($plot->fresh()->hasInFlightAdoptions());
+        // 已到期但从未付款 → 没收过钱，可删
+        $this->adoptionOn($plot, $admin, AdoptionStatus::Ended);
 
         $this->actingAs($admin)
             ->delete("/admin/plots/{$plot->id}")
             ->assertRedirect();
 
         $this->assertSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 本轮核心缺口：已到期 = 已收过钱，不能删。 */
+    public function test_admin_cannot_delete_ended_paid_plot(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-EPAID-01'), ['tenant_id' => $t->id]));
+
+        $this->adoptionOn($plot, $admin, AdoptionStatus::Ended, PaymentStatus::Paid);
+
+        $this->actingAs($admin)
+            ->delete("/admin/plots/{$plot->id}")
+            ->assertStatus(409);
+
+        $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 已退款也是付过款：钱退出去了，记录仍在。 */
+    public function test_admin_cannot_delete_refunded_plot(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-REF-01'), ['tenant_id' => $t->id]));
+
+        $this->adoptionOn($plot, $admin, AdoptionStatus::Cancelled, PaymentStatus::Refunded);
+
+        $this->actingAs($admin)
+            ->delete("/admin/plots/{$plot->id}")
+            ->assertStatus(409);
+
+        $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 只有未付款弃付单的地块可删，删除时顺带取消弃付单，不留孤儿认养。 */
+    public function test_deleting_plot_cancels_its_pending_orders(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-PEND-01'), ['tenant_id' => $t->id]));
+
+        $pending = $this->adoptionOn($plot, $admin, AdoptionStatus::PendingPayment);
+
+        $this->actingAs($admin)
+            ->delete("/admin/plots/{$plot->id}")
+            ->assertRedirect()
+            ->assertSessionHas('ok', '地块「FD-PEND-01」已删除，并取消其 1 张未付款订单。');
+
+        $this->assertSoftDeleted('plots', ['id' => $plot->id]);
+        $this->assertSame(AdoptionStatus::Cancelled, $pending->fresh()->status);
     }
 
     public function test_family_can_create_plot_within_own_farm(): void
@@ -230,6 +296,101 @@ class PlotManagementTest extends TestCase
         $this->actingAs($user)
             ->put("/family/plots/{$otherPlot->id}", $data)
             ->assertForbidden();
+    }
+
+    public function test_family_can_delete_own_farm_plot(): void
+    {
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        [$user] = $this->familyMember($t, $farm);
+
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-FADEL-01'), ['tenant_id' => $t->id]));
+
+        // 列表给出删除入口（此前的文案是「删除请联系租户管理员」）
+        $this->actingAs($user)->get('/family/plots')->assertOk()
+            ->assertSee('plots/'.$plot->id.'" onsubmit=', false);
+
+        $this->actingAs($user)
+            ->delete("/family/plots/{$plot->id}")
+            ->assertRedirect()
+            ->assertSessionHas('ok', '地块「FD-FADEL-01」已删除。');
+
+        $this->assertSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 跨基地删除 → 403（与既有编辑口径一致）。 */
+    public function test_family_cannot_delete_other_farm_plot(): void
+    {
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $otherFarm = Farm::create(['tenant_id' => $t->id, 'name' => '他基地']);
+        $otherPlot = Plot::create(array_merge($this->plotData($otherFarm, $plan, 'FD-FODEL-01'), ['tenant_id' => $t->id]));
+
+        [$user] = $this->familyMember($t, $farm);
+
+        $this->actingAs($user)->delete("/family/plots/{$otherPlot->id}")->assertForbidden();
+
+        $this->assertNotSoftDeleted('plots', ['id' => $otherPlot->id]);
+    }
+
+    /** 无 plot scope 的家人调不到删除入口。 */
+    public function test_family_without_plot_scope_cannot_delete(): void
+    {
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-FOPE-01'), ['tenant_id' => $t->id]));
+
+        $user = User::create([
+            'tenant_id' => $t->id, 'phone' => '13900000003', 'username' => '13900000003',
+            'password' => 'secret123', 'nickname' => '家人(无 plot 权限)', 'role' => UserRole::Family->value,
+        ]);
+        FarmMember::create([
+            'tenant_id' => $t->id, 'user_id' => $user->id, 'farm_id' => $farm->id,
+            'relation' => '家人', 'permission_scope' => ['farm_log'],
+        ]);
+
+        $this->actingAs($user)->delete("/family/plots/{$plot->id}")->assertForbidden();
+
+        $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 已付款地块对家人是权限边界 → 403（不是后台的 409）。 */
+    public function test_family_cannot_delete_paid_plot(): void
+    {
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        [$user] = $this->familyMember($t, $farm);
+
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-FOPAID-01'), ['tenant_id' => $t->id]));
+        $this->adoptionOn($plot, $user, AdoptionStatus::Ended, PaymentStatus::Paid);
+
+        $this->actingAs($user)->delete("/family/plots/{$plot->id}")->assertForbidden();
+
+        $this->assertNotSoftDeleted('plots', ['id' => $plot->id]);
+    }
+
+    /** 后台列表按可删性分档：可删的给删除按钮，不可删的显示原因。 */
+    public function test_admin_plot_index_shows_deletability(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+
+        $free = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-UIFREE-01'), ['tenant_id' => $t->id]));
+        $paid = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-UIPAID-01'), ['tenant_id' => $t->id]));
+        $this->adoptionOn($paid, $admin, AdoptionStatus::Ended, PaymentStatus::Paid);
+
+        // 列表按可删性分档：可删的地块有删除表单，已付款地块只有原因说明
+        $this->actingAs($admin)->get('/admin/plots')->assertOk()
+            ->assertSee('plots/'.$free->id.'" onsubmit=', false)
+            ->assertDontSee('plots/'.$paid->id.'" onsubmit=', false)
+            ->assertSee('该地块已有付款记录，无法删除')
+            ->assertSee('删除后不可恢复');
     }
 
     public function test_plot_code_unique_per_tenant(): void

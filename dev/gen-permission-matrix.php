@@ -55,7 +55,7 @@ foreach ($rows as $r) {
 
 $out = "# 陌上原乡 · 权限矩阵\n\n";
 $out .= "> 产出物（原 PRD v2.0 第 3 篇承诺未给，见复工计划 §6 #13）\n";
-$out .= "> 生成日期：2026-10-08　|　**代码即真源**：本表由 `routes/web.php` + `routes/platform.php` 推导。\n";
+$out .= '> 生成日期：' . today()->toDateString() . '　|　**代码即真源**：本表由 `routes/web.php` + `routes/platform.php` 推导。' . "\n";
 $out .= "> 重生方式：`php dev/gen-permission-matrix.php`（枚举规则改动后请同步跑一次）。\n\n";
 
 $out .= "## 角色\n\n";

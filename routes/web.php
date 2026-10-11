@@ -226,10 +226,11 @@ Route::get('/', function () {
         Route::get('/harvest/{harvest}/edit', [FamilyHarvest::class, 'edit'])->name('tenant.family.harvest.edit');
         Route::post('/harvest/{harvest}', [FamilyHarvest::class, 'update'])->name('tenant.family.harvest.update');
 
-        // F1.2 田地录入（家人建/改，限本基地；删除走 admin）
+        // F1.2 田地录入（家人建/改/删，限本基地；删除先取消其未付款弃付单）
         Route::get('/plots', [FamilyPlots::class, 'index'])->name('tenant.family.plots.index');
         Route::get('/plots/create', [FamilyPlots::class, 'create'])->name('tenant.family.plots.create');
         Route::post('/plots', [FamilyPlots::class, 'store'])->name('tenant.family.plots.store');
         Route::get('/plots/{plot}/edit', [FamilyPlots::class, 'edit'])->name('tenant.family.plots.edit');
         Route::put('/plots/{plot}', [FamilyPlots::class, 'update'])->name('tenant.family.plots.update');
+        Route::delete('/plots/{plot}', [FamilyPlots::class, 'destroy'])->name('tenant.family.plots.destroy');
     });

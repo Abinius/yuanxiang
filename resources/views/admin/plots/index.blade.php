@@ -24,27 +24,29 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <p class="note mb-5">田地由后台动态录入（不再硬编码）。为每块田写种植故事，认养详情页会在「地块故事」展示。在约认养的地块不可删除，可下架。</p>
+  <p class="note mb-5">田地由后台动态录入（不再硬编码）。为每块田写种植故事，认养详情页会在「地块故事」展示。已付款或在约认养的地块不可删除，可改用「下架」。</p>
 
   <div class="card-grid grid-2">
     @forelse ($plots as $plot)
+      @php($blocker = $plot->deletionBlocker())
       <div class="card" style="padding:16px">
         <div class="flex justify-between items-center mb-2">
           <span class="font-medium serif text-brand">{{ $plot->code }}</span>
           <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : 'tag-off' }}">{{ $plot->status->label() }}</span>
         </div>
-        <div class="flex gap-2 mb-3">
+        <div class="flex gap-2 mb-2">
           <a class="btn btn-ghost btn-sm" href="{{ route('tenant.admin.plots.edit', ['plot' => $plot]) }}">编辑</a>
-          @if ($plot->hasInFlightAdoptions())
-            <span class="tag tag-off" title="有在约认养，无法删除">在约·不可删</span>
-          @else
-            <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除 {{ $plot->code }}？')">
+          @if (! $blocker)
+            <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除 {{ $plot->code }}（{{ $plot->mu_area }} 亩）？删除后不可恢复。')">
               @csrf
               @method('DELETE')
               <button class="btn btn-ghost btn-sm" type="submit">删除</button>
             </form>
           @endif
         </div>
+        @if ($blocker)
+          <p class="note text-xs mb-3">{{ $blocker }}</p>
+        @endif
         <form method="POST" action="{{ route('tenant.admin.plots.story', ['plot' => $plot]) }}">
           @csrf
           <textarea class="textarea" name="story" rows="3" maxlength="1000" placeholder="例:这块田挨着涝坝,晨露重,夏果格外甜。">{{ $plot->story }}</textarea>

@@ -7,8 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Farm;
 use App\Models\Plan;
 use App\Models\Plot;
-use App\Support\Tenant;
+use App\Services\AdoptionService;
 use App\Services\SettingsService;
+use App\Support\Tenant;
 use App\Support\PlotRules;
 use Illuminate\Http\Request;
 
@@ -16,14 +17,16 @@ use Illuminate\Http\Request;
  * F1 田地动态管理（tenant_admin）：增/改/删 + 故事。
  *
  * - 田地不再硬编码（PlotSeeder 仅作测试种子）；生产田地由此 CRUD。
- * - 删除保护（F1.3）：存在在约/在途认养的田地禁止删除 → 409；改用下架(offline)。
+ * - 删除保护：存在已付款或在约/在途认养的田地禁止删除 → 409；改用下架(offline)。
  * - 路由-param 位置性：Tenant 在前、Plot 在后。
  * - 校验规则见 App\Support\PlotRules（与家人端共用一份）。
  */
 class PlotController extends Controller
 {
-    public function __construct(private readonly SettingsService $settings)
-    {
+    public function __construct(
+        private readonly SettingsService $settings,
+        private readonly AdoptionService $adoptions,
+    ) {
     }
 
     public function index()
@@ -68,18 +71,10 @@ class PlotController extends Controller
 
     public function destroy(Plot $plot)
     {
-
-        // F1.3 删除保护：在约/在途认养存在则禁止删除
-        if ($plot->hasInFlightAdoptions()) {
-            return redirect()
-                ->route('tenant.admin.plots.index', [])
-                ->with('error', '该地块有在约认养，无法删除；可改用「下架」停止新认养。');
-        }
-
-        $plot->delete();
+        $cancelled = $this->adoptions->deletePlot($plot);   // 不可删时抛 PlotNotDeletable → 409 + 原因
 
         return redirect()->route('tenant.admin.plots.index', [])
-            ->with('ok', '地块已删除');
+            ->with('ok', $this->adoptions->deletedMessage($plot->code, $cancelled));
     }
 
     public function updateStory(Plot $plot, Request $request)

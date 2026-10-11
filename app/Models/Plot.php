@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\AdoptionStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\PlotStatus;
 use App\Enums\PlotType;
+use App\Exceptions\PlotNotDeletable;
 use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -69,6 +71,50 @@ class Plot extends Model
         return $this->adoptions()
             ->whereNotIn('status', [AdoptionStatus::Ended->value, AdoptionStatus::Cancelled->value])
             ->exists();
+    }
+
+    /**
+     * 是否存在任意已付款认养（支付单曾进入 paid，含后续 refunded）。
+     * 收过钱的田块永久不可删：地块编号、认养记录与溯源链不能断——
+     * 已到期不等于可删，"已付款"这条线不看认养状态。
+     */
+    public function hasPaidAdoptions(): bool
+    {
+        return $this->adoptions()->whereHas('payments', fn ($q) => $q->whereIn('status', [
+            PaymentStatus::Paid->value,
+            PaymentStatus::Refunded->value,
+        ]))->exists();
+    }
+
+    /**
+     * 是否存在约已成立的认养（待签约/生效中）。
+     * 未付款弃付单不算——它还没收钱，删除地块时会顺带取消（见 deletionBlocker）。
+     */
+    public function hasBindingAdoptions(): bool
+    {
+        return $this->adoptions()->whereIn('status', [
+            AdoptionStatus::PendingAgreement->value,
+            AdoptionStatus::Active->value,
+        ])->exists();
+    }
+
+    /** 删除阻断原因；可删时返回 null（后台/家人两端口与视图共用这一份判定）。 */
+    public function deletionBlocker(): ?string
+    {
+        if ($this->hasPaidAdoptions()) {
+            return '该地块已有付款记录，无法删除；可改用「下架」停止新认养。';
+        }
+
+        return $this->hasBindingAdoptions()
+            ? '该地块存在在约认养，无法删除；可改用「下架」停止新认养。'
+            : null;
+    }
+
+    /** @throws PlotNotDeletable */
+    public function assertDeletable(): void
+    {
+        $blocker = $this->deletionBlocker();
+        if ($blocker !== null) throw new PlotNotDeletable($blocker);
     }
 
     /**

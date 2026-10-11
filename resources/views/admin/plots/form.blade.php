@@ -104,14 +104,17 @@
     <button class="btn btn-primary btn-block btn-lg" type="submit">{{ $plot->exists ? '保存修改' : '添加地块' }}</button>
   </form>
 
-  @if ($plot->exists && $plot->hasInFlightAdoptions())
-    <div class="alert mt-4">该地块有在约认养，无法删除——可改用「下架」。</div>
-  @elseif ($plot->exists)
-    <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除地块 {{ $plot->code }}？')" class="mt-4">
-      @csrf
-      @method('DELETE')
-      <button class="btn btn-ghost btn-block" type="submit">删除地块</button>
-    </form>
+  @if ($plot->exists)
+    @php($blocker = $plot->deletionBlocker())
+    @if ($blocker)
+      <div class="alert mt-4">{{ $blocker }}</div>
+    @else
+      <form method="POST" action="{{ route('tenant.admin.plots.destroy', ['plot' => $plot]) }}" onsubmit="return confirm('确认删除地块 {{ $plot->code }}（{{ $plot->mu_area }} 亩）？删除后不可恢复。')" class="mt-4">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-ghost btn-block" type="submit">删除地块</button>
+      </form>
+    @endif
   @endif
 
   <script>

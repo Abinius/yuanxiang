@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Family;
 
 use App\Enums\PlotType;
+use App\Exceptions\PlotNotDeletable;
 use App\Models\Plan;
 use App\Models\Plot;
+use App\Services\AdoptionService;
 use App\Support\Tenant;
 use App\Support\PlotRules;
 use Illuminate\Http\Request;
@@ -14,13 +16,17 @@ use Illuminate\Http\Request;
  *
  * - scope=plot；family 按 farm_members.permission_scope 限权，tenant_admin 直通。
  * - farm_id 锁定为家人所属基地（不进表单）；tenant_admin 取本租户首个 farm。
- * - 仅建/改，不删（删除走 admin，防家人误删在约田地）。
+ * - 删除与后台共用同一份可删性判定；已付款/在约地块对家人是权限边界，转 403。
  * - 校验规则见 App\Support\PlotRules（与后台共用一份）。
  */
 class PlotController extends Controller
 {
     /** 家人不能改的字段：定价与上下架是经营决策，归商户后台。 */
     private const FAMILY_READONLY = ['price_yearly', 'status'];
+
+    public function __construct(private readonly AdoptionService $adoptions)
+    {
+    }
 
     public function create(Request $request)
     {
@@ -72,6 +78,22 @@ class PlotController extends Controller
 
         return redirect()->route('tenant.family.plots.index', [])
             ->with('ok', '地块已更新');
+    }
+
+    public function destroy(Plot $plot, Request $request)
+    {
+        $member = $this->assertScope($request, 'plot');
+        abort_if($plot->farm_id !== $member->farm_id, 403);
+
+        // 已付款/在约地块对家人是权限边界：同一份可删性判定，这里按家人口径转 403。
+        try {
+            $cancelled = $this->adoptions->deletePlot($plot);
+        } catch (PlotNotDeletable) {
+            abort(403, '该地块已有认养记录，无删除权限。');
+        }
+
+        return redirect()->route('tenant.family.plots.index', [])
+            ->with('ok', $this->adoptions->deletedMessage($plot->code, $cancelled));
     }
 
     /** 新增/编辑共用的表单数据。 */

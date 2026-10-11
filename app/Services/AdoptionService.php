@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\PlotStatus;
 use App\Enums\PlotType;
 use App\Exceptions\OrderCancelledWhilePaying;
+use App\Exceptions\PlotNotDeletable;
 use App\Models\Address;
 use App\Models\Adoption;
 use App\Models\Payment;
@@ -180,6 +181,45 @@ class AdoptionService
             $this->commissions->freezeFor($adoption);
             $this->releasePlot($adoption);
         });
+    }
+
+    /**
+     * 删除地块（后台与家人端共用）：先取消其未付款弃付单，再软删地块。
+     * 顺序不能反——先删地块会让弃付单变成孤儿认养，releasePlot() 里取不到 adoptable。
+     *
+     * @return int 顺带取消的弃付单数
+     * @throws PlotNotDeletable
+     */
+    public function deletePlot(Plot $plot): int
+    {
+        return DB::transaction(function () use ($plot) {
+            $plot->assertDeletable();
+
+            $count = $this->cancelPendingOn($plot);
+            $plot->delete();
+
+            return $count;
+        });
+    }
+
+    /** 删除结果提示（后台与家人端共用）：有弃付单被顺带取消时说明条数。 */
+    public function deletedMessage(string $code, int $cancelled): string
+    {
+        return $cancelled > 0
+            ? "地块「{$code}」已删除，并取消其 {$cancelled} 张未付款订单。"
+            : "地块「{$code}」已删除。";
+    }
+
+    /** 删除地块前顺带取消的未付款弃付单走状态机转取消（不直接改字段）。 */
+    private function cancelPendingOn(Plot $plot): int
+    {
+        $count = 0;
+        foreach ($plot->adoptions()->where('status', AdoptionStatus::PendingPayment->value)->get() as $adoption) {
+            $adoption->transitionTo(AdoptionStatus::Cancelled);
+            $count++;
+        }
+
+        return $count;
     }
 
     /**
