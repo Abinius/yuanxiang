@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Family;
 
-use App\Support\Tenant;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller as FrameworkController;
 use App\Models\Farm;
 use App\Models\FarmMember;
+use App\Support\FamilyScope;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 
 /**
@@ -44,7 +45,7 @@ class Controller extends FrameworkController
                 'farm_id' => $farm->id,
                 'user_id' => $user->id,
                 'relation' => 'tenant_admin',
-                'permission_scope' => ['farm_log', 'fertilizer', 'harvest', 'plot'],
+                'permission_scope' => FamilyScope::ALL,
             ]);
         }
 

@@ -15,18 +15,14 @@
 
 @section('content')
   @php
-    $scopeLabels = [
-      'farm_log'   => '农事动态 / 直播预告',
-      'fertilizer' => '有机肥批次',
-      'harvest'    => '采收',
-    ];
+    $scopeLabels = \App\Support\FamilyScope::labels();
     $scopeNames = array_map(fn ($s) => $scopeLabels[$s] ?? $s, $scopes ?? []);
     $isAdmin = auth()->user()->role->value === 'tenant_admin';
   @endphp
 
   <h1 class="admin-h1 mb-2">{{ $tenant->name }} · 家人录入端</h1>
   <p class="lede mb-4">
-    当前权限:{{ $scopes ? implode(' / ', $scopeNames) : '<span class="text-warn font-medium">暂无</span>(请联系管理员配置 farm_members.permission_scope)' }}
+    当前权限:{{ $scopes ? implode(' / ', $scopeNames) : '<span class="text-warn font-medium">暂无</span>(请联系管理员在「账号管理」里配置录入权限)' }}
   </p>
 
   @if (session('ok'))
@@ -37,7 +33,8 @@
     $links = [
       'farm_log'   => ['发农事动态 / 直播预告', 'pen',    route('tenant.family.logs.create',     [])],
       'fertilizer' => ['录有机肥批次',          'flask',  route('tenant.family.fertilizer.create', [])],
-      'harvest'    => ['录采收',               'basket', route('tenant.family.harvest.create',    [])],
+      'harvest'    => ['录采收',                'basket', route('tenant.family.harvest.create',  [])],
+      'plot'       => ['地块录入 / 改删',       'map',    route('tenant.family.plots.index',     [])],
     ];
   @endphp
 

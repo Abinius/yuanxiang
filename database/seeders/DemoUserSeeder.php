@@ -9,11 +9,12 @@ use App\Models\Plot;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdoptionService;
+use App\Support\FamilyScope;
 use Illuminate\Database\Seeder;
 
 /**
  * 演示账号（dev 走查，密码统一 test1234）：
- * - family  家人端：阿叔，全 scope（farm_log/fertilizer/harvest）
+ * - family  家人端：阿叔，全 scope（含地块录入）
  * - villager 用户端：云乡民阿林，带一份已生效认养（我的田/礼盒/续费/配送可用），带 openid（扫码/推送）
  * 幂等：firstOrCreate / updateOrCreate / 已生效则不重复下单。
  */
@@ -36,7 +37,7 @@ class DemoUserSeeder extends Seeder
         );
         FarmMember::updateOrCreate(
             ['user_id' => $family->id, 'farm_id' => $farm->id],
-            ['tenant_id' => $tenant->id, 'relation' => 'father', 'permission_scope' => ['farm_log', 'fertilizer', 'harvest']],
+            ['tenant_id' => $tenant->id, 'relation' => 'father', 'permission_scope' => FamilyScope::ALL],
         );
 
         $villager = User::firstOrCreate(

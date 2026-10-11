@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Support\Tenant;
+use App\Models\Farm;
+use App\Models\FarmMember;
 use App\Models\User;
+use App\Support\FamilyScope;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +21,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::query()
+            ->with('farmMemberships')
             ->where('tenant_id', Tenant::current()->id)
             ->where('role', '!=', UserRole::PlatformAdmin->value)
             ->when($request->input('q'), fn ($q, $v) => $q->where(
@@ -37,6 +41,9 @@ class UserController extends Controller
         return view('admin.users.form', [
             'user' => new User(),
             'roles' => $this->assignableRoles(),
+            'member' => new FarmMember(),
+            'scopes' => FamilyScope::labels(),
+            'relations' => FamilyScope::relations(),
         ]);
     }
 
@@ -49,6 +56,8 @@ class UserController extends Controller
         $user->fill($data); // password 走 hashed cast 自动哈希
         $user->save();
 
+        $this->syncFamilyMember($user, $data);
+
         return redirect()->route('tenant.admin.users.index', [])
             ->with('ok', "已创建 {$user->nickname}（{$user->role->label()}）");
     }
@@ -60,6 +69,9 @@ class UserController extends Controller
         return view('admin.users.form', [
             'user' => $user,
             'roles' => $this->assignableRoles(),
+            'member' => $user->farmMemberships()->first() ?? new FarmMember(),
+            'scopes' => FamilyScope::labels(),
+            'relations' => FamilyScope::relations(),
         ]);
     }
 
@@ -72,6 +84,8 @@ class UserController extends Controller
             unset($data['password']); // 留空不改密
         }
         $user->fill($data)->save();
+
+        $this->syncFamilyMember($user, $data);
 
         return redirect()->route('tenant.admin.users.index', [])
             ->with('ok', '已更新');
@@ -122,6 +136,29 @@ class UserController extends Controller
             'role' => ['required', Rule::in($roles)],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:6'],
             'birthday' => ['nullable', 'date'],
+            'relation' => ['sometimes', 'string', Rule::in(array_keys(FamilyScope::relations()))],
+            'permission_scope' => ['sometimes', 'array'],
+            'permission_scope.*' => ['sometimes', 'string', Rule::in(FamilyScope::ALL)],
         ]);
+    }
+
+    /**
+     * 家人账号必须有 farm_members 记录才能在家人端录入；非家人角色不同步，
+     * 改角色时保留原记录，改回家人不丢已配权限。
+     */
+    private function syncFamilyMember(User $user, array $data): void
+    {
+        if ($user->role !== UserRole::Family) {
+            return;
+        }
+
+        FarmMember::updateOrCreate(
+            ['user_id' => $user->id, 'farm_id' => Farm::firstOrFail()->id],
+            [
+                'tenant_id' => Tenant::current()->id,
+                'relation' => $data['relation'] ?? 'father',
+                'permission_scope' => $data['permission_scope'] ?? [],
+            ],
+        );
     }
 }

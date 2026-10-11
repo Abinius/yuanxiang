@@ -15,7 +15,7 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <p class="note mb-4">管理本村庄的家人 / 云乡民 / 商户管理员账号。可禁用、改密；平台管理员须在平台后台管理。</p>
+  <p class="note mb-4">管理本村庄的家人 / 云乡民 / 商户管理员账号。家人账号在「编辑」里配录入权限；可禁用、改密；平台管理员须在平台后台管理。</p>
 
   <form method="GET" class="flex gap-2 mb-4">
     <input class="input" name="q" value="{{ request('q') }}" placeholder="昵称/手机号/用户名搜索">
@@ -24,14 +24,22 @@
 
   <table class="table">
     <thead>
-      <tr><th>昵称</th><th>手机号</th><th>角色</th><th>状态</th><th>注册</th><th>操作</th></tr>
+      <tr><th>昵称</th><th>手机号</th><th>角色</th><th>录入权限</th><th>状态</th><th>注册</th><th>操作</th></tr>
     </thead>
     <tbody>
       @forelse ($users as $u)
+        @php($scopes = $u->farmMemberships->first()?->permission_scope ?? [])
         <tr>
           <td>{{ $u->nickname }}</td>
           <td>{{ $u->phone }}</td>
           <td>{{ $u->role->label() }}</td>
+          <td>
+            @if ($u->role->value === 'family' && $scopes)
+              <span class="text-xs">{{ implode(' / ', array_map(fn ($s) => \App\Support\FamilyScope::labels()[$s] ?? $s, $scopes)) }}</span>
+            @else
+              <span class="text-xs muted">—</span>
+            @endif
+          </td>
           <td>
             @if ($u->is_disabled)
               <span class="tag tag-warn">已禁用</span>
@@ -49,7 +57,7 @@
           </td>
         </tr>
       @empty
-        <tr><td colspan="6" class="text-xs muted">暂无账号。</td></tr>
+        <tr><td colspan="7" class="text-xs muted">暂无账号。</td></tr>
       @endforelse
     </tbody>
   </table>

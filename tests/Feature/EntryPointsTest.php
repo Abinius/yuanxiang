@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Farm;
 use App\Models\FarmLog;
+use App\Models\FarmMember;
 use App\Models\FertilizerBatch;
 use App\Models\Harvest;
 use App\Models\Plot;
@@ -145,5 +146,52 @@ class EntryPointsTest extends TestCase
         $this->actingAs($admin)->get("/family/logs/{$log->id}/edit")->assertOk();
         $this->actingAs($admin)->get("/family/fertilizer/{$batch->id}/edit")->assertOk();
         $this->actingAs($admin)->get("/family/harvest/{$harvest->id}/edit")->assertOk();
+    }
+
+    public function test_family_dashboard_links_plot_entry(): void
+    {
+        $this->seedAll();
+
+        // tenant_admin 直通：四张录入卡都可用，地块页可达
+        $this->actingAs($this->admin())
+            ->get("/family")
+            ->assertOk()
+            ->assertSee('地块录入 / 改删');
+        $this->actingAs($this->admin())->get("/family/plots")->assertOk();
+
+        // family 配了 plot scope：卡片可用，地块页可达
+        $family = $this->familyWith(['farm_log', 'plot'], '13900000101');
+        $this->actingAs($family)->get("/family")->assertOk()->assertSee('地块录入 / 改删');
+        $this->actingAs($family)->get("/family/plots")->assertOk();
+
+        // family 没配 plot scope：卡片置灰「— 」前缀，页面 403
+        $limited = $this->familyWith(['farm_log'], '13900000102');
+        $this->actingAs($limited)
+            ->get("/family")
+            ->assertOk()
+            ->assertSee('— 地块录入 / 改删');
+        $this->actingAs($limited)->get("/family/plots")->assertForbidden();
+    }
+
+    /** 建一个带指定录入权限的 family 账号（后台账号管理里配置即得）。 */
+    private function familyWith(array $scopes, string $phone): User
+    {
+        $t = $this->tenant();
+        $user = User::create([
+            'tenant_id' => $t->id,
+            'phone' => $phone,
+            'nickname' => '录入家人',
+            'role' => 'family',
+            'password' => 'secret123',
+        ]);
+        FarmMember::create([
+            'tenant_id' => $t->id,
+            'farm_id' => $this->farm()->id,
+            'user_id' => $user->id,
+            'relation' => 'father',
+            'permission_scope' => $scopes,
+        ]);
+
+        return $user;
     }
 }

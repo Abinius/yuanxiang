@@ -40,6 +40,31 @@
       </select>
     </div>
 
+    <div id="family-perms">
+      <div class="field">
+        <label>身份关系</label>
+        <select class="input" name="relation">
+          @foreach ($relations as $value => $label)
+            <option value="{{ $value }}" @selected(old('relation', $member->relation) === $value)>{{ $label }}</option>
+          @endforeach
+          @if ($member->relation && ! array_key_exists($member->relation, $relations))
+            <option value="{{ $member->relation }}" @selected(true)>（原有：{{ $member->relation }}）</option>
+          @endif
+        </select>
+      </div>
+
+      <div class="field">
+        <label>录入权限（家人端能录什么）</label>
+        @foreach ($scopes as $key => $label)
+          <label class="flex items-center gap-2 mb-1">
+            <input type="checkbox" name="permission_scope[]" value="{{ $key }}" @checked(in_array($key, old('permission_scope', $member->permission_scope ?? []), true))>
+            <span>{{ $label }}</span>
+          </label>
+        @endforeach
+        <div class="field-hint">未勾选的录入项在家人端显示「未授权」，访问会被拒。</div>
+      </div>
+    </div>
+
     <div class="field">
       <label>密码 {{ $user->exists ? '（留空不改）' : '*' }}</label>
       <input class="input" type="password" name="password" {{ $user->exists ? '' : 'required' }} minlength="6">
@@ -68,4 +93,14 @@
       <button class="btn btn-ghost btn-sm" type="submit">重置密码</button>
     </form>
   @endif
+
+  <script>
+    (function () {
+      const role = document.querySelector('select[name="role"]');
+      const perms = document.getElementById('family-perms');
+      const sync = () => { perms.style.display = role.value === 'family' ? '' : 'none'; };
+      role.addEventListener('change', sync);
+      sync();
+    })();
+  </script>
 @endsection

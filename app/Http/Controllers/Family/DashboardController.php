@@ -9,6 +9,7 @@ use App\Models\FarmLog;
 use App\Models\FertilizerBatch;
 use App\Models\GiftBox;
 use App\Models\Harvest;
+use App\Support\FamilyScope;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -18,7 +19,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         if ($user->role === UserRole::TenantAdmin) {
-            $scopes = ['farm_log', 'fertilizer', 'harvest'];
+            $scopes = FamilyScope::ALL;
         } else {
             $scopes = $user->farmMemberships()
                 ->first()?->permission_scope ?? [];
