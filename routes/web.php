@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\DeliveryController as AdminDeliveries;
 use App\Http\Controllers\Admin\FarmLogController as AdminFarmLogs;
 use App\Http\Controllers\Admin\GiftBoxController as AdminGiftBoxes;
+use App\Http\Controllers\Admin\IntegrationsController as AdminIntegrations;
 use App\Http\Controllers\Admin\ShipmentWorkbenchController as AdminShipments;
 use App\Http\Controllers\Admin\PromotionController as AdminPromotions;
 use App\Http\Controllers\Admin\PlotController as AdminPlots;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Admin\TraceCodeController as AdminTraceCodes;
 use App\Http\Controllers\Admin\UserController as AdminUsers;
 use App\Http\Controllers\Auth\LoginController;
 use App\Services\SettingsService;
+use App\Http\Middleware\IntegrationConfigMiddleware;
 use App\Http\Controllers\Family\DashboardController as FamilyDashboard;
 use App\Http\Controllers\Family\FarmLogController as FamilyLogs;
 use App\Http\Controllers\Family\FertilizerBatchController as FamilyFertilizer;
@@ -40,7 +42,10 @@ use App\Support\Tenant;
 use Illuminate\Support\Facades\Route;
 
 // 微信支付回调（微信服务器推送：无租户上下文、免 CSRF/登录）
-Route::post('/pay/wechat/notify', [WeChatPayController::class, 'notify'])->name('pay.wechat.notify');
+// 注意：此路由在 web 组之外，全局 web 中间件不会到这里，集成配置必须单独挂一份。
+Route::post('/pay/wechat/notify', [WeChatPayController::class, 'notify'])
+    ->middleware(IntegrationConfigMiddleware::class)
+    ->name('pay.wechat.notify');
 
 // 站点 SEO：robots + sitemap（全局）
 Route::get('/robots.txt', function () {
@@ -191,6 +196,8 @@ Route::get('/', function (SettingsService $settings) {
 
         Route::get('/settings', [AdminSettings::class, 'edit'])->name('tenant.admin.settings.edit');
         Route::put('/settings', [AdminSettings::class, 'update'])->name('tenant.admin.settings.update');
+        Route::get('/integrations', [AdminIntegrations::class, 'edit'])->name('tenant.admin.integrations.edit');
+        Route::put('/integrations', [AdminIntegrations::class, 'update'])->name('tenant.admin.integrations.update');
 
         // M4 佣金/提现审核
         Route::get('/commissions', [AdminCommissions::class, 'ledger'])->name('tenant.admin.commissions.ledger');

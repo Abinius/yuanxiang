@@ -82,6 +82,11 @@
        data-label="站点设置">
       <span class="menu-icon"><x-lucide-settings /></span><span class="menu-text">站点设置</span>
     </a>
+    <a class="menu-link {{ $current === 'tenant.admin.integrations.edit' ? 'active' : '' }}"
+       href="{{ route('tenant.admin.integrations.edit', []) }}"
+       data-label="微信与支付">
+      <span class="menu-icon"><x-lucide-credit-card /></span><span class="menu-text">微信与支付</span>
+    </a>
     <a class="menu-link {{ str_starts_with($current, 'tenant.admin.short-links') ? 'active' : '' }}"
        href="{{ route('tenant.admin.short-links.index', []) }}"
        data-label="短链接">

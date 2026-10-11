@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // F8 R8.2：全局 web 前置，把 ?ref=CODE 存进 session 供下单表单预填
         $middleware->web(\App\Http\Middleware\PreserveReferralCode::class);
 
+        // B5：后台改的微信/支付配置在本请求生效（env 仍是兜底）
+        $middleware->web(\App\Http\Middleware\IntegrationConfigMiddleware::class);
+
         // 微信支付回调由微信侧验签，跳过 CSRF
         $middleware->validateCsrfTokens(except: ['pay/wechat/notify']);
 

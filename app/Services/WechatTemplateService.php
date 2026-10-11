@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PushMessage;
 use App\Models\User;
+use App\Support\IntegrationConfig;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -36,6 +37,9 @@ class WechatTemplateService
 
     public function send(User $user, string $templateKey, array $data): void
     {
+        // 定时命令与队列 job 不走 web 中间件，这里必须自己应用一次（幂等）
+        IntegrationConfig::apply();
+
         $message = PushMessage::create([
             'tenant_id' => $user->tenant_id,
             'user_id' => $user->id,
@@ -53,7 +57,9 @@ class WechatTemplateService
         }
 
         try {
-            $accessToken = Cache::remember('wechat:access_token', now()->addHours(2), function () {
+            // 键里带 app_id：app_id 现在是后台可改的，共用常量键会在改完后最长 2 小时
+            // 继续用旧 appid 的 token（微信报 40001/invalid appid，errmsg 看不出是配置变更）
+            $accessToken = Cache::remember('wechat:access_token:'.config('wechat.app_id'), now()->addHours(2), function () {
                 return Http::get('https://api.weixin.qq.com/cgi-bin/token', [
                     'grant_type' => 'client_credential',
                     'appid' => config('wechat.app_id'),
