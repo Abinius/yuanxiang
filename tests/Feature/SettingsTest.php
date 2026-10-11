@@ -181,4 +181,121 @@ class SettingsTest extends TestCase
         $this->assertSame(8888, $t->settings['member']['tiers']['expert']);
         $this->assertSame('v2', $t->settings['contract']['template_version']);
     }
+
+    // ── R4-a：首页内容配置化 ──
+
+    public function test_home_renders_defaults_when_no_settings(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+
+        $this->get("")
+            ->assertOk()
+            ->assertSee(config('site.defaults.homepage.hero_title'))
+            // {tenant} 占位被替换成站点名
+            ->assertSee('这里是 '.$t->name)
+            ->assertSee(config('site.defaults.homepage.points_title'))
+            ->assertSee(config('site.defaults.homepage.flow_title'))
+            ->assertSee(config('site.defaults.homepage.faq_title'));
+    }
+
+    public function test_settings_form_shows_homepage_section(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+
+        $this->actingAs($this->admin())
+            ->get("/admin/settings")
+            ->assertOk()
+            ->assertSee('首页内容')
+            ->assertSee('显示「卖点」区块')
+            ->assertSee(config('site.defaults.homepage.points.0.title'))
+            ->assertSee('＋ 加一条问答（最多 10 条）');
+    }
+
+    public function test_admin_can_save_homepage_settings_and_home_reflects(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+
+        $this->actingAs($this->admin())
+            ->put("/admin/settings", [
+                'show_points' => '1', 'show_flow' => '1', 'show_faq' => '1',
+                'hero_title' => '测试主标题',
+                'hero_lede' => '这里是 {tenant}，测试副标题。',
+                'points_title' => '测试卖点标题',
+                'points' => [['title' => '测试卖点', 'body' => '测试卖点说明', 'note' => '']],
+                'flow_steps' => [['num' => '01', 'label' => '测试步骤', 'note' => '']],
+                'faq' => [['q' => '测试问题', 'a' => '']],
+            ])
+            ->assertRedirect();
+
+        $t->refresh();
+        $this->assertSame('测试主标题', $t->settings['homepage']['hero_title']);
+        $this->assertSame('测试卖点', $t->settings['homepage']['points'][0]['title']);
+        $this->assertCount(1, $t->settings['homepage']['points'], '删掉的出厂行不应残留');
+
+        $this->get("")
+            ->assertOk()
+            ->assertSee('测试主标题')
+            ->assertSee('这里是 '.$t->name.'，测试副标题。')
+            ->assertSee('测试卖点说明')
+            ->assertDontSee(config('site.defaults.homepage.points.1.title'), false);
+    }
+
+    public function test_home_falls_back_per_field_when_only_partly_overridden(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $t->settings = ['homepage' => ['hero_title' => '只改标题']];
+        $t->save();
+
+        $this->get("")
+            ->assertOk()
+            ->assertSee('只改标题')
+            // 未覆盖的区块仍是出厂文案
+            ->assertSee('认养后可在「我的田」查看生长日历')
+            ->assertSee(config('site.defaults.homepage.points.0.title'));
+    }
+
+    public function test_hidden_section_is_not_rendered(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+
+        // 不勾「认养流程」= 该字段缺键，区块应整体不渲染（而不是渲染空标题）
+        $t->settings = ['homepage' => ['show_flow' => false]];
+        $t->save();
+
+        $this->get("")
+            ->assertOk()
+            ->assertDontSee(config('site.defaults.homepage.flow_title'))
+            ->assertDontSee(config('site.defaults.homepage.flow_steps.0.label'))
+            ->assertSee(config('site.defaults.homepage.points_title'));
+    }
+
+    public function test_homepage_xss_is_escaped(): void
+    {
+        $this->seed([BaseSeeder::class, PlotSeeder::class]);
+        $t = $this->tenant();
+        $t->settings = ['homepage' => ['hero_title' => '<script>alert(1)</script>']];
+        $t->save();
+
+        $this->get("")
+            ->assertOk()
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
+            ->assertDontSee('<script>alert(1)</script>', false);
+    }
+
+    public function test_homepage_row_limits_are_enforced(): void
+    {
+        $this->seed([BaseSeeder::class, AdminSeeder::class]);
+        $t = $this->tenant();
+        $seven = array_map(fn ($i) => ['title' => '第'.$i.'条', 'body' => '说明'], range(1, 7));
+
+        $this->actingAs($this->admin())
+            ->put("/admin/settings", ['points' => $seven])
+            ->assertSessionHasErrors('points');
+
+        $this->assertNull($t->fresh()->settings['homepage'] ?? null, '超限不应写入');
+    }
 }

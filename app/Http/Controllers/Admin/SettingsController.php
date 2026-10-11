@@ -27,6 +27,7 @@ class SettingsController extends Controller
             'commission' => $this->settings->commission(),
             'member' => $this->settings->member(),
             'contract' => $this->settings->contract(),
+            'homepage' => $this->settings->homepage(),
         ]);
     }
 
@@ -65,6 +66,31 @@ class SettingsController extends Controller
             'tier_partner' => ['nullable', 'integer', 'min:0'],
             // 合同
             'contract_template_version' => ['nullable', 'string', 'max:20'],
+            // 首页内容（R4-a）
+            'hero_title' => ['nullable', 'string', 'max:60'],
+            'hero_lede' => ['nullable', 'string', 'max:300'],
+            'eyebrow_primary' => ['nullable', 'string', 'max:60'],
+            'eyebrow_secondary' => ['nullable', 'string', 'max:60'],
+            'points_title' => ['nullable', 'string', 'max:30'],
+            'flow_title' => ['nullable', 'string', 'max:30'],
+            'faq_title' => ['nullable', 'string', 'max:30'],
+            'cta_note_eyebrow' => ['nullable', 'string', 'max:20'],
+            'cta_note_body' => ['nullable', 'string', 'max:200'],
+            'cta_button' => ['nullable', 'string', 'max:20'],
+            'show_points' => ['nullable', 'boolean'],
+            'show_flow' => ['nullable', 'boolean'],
+            'show_faq' => ['nullable', 'boolean'],
+            'points' => ['nullable', 'array', 'max:6'],
+            'points.*.title' => ['nullable', 'string', 'max:30'],
+            'points.*.body' => ['nullable', 'string', 'max:120'],
+            'points.*.note' => ['nullable', 'string', 'max:80'],
+            'flow_steps' => ['nullable', 'array', 'max:8'],
+            'flow_steps.*.num' => ['nullable', 'string', 'max:4'],
+            'flow_steps.*.label' => ['nullable', 'string', 'max:20'],
+            'flow_steps.*.note' => ['nullable', 'string', 'max:60'],
+            'faq' => ['nullable', 'array', 'max:10'],
+            'faq.*.q' => ['nullable', 'string', 'max:60'],
+            'faq.*.a' => ['nullable', 'string', 'max:200'],
         ]);
 
         // 补全所有键（PUT 可能只带部分分区，未发送的键置 null，避免 Undefined array key）
@@ -76,6 +102,10 @@ class SettingsController extends Controller
             'rate_red', 'rate_expert', 'rate_partner', 'cooldown_days',
             'tier_red', 'tier_expert', 'tier_partner',
             'contract_template_version',
+            'hero_title', 'hero_lede', 'eyebrow_primary', 'eyebrow_secondary',
+            'points_title', 'flow_title', 'faq_title',
+            'cta_note_eyebrow', 'cta_note_body', 'cta_button',
+            'show_points', 'show_flow', 'show_faq',
         ], null), $data);
 
         $settings = Tenant::current()->settings ?? [];
@@ -147,10 +177,63 @@ class SettingsController extends Controller
             'template_version' => $this->filled($data['contract_template_version'], $prevCon['template_version'] ?? 'v1', 'str'),
         ];
 
+        // 首页内容（R4-a）
+        $settings['homepage'] = $this->homepageSettings($data);
+
         Tenant::current()->update(['settings' => $settings]);
 
         return redirect()->route('tenant.admin.settings.edit', [])
             ->with('ok', '设置已保存');
+    }
+
+    /** 首页内容：扁平表单 → 出厂默认按键覆盖后的完整分区。 */
+    private function homepageSettings(array $data): array
+    {
+        $defaults = config('site.defaults.homepage', []);
+        // 文案用出厂默认兜底（清空即回到出厂文案）；区块开关用上次保存值兜底
+        // （默认值是 true，缺键回落默认会让「关掉区块」失效）。
+        $prev = Tenant::current()->settings['homepage'] ?? [];
+
+        return array_merge($defaults, [
+            'hero_title' => $this->filled($data['hero_title'], $defaults['hero_title'] ?? '', 'str'),
+            'hero_lede' => $this->filled($data['hero_lede'], $defaults['hero_lede'] ?? '', 'str'),
+            'eyebrow_primary' => $this->filled($data['eyebrow_primary'], $defaults['eyebrow_primary'] ?? '', 'str'),
+            'eyebrow_secondary' => $this->filled($data['eyebrow_secondary'], $defaults['eyebrow_secondary'] ?? '', 'str'),
+            'points_title' => $this->filled($data['points_title'], $defaults['points_title'] ?? '', 'str'),
+            'flow_title' => $this->filled($data['flow_title'], $defaults['flow_title'] ?? '', 'str'),
+            'faq_title' => $this->filled($data['faq_title'], $defaults['faq_title'] ?? '', 'str'),
+            'cta_note_eyebrow' => $this->filled($data['cta_note_eyebrow'], $defaults['cta_note_eyebrow'] ?? '', 'str'),
+            'cta_note_body' => $this->filled($data['cta_note_body'], $defaults['cta_note_body'] ?? '', 'str'),
+            'cta_button' => $this->filled($data['cta_button'], $defaults['cta_button'] ?? '', 'str'),
+            'show_points' => (bool) ($data['show_points'] ?? $prev['show_points'] ?? false),
+            'show_flow' => (bool) ($data['show_flow'] ?? $prev['show_flow'] ?? false),
+            'show_faq' => (bool) ($data['show_faq'] ?? $prev['show_faq'] ?? false),
+            'points' => $this->rows($data['points'] ?? [], ['title', 'body', 'note'], $defaults['points'] ?? []),
+            'flow_steps' => $this->rows($data['flow_steps'] ?? [], ['num', 'label', 'note'], $defaults['flow_steps'] ?? []),
+            'faq' => $this->rows($data['faq'] ?? [], ['q', 'a'], $defaults['faq'] ?? []),
+        ]);
+    }
+
+    /** 行式字段：保留至少有一个非空值的行并补齐键；全部清空则整段回落出厂默认。 */
+    private function rows(array $submitted, array $keys, array $fallback): array
+    {
+        $rows = array_map(function ($row) use ($keys) {
+            foreach ($keys as $k) {
+                $row[$k] = $row[$k] ?? '';
+            }
+
+            return $row;
+        }, array_filter($submitted, function ($row) use ($keys) {
+            foreach ($keys as $k) {
+                if (($row[$k] ?? '') !== '') {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+
+        return $rows !== [] ? $rows : $fallback;
     }
 
     /** 空值回落到前值；按类型强转。 */

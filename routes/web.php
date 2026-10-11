@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\ShortLinkController as AdminShortLinks;
 use App\Http\Controllers\Admin\TraceCodeController as AdminTraceCodes;
 use App\Http\Controllers\Admin\UserController as AdminUsers;
 use App\Http\Controllers\Auth\LoginController;
+use App\Services\SettingsService;
 use App\Http\Controllers\Family\DashboardController as FamilyDashboard;
 use App\Http\Controllers\Family\FarmLogController as FamilyLogs;
 use App\Http\Controllers\Family\FertilizerBatchController as FamilyFertilizer;
@@ -61,10 +62,11 @@ Route::get('/sitemap.xml', function () {
 });
 
 // 租户前台（单租户）：auth-only 资源路由加 tenant.member 防越权；公开页不加（保持可分享）
-Route::get('/', function () {
+Route::get('/', function (SettingsService $settings) {
     return view('site.home', [
         'tenant' => Tenant::current(),
         'user' => auth()->user(),
+        'home' => $settings->homepage(),
     ]);
 })->name('tenant.home');
 

@@ -58,4 +58,13 @@ class SettingsService
             'contact' => (string) $this->get('contact', '') ?: null,
         ];
     }
+
+    /**
+     * 首页内容（区块开关 + 文案），DB 值按键覆盖出厂默认。
+     * 不走 get()：那里是整段覆盖语义，会漏掉出厂默认里新增的区块键。
+     */
+    public function homepage(): array
+    {
+        return array_merge(config('site.defaults.homepage', []), Tenant::current()->settings['homepage'] ?? []);
+    }
 }
