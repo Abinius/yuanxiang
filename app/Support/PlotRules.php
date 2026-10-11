@@ -35,6 +35,7 @@ final class PlotRules
             'status' => ['required', Rule::in(['available', 'adopted', 'sold_out', 'offline'])],
             'order_index' => ['nullable', 'integer', 'min:0'],
             'story' => ['nullable', 'string', 'max:1000'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
 
         if ($farmId === null) {

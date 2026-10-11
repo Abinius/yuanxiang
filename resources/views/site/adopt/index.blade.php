@@ -24,16 +24,11 @@
     </div>
     <div class="product-grid">
       @foreach ($plots as $p)
-        <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $p]) }}">
-          <div class="code">{{ $p->code }}</div>
-          <div class="price">¥{{ number_format($p->price_yearly) }}/年</div>
-          <div class="meta">{{ $p->mu_area }} 亩 · 命名/监控/溯源/礼盒</div>
-          <div class="mt-2">
-            <span class="tag {{ $p->status->value === 'available' ? 'tag-available' : ($p->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
-              {{ $p->status->label() }}
-            </span>
-          </div>
-        </a>
+        @include('site.partials.plot-card', [
+          'plot' => $p,
+          'price' => '¥'.number_format($p->price_yearly).'/年',
+          'meta' => $p->mu_area.' 亩 · 命名/监控/溯源/礼盒',
+        ])
       @endforeach
     </div>
   </section>
@@ -44,11 +39,11 @@
     </div>
     <div class="product-grid">
       @foreach ($groups as $g)
-        <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $g]) }}">
-          <div class="code">{{ $g->code }}</div>
-          <div class="price">¥300/株</div>
-          <div class="meta">{{ $g->children_count }} 株可认养 · 池均摊</div>
-        </a>
+        @include('site.partials.plot-card', [
+          'plot' => $g,
+          'price' => '¥300/株',
+          'meta' => $g->children_count.' 株可认养 · 池均摊',
+        ])
       @endforeach
     </div>
   </section>

@@ -538,6 +538,31 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .card-soft  { background: var(--ds-bg-layer-2); box-shadow: none; }
 .card-inverse { background: var(--ds-bg-layer-3); }
 
+/* R3 内容卡竖版：比例是单一常量（改横版只动 --card-aspect），只挂在面向云乡民的展示卡上；
+   .card 基类不加比例——那会同时污染后台/家人端 20+ 处操作卡。 */
+.card-portrait {
+  --card-aspect: 3 / 4;
+  aspect-ratio: var(--card-aspect);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.card-portrait .card-cover { flex: 1 1 auto; min-height: 0; overflow: hidden; background: var(--ds-bg-layer-2); }
+.card-portrait .card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-portrait .card-body { flex: none; padding: 12px 14px; }
+/* 未上传封面时的占位：品牌色底 + 编号水印，不请求任何图片资源。 */
+.card-cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--color-brand-500), var(--color-brand-700));
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: var(--ds-h3);
+}
+
 .card-grid {
   display: grid;
   gap: 16px;

@@ -15,11 +15,21 @@
     <div class="alert">{{ $errors->first() }}</div>
   @endif
 
-  <form method="POST" action="{{ $plot->exists ? route('tenant.family.plots.update', ['plot' => $plot]) : route('tenant.family.plots.store', []) }}">
+  <form method="POST" enctype="multipart/form-data" action="{{ $plot->exists ? route('tenant.family.plots.update', ['plot' => $plot]) : route('tenant.family.plots.store', []) }}">
     @csrf
     @if ($plot->exists)
       @method('PUT')
     @endif
+
+    <div class="field mb-4">
+      <label>封面图(可选，认养卡片展示；jpg/png/webp，≤4MB)</label>
+      @if ($plot->coverUrl())
+        <img src="{{ $plot->coverUrl() }}" alt="{{ $plot->code }} 当前封面"
+             style="max-width:200px;max-height:150px;object-fit:cover;border-radius:var(--ds-r-md);margin-bottom:8px">
+      @endif
+      <input class="input" type="file" name="cover_image" accept="image/*" style="padding:8px">
+      <div class="field-hint">替换会覆盖当前封面；不选则保留原图。</div>
+    </div>
 
     <div class="card-grid grid-2 mb-4">
       <div class="field">

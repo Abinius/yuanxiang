@@ -15,6 +15,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\BaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -66,6 +68,11 @@ class PlotManagementTest extends TestCase
         ]);
 
         return [$user, $member];
+    }
+
+    private function cover(): UploadedFile
+    {
+        return UploadedFile::fake()->image('cover.jpg', 600, 800);
     }
 
     /** 给地块挂一张认养单；$paymentStatus 为 null 表示从未付款。 */
@@ -433,5 +440,125 @@ class PlotManagementTest extends TestCase
             ->assertRedirect();
 
         $this->assertNull($plot->fresh()->story);
+    }
+
+    // ── R3：地块封面图 ──
+
+    public function test_admin_can_upload_plot_cover(): void
+    {
+        Storage::fake('public');
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post("/admin/plots", array_merge($this->plotData($farm, $plan, 'FD-COV-01'), ['cover_image' => $this->cover()]))
+            ->assertRedirect();
+
+        $plot = Plot::where('code', 'FD-COV-01')->firstOrFail();
+        $this->assertNotNull($plot->cover_image);
+        $this->assertTrue(Storage::disk('public')->exists($plot->cover_image));
+    }
+
+    public function test_replacing_plot_cover_deletes_the_old_file(): void
+    {
+        Storage::fake('public');
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-REPL-01'), ['tenant_id' => $t->id]));
+        $plot->attachCover($this->cover());
+        $plot->save();
+        $oldPath = $plot->fresh()->cover_image;
+
+        $this->actingAs($admin)
+            ->put("/admin/plots/{$plot->id}", array_merge($this->plotData($farm, $plan, 'FD-REPL-01'), ['cover_image' => $this->cover()]))
+            ->assertRedirect();
+
+        $newPath = $plot->fresh()->cover_image;
+        $this->assertNotSame($oldPath, $newPath);
+        $this->assertFalse(Storage::disk('public')->exists($oldPath));
+        $this->assertTrue(Storage::disk('public')->exists($newPath));
+    }
+
+    public function test_plot_cover_rejects_non_image(): void
+    {
+        Storage::fake('public');
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post("/admin/plots", array_merge($this->plotData($farm, $plan, 'FD-BADIMG-01'), [
+                'cover_image' => UploadedFile::fake()->create('notes.txt', 10, 'text/plain'),
+            ]))
+            ->assertSessionHasErrors('cover_image');
+
+        $this->assertNull(Plot::where('code', 'FD-BADIMG-01')->value('id'));
+    }
+
+    public function test_family_can_upload_plot_cover(): void
+    {
+        Storage::fake('public');
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        [$user] = $this->familyMember($t, $farm);
+
+        $data = $this->plotData($farm, $plan, 'FD-FAMCOV-01');
+        unset($data['farm_id']);
+
+        $this->actingAs($user)
+            ->post("/family/plots", array_merge($data, ['cover_image' => $this->cover()]))
+            ->assertRedirect();
+
+        $plot = Plot::where('code', 'FD-FAMCOV-01')->firstOrFail();
+        $this->assertNotNull($plot->cover_image);
+        $this->assertSame($farm->id, $plot->farm_id);
+    }
+
+    public function test_plot_card_shows_cover_and_placeholder(): void
+    {
+        Storage::fake('public');
+        $t = $this->tenant();
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+
+        $withCover = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-SHOW-01'), ['tenant_id' => $t->id]));
+        $withCover->attachCover($this->cover());
+        $withCover->save();
+        Plot::create(array_merge($this->plotData($farm, $plan, 'FD-NOIMG-01'), ['tenant_id' => $t->id]));
+
+        $this->get('/adopt')
+            ->assertOk()
+            ->assertSee('class="product-card card-portrait"', false)
+            ->assertSee(Storage::disk('public')->url($withCover->cover_image))
+            ->assertSee('card-cover--placeholder', false)
+            ->assertSee('FD-NOIMG-01');
+    }
+
+    public function test_plot_forms_expose_the_cover_upload(): void
+    {
+        $t = $this->tenant();
+        $admin = $this->admin($t);
+        $farm = Farm::where('tenant_id', $t->id)->firstOrFail();
+        $plan = Plan::where('tenant_id', $t->id)->firstOrFail();
+        $plot = Plot::create(array_merge($this->plotData($farm, $plan, 'FD-FORMIMG-01'), ['tenant_id' => $t->id]));
+
+        // 两个表单都缺 enctype 的话图片字段会被静默丢弃：看似保存成功、实际没存。
+        foreach (['/admin/plots/create', "/admin/plots/{$plot->id}/edit"] as $url) {
+            $this->actingAs($admin)->get($url)->assertOk()
+                ->assertSee('enctype="multipart/form-data"', false)
+                ->assertSee('name="cover_image"', false);
+        }
+
+        [$user] = $this->familyMember($t, $farm);
+        $this->actingAs($user)->get('/family/plots/create')->assertOk()
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('name="cover_image"', false);
     }
 }

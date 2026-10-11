@@ -44,6 +44,7 @@ class PlotController extends Controller
 
         $plot = new Plot($data);
         $plot->tenant_id = Tenant::current()->id;
+        $plot->attachCover($request->file('cover_image'));
         $plot->save();
 
         return redirect()->route('tenant.family.plots.index', [])
@@ -74,7 +75,9 @@ class PlotController extends Controller
         abort_if($plot->farm_id !== $member->farm_id, 403);
 
         // 家人不可改 farm_id（PlotRules 在传 farmId 时本就不收该字段）与定价/上下架
-        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot, $member->farm_id, self::FAMILY_READONLY)))->save();
+        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot, $member->farm_id, self::FAMILY_READONLY)));
+        $plot->attachCover($request->file('cover_image'));
+        $plot->save();
 
         return redirect()->route('tenant.family.plots.index', [])
             ->with('ok', '地块已更新');

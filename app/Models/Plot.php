@@ -10,6 +10,8 @@ use App\Exceptions\PlotNotDeletable;
 use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class Plot extends Model
 {
@@ -25,6 +27,8 @@ class Plot extends Model
         'mu_area',
         'price_yearly',
         'story',
+        // cover_image 不进 fillable：表单里的它是上传对象，不是路径，
+        // 一旦可 fill 会把 File 对象盖掉旧路径，替换封面时就删不掉旧文件。
         'status',
         'order_index',
     ];
@@ -115,6 +119,29 @@ class Plot extends Model
     {
         $blocker = $this->deletionBlocker();
         if ($blocker !== null) throw new PlotNotDeletable($blocker);
+    }
+
+    /** R3 卡片封面：落库 storage/app/public/plots 相对路径；替换时先存新文件再删旧文件。 */
+    public function attachCover(?UploadedFile $file): void
+    {
+        if ($file === null) {
+            return;
+        }
+
+        // 顺序不能反：store() 失败（磁盘满/权限）时旧封面还在，前台只是沿用旧图；
+        // 先删后存的话上一张当场销毁，而库里的路径还指着它，卡片直接变坏图。
+        $old = $this->cover_image;
+        $this->setAttribute('cover_image', $file->store('plots', 'public'));
+
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
+    }
+
+    /** 封面图 URL；未上传返回 null，卡片渲染占位。 */
+    public function coverUrl(): ?string
+    {
+        return $this->cover_image ? Storage::disk('public')->url($this->cover_image) : null;
     }
 
     /**

@@ -12,16 +12,11 @@
 
   <div class="product-grid">
     @foreach ($plants as $pl)
-      <a class="product-card" href="{{ route('tenant.adopt.show', ['plot' => $pl]) }}">
-        <div class="code">{{ $pl->code }}</div>
-        <div class="price">¥300/年</div>
-        <div class="meta">单株 · 命名/监控/溯源</div>
-        <div class="mt-2">
-          <span class="tag {{ $pl->status->value === 'available' ? 'tag-available' : ($pl->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
-            {{ $pl->status->label() }}
-          </span>
-        </div>
-      </a>
+      @include('site.partials.plot-card', [
+        'plot' => $pl,
+        'price' => '¥300/年',
+        'meta' => '单株 · 命名/监控/溯源',
+      ])
     @endforeach
   </div>
 @endsection

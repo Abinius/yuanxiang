@@ -48,6 +48,7 @@ class PlotController extends Controller
     {
         $plot = new Plot($request->validate(PlotRules::rules(Tenant::current(), $request)));
         $plot->tenant_id = Tenant::current()->id;
+        $plot->attachCover($request->file('cover_image'));
         $plot->save();
 
         return redirect()->route('tenant.admin.plots.index', [])
@@ -63,7 +64,9 @@ class PlotController extends Controller
     public function update(Plot $plot, Request $request)
     {
 
-        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot)))->save();
+        $plot->fill($request->validate(PlotRules::rules(Tenant::current(), $request, $plot)));
+        $plot->attachCover($request->file('cover_image'));
+        $plot->save();
 
         return redirect()->route('tenant.admin.plots.index', [])
             ->with('ok', '地块已更新');

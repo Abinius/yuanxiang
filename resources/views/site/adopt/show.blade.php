@@ -4,6 +4,10 @@
 
 @section('content')
   <div class="panel" style="max-width:680px;margin:0 auto">
+    @if ($plot->coverUrl())
+      <img src="{{ $plot->coverUrl() }}" alt="{{ $plot->code }} 封面"
+           style="width:100%;max-height:420px;object-fit:cover;border-radius:var(--ds-r-md);margin-bottom:14px">
+    @endif
     <div class="flex items-center justify-between mb-2">
       <h1 style="font-size:var(--ds-h2);margin:0">{{ $plot->code }}</h1>
       <span class="tag {{ $plot->status->value === 'available' ? 'tag-available' : ($plot->status->value === 'adopted' ? 'tag-adopted' : 'tag-off') }}">
