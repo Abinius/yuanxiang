@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-  <h1 class="hero-title mb-4" style="font-size:var(--ds-h2)">{{ $plot->exists ? '编辑地块' : '添加地块' }}</h1>
+  <h1 class="admin-h1 mb-4">{{ $plot->exists ? '编辑地块' : '添加地块' }}</h1>
 
   @if ($errors->any())
     <div class="alert">{{ $errors->first() }}</div>

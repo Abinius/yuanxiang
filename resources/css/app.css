@@ -492,6 +492,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .card .num.sm { font-size: 22px; }
 .card .num.xs { font-size: 18px; }
+/* 卡片里的 SVG 图标(取代此前的 emoji):描边跟随 currentColor，未授权卡片自动转弱 */
+.card-icon { color: var(--color-brand-500); }
+.card-soft .card-icon { color: var(--ds-text-mute); }
 .card .label {
   font-size: var(--ds-body-s);
   color: var(--ds-text-mute);
@@ -617,6 +620,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* ====================== 表单 ====================== */
 
 .field { margin-bottom: 16px; }
+/* 单列录入表单:PC 上全宽输入框会拉到 1000px+，读起来像断行 */
+.form-single { max-width: 640px; }
 .field label {
   display: block;
   font-size: var(--ds-body-s);
@@ -804,6 +809,11 @@ tbody tr:hover { background: rgba(179, 58, 38, 0.04); }
 .layout:has(> .sidebar.collapsed) {
   grid-template-columns: 64px 1fr;
 }
+/* 无侧栏的单栏布局(家人端 / 平台后台):.layout 默认是 220px+1fr 两列网格,
+   唯一子项会挤进 220px 列;且网格项上的 margin:auto 会让它收缩到内容宽,
+   所以这里退成块级布局,max-width + margin:auto 才按常规居中。 */
+.layout.layout-full { display: block; }
+.layout.layout-full > .admin-main { margin: 0 auto; }
 /* admin-shell 仅是 Blade 包裹层:用 display:contents 让 sidebar 与 main 成为 .layout 的直接网格项,
    否则 admin-shell 作为唯一网格子项落入 220px 列,main 内容溢出并遮挡右栏(移动端尤其严重)。 */
 .admin-shell { display: contents; }

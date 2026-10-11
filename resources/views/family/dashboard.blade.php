@@ -24,7 +24,7 @@
     $isAdmin = auth()->user()->role->value === 'tenant_admin';
   @endphp
 
-  <h1 class="hero-title mb-2" style="font-size:var(--ds-h2)">{{ $tenant->name }} · 家人录入端</h1>
+  <h1 class="admin-h1 mb-2">{{ $tenant->name }} · 家人录入端</h1>
   <p class="lede mb-4">
     当前权限:{{ $scopes ? implode(' / ', $scopeNames) : '<span class="text-warn font-medium">暂无</span>(请联系管理员配置 farm_members.permission_scope)' }}
   </p>
@@ -35,9 +35,9 @@
 
   @php
     $links = [
-      'farm_log'   => ['发农事动态 / 直播预告', '📝', route('tenant.family.logs.create',     [])],
-      'fertilizer' => ['录有机肥批次',          '🧪', route('tenant.family.fertilizer.create', [])],
-      'harvest'    => ['录采收',               '🌾', route('tenant.family.harvest.create',    [])],
+      'farm_log'   => ['发农事动态 / 直播预告', 'pen',    route('tenant.family.logs.create',     [])],
+      'fertilizer' => ['录有机肥批次',          'flask',  route('tenant.family.fertilizer.create', [])],
+      'harvest'    => ['录采收',               'basket', route('tenant.family.harvest.create',    [])],
     ];
   @endphp
 
@@ -45,13 +45,13 @@
     @foreach ($links as $key => [$label, $icon, $url])
       @if (in_array($key, $scopes))
         <a class="card card-link" href="{{ $url }}">
-          <div class="num sm serif text-brand">{{ $icon }}</div>
+          <x-glyph :name="$icon" />
           <div class="label font-medium">{{ $label }}</div>
           <span class="tag tag-dot tag-available mt-2">可用</span>
         </a>
       @else
         <div class="card card-soft">
-          <div class="num sm" style="color:var(--ds-text-mute)">{{ $icon }}</div>
+          <x-glyph :name="$icon" />
           <div class="label">— {{ $label }}</div>
           <span class="tag tag-off mt-2">未授权</span>
         </div>
@@ -63,15 +63,15 @@
     <div class="section-title"><span>快速记录（拍照即发，标题可留空）</span></div>
     <div class="card-grid grid-3 mb-5">
       <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=daily" style="background:var(--ds-bg-layer-2)">
-        <div class="num sm serif text-brand">📷</div>
+        <x-glyph name="camera" />
         <div class="label font-medium">发动态</div>
       </a>
       <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=explain" style="background:var(--ds-bg-layer-2)">
-        <div class="num sm serif text-brand">🎙️</div>
+        <x-glyph name="mic" />
         <div class="label font-medium">录解说（露脸）</div>
       </a>
       <a class="card card-link" href="{{ route('tenant.family.logs.create', []) }}?type=live_broadcast" style="background:var(--ds-bg-layer-2)">
-        <div class="num sm serif text-brand">🔴</div>
+        <x-glyph name="video" />
         <div class="label font-medium">直播预告</div>
       </a>
     </div>

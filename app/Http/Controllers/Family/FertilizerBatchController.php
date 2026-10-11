@@ -17,7 +17,7 @@ class FertilizerBatchController extends Controller
     {
         $this->assertScope($request, 'fertilizer');
 
-        return view('family.fertilizer.create', compact());
+        return view('family.fertilizer.create');
     }
 
     public function store(Request $request)

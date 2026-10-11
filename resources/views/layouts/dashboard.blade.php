@@ -37,7 +37,7 @@
   </div>
 </nav>
 
-<div class="layout {{ $isAdmin ? 'layout-admin' : '' }}">
+<div class="layout {{ $isAdmin ? '' : 'layout-full' }}">
   @if ($isAdmin)
     <div class="admin-shell">
       <aside class="sidebar" id="admin-sidebar">
@@ -59,7 +59,7 @@
       </main>
     </div>
   @else
-    <main class="admin-main" style="max-width:none">
+    <main class="admin-main">
       @yield('content')
     </main>
   @endif

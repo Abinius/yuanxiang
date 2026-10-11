@@ -108,8 +108,8 @@ class HarvestController extends Controller
             'season_year' => $data['season_year'] ?? $harvest->season_year,
             'harvested_at' => $data['harvested_at'],
             'dry_weight_kg' => $data['dry_weight_kg'],
-            'quality_grade' => $data['quality_grade'],
-            'notes' => $data['notes'],
+            'quality_grade' => $data['quality_grade'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ]);
 
         return redirect()->route('tenant.family.dashboard', [])

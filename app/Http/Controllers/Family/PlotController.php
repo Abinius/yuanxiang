@@ -26,7 +26,7 @@ class PlotController extends Controller
     {
         $member = $this->assertScope($request, 'plot');
 
-        return view('family.plot.form', $this->formData(Tenant::current(), new Plot(), $member));
+        return view('family.plot.form', $this->formData(new Plot(), $member));
     }
 
     public function store(Request $request)
@@ -59,7 +59,7 @@ class PlotController extends Controller
         $member = $this->assertScope($request, 'plot');
         abort_if($plot->farm_id !== $member->farm_id, 403);
 
-        return view('family.plot.form', $this->formData(Tenant::current(), $plot, $member));
+        return view('family.plot.form', $this->formData($plot, $member));
     }
 
     public function update(Plot $plot, Request $request)
