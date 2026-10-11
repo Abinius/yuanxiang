@@ -33,6 +33,9 @@ class LoginController extends Controller
             'account' => ['required', 'string'],
             'password' => ['required', 'string'],
             'agreed' => ['accepted'],
+        ], [
+            // 无 JS 提交、或同意墙拦截失效时用户看到的是这条，不能露英文校验文案。
+            'agreed.accepted' => '请先阅读并勾选同意《服务协议》与《隐私政策》',
         ]);
 
         $account = $credentials['account'];

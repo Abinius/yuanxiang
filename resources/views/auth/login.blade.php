@@ -103,6 +103,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 
   var accept  = document.getElementById('consent-accept');
   var dismiss = document.getElementById('consent-dismiss');
+  var submitBtn = document.getElementById('login-submit');
   var busy = false;
 
   function open() {
@@ -116,8 +117,13 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   }
 
   form.addEventListener('submit', function (e) {
+    if (agree.checked) {
+      // 登录成功会 session regenerate 作废旧 token，连点第二次 POST 直接 419；
+      // 真提交才锁按钮（未勾协议走弹窗分支时不能锁，否则 requestSubmit 无 submitter）。
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
     if (busy) return;
-    if (agree.checked) return;
     e.preventDefault();
     open();
   });

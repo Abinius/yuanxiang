@@ -64,6 +64,40 @@ class AuthTest extends TestCase
             ->assertSee('<input type="checkbox" name="agreed" value="1" id="agreed-check">', false);
     }
 
+    /**
+     * 连点登录撞 419：登录成功会 session regenerate 作废旧 token，第二个 POST 带着死 token 出去。
+     * 提交按钮必须在真提交时锁住；未勾协议走弹窗分支时不能锁，否则 requestSubmit 找不到 submitter。
+     */
+    public function test_submit_button_is_locked_when_form_submits(): void
+    {
+        $this->makeTenant();
+
+        $this->get("/login")
+            ->assertOk()
+            ->assertSee('id="login-submit"', false)
+            ->assertSee('submitBtn.disabled = true', false);
+    }
+
+    /** 无 JS、或弹窗拦截失效时用户直接撞上这条，不能露出英文校验文案。 */
+    public function test_missing_acceptance_shows_chinese_hint(): void
+    {
+        $t = $this->makeTenant();
+        User::create([
+            'tenant_id' => $t->id,
+            'phone' => '13800000003',
+            'password' => 'secret123',
+            'role' => UserRole::Villager->value,
+        ]);
+
+        $this->post("/login", ['account' => '13800000003', 'password' => 'secret123'])
+            ->assertSessionHasErrors('agreed');
+        $this->assertGuest();
+
+        $this->get("/login")
+            ->assertSee('请先阅读并勾选同意《服务协议》与《隐私政策》')
+            ->assertDontSee('must be accepted');
+    }
+
     public function test_password_login_succeeds_and_redirects(): void
     {
         $t = $this->makeTenant();
